@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Teste Específico - Botões de Adição</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .produto { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        button { padding: 8px 15px; margin: 5px; cursor: pointer; border: none; border-radius: 4px; }
+        .btn-add { background: #007bff; color: white; }
+        .btn-qty { background: #28a745; color: white; width: 30px; height: 30px; }
+        input { width: 60px; text-align: center; margin: 0 5px; padding: 5px; }
+        .debug { background: #000; color: #0f0; padding: 10px; font-family: monospace; margin: 10px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Teste Específico - Problemas de Adição ao Carrinho</h1>
+        
+        <div class="debug" id="log">Log de debug aparecerá aqui...</div>
+        
+        <h3>Teste 1: Produto Simples</h3>
+        <div class="produto">
+            <strong>Hambúrguer Artesanal - R$ 25,90</strong><br><br>
+            <button class="btn-qty" onclick="alterarQty(1, -1)">-</button>
+            <input type="number" id="qty-1" value="0" min="0" max="10">
+            <button class="btn-qty" onclick="alterarQty(1, 1)">+</button>
+            <button class="btn-add" onclick="testarAdicao(1, 'Hambúrguer Artesanal', 25.90)">
+                ➕ Adicionar ao Carrinho
+            </button>
+        </div>
+        
+        <h3>Teste 2: Produto com Problema</h3>
+        <div class="produto">
+            <strong>Refrigerante Coca-Cola - R$ 5,50</strong><br><br>
+            <button class="btn-qty" onclick="alterarQty(2, -1)">-</button>
+            <input type="number" id="qty-2" value="0" min="0" max="10">
+            <button class="btn-qty" onclick="alterarQty(2, 1)">+</button>
+            <button class="btn-add" onclick="testarAdicao(2, 'Refrigerante Coca-Cola', 5.50)">
+                ➕ Adicionar ao Carrinho
+            </button>
+        </div>
+
+        <h3>Estado do Carrinho</h3>
+        <div id="carrinho-status" style="border: 1px solid #ccc; padding: 10px; background: #f9f9f9;">
+            Carrinho vazio
+        </div>
+        
+        <h3>Testes Automáticos</h3>
+        <button onclick="executarTestesAutomaticos()">🧪 Executar Todos os Testes</button>
+        <button onclick="limparTudo()">🗑️ Limpar Tudo</button>
+    </div>
+
+    <script>
+        let carrinho = [];
+        let logElement = document.getElementById('log');
+        let carrinhoStatus = document.getElementById('carrinho-status');
+
+        function log(message, data = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `[${timestamp}] ${message}${data ? ' | ' + JSON.stringify(data) : ''}`;
+            logElement.textContent = entry + '\n' + logElement.textContent;
+            console.log(entry, data);
+        }
+
+        function alterarQty(produtoId, delta) {
+            log(`Alterando quantidade produto ${produtoId} em ${delta}`);
+            
+            const input = document.getElementById(`qty-${produtoId}`);
+            if (!input) {
+                log('ERRO: Input não encontrado', { produtoId });
+                return;
+            }
+            
+            let valor = parseInt(input.value || 0);
+            valor += delta;
+            valor = Math.max(0, Math.min(10, valor));
+            input.value = valor;
+            
+            log('Quantidade alterada', { produtoId, novoValor: valor });
+        }
+
+        function testarAdicao(produtoId, nome, preco) {
+            log(`=== INICIANDO TESTE ADIÇÃO PRODUTO ${produtoId} ===`);
+            
+            // Verificar se input existe
+            const input = document.getElementById(`qty-${produtoId}`);
+            if (!input) {
+                log('ERRO CRÍTICO: Input de quantidade não encontrado!', { produtoId });
+                alert('ERRO: Input de quantidade não encontrado!');
+                return;
+            }
+            
+            // Verificar valor do input
+            const quantidade = parseInt(input.value || 0);
+            log('Valor do input capturado', { produtoId, quantidade, valorOriginal: input.value });
+            
+            if (quantidade <= 0) {
+                log('ERRO: Quantidade inválida', { quantidade });
+                alert('Defina uma quantidade antes de adicionar!');
+                return;
+            }
+            
+            // Verificar se já existe no carrinho
+            const itemExistente = carrinho.find(item => item.id == produtoId);
+            
+            if (itemExistente) {
+                log('Item já existe no carrinho, aumentando quantidade', itemExistente);
+                itemExistente.quantidade += quantidade;
+            } else {
+                log('Criando novo item no carrinho');
+                const novoItem = {
+                    id: produtoId,
+                    nome: nome,
+                    preco: preco,
+                    quantidade: quantidade
+                };
+                carrinho.push(novoItem);
+                log('Item adicionado ao carrinho', novoItem);
+            }
+            
+            // Resetar input
+            input.value = 0;
+            log('Input resetado para 0');
+            
+            // Atualizar display
+            atualizarCarrinho();
+            
+            log(`=== FIM TESTE ADIÇÃO PRODUTO ${produtoId} ===`);
+        }
+
+        function atualizarCarrinho() {
+            log('Atualizando display do carrinho', carrinho);
+            
+            if (carrinho.length === 0) {
+                carrinhoStatus.innerHTML = 'Carrinho vazio';
+                return;
+            }
+            
+            let html = '<strong>Itens no Carrinho:</strong><br>';
+            let total = 0;
+            
+            carrinho.forEach(item => {
+                const subtotal = item.preco * item.quantidade;
+                total += subtotal;
+                html += `• ${item.nome} (x${item.quantidade}) = R$ ${subtotal.toFixed(2)}<br>`;
+            });
+            
+            html += `<br><strong>Total: R$ ${total.toFixed(2)}</strong>`;
+            carrinhoStatus.innerHTML = html;
+            
+            log('Display atualizado', { itens: carrinho.length, total });
+        }
+
+        function executarTestesAutomaticos() {
+            log('=== INICIANDO TESTES AUTOMÁTICOS ===');
+            
+            // Teste 1: Verificar se inputs existem
+            const input1 = document.getElementById('qty-1');
+            const input2 = document.getElementById('qty-2');
+            
+            if (!input1) {
+                log('FALHA: Input qty-1 não encontrado');
+                return;
+            }
+            
+            if (!input2) {
+                log('FALHA: Input qty-2 não encontrado');
+                return;
+            }
+            
+            log('✓ Todos os inputs encontrados');
+            
+            // Teste 2: Definir quantidades
+            input1.value = 2;
+            input2.value = 1;
+            log('✓ Quantidades definidas', { qty1: input1.value, qty2: input2.value });
+            
+            // Teste 3: Adicionar itens
+            setTimeout(() => {
+                testarAdicao(1, 'Hambúrguer Artesanal', 25.90);
+                setTimeout(() => {
+                    testarAdicao(2, 'Refrigerante Coca-Cola', 5.50);
+                    log('=== TESTES AUTOMÁTICOS CONCLUÍDOS ===');
+                }, 500);
+            }, 500);
+        }
+
+        function limparTudo() {
+            carrinho = [];
+            document.getElementById('qty-1').value = 0;
+            document.getElementById('qty-2').value = 0;
+            logElement.textContent = '';
+            atualizarCarrinho();
+            log('Tudo limpo');
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Página de teste carregada');
+            log('Elementos encontrados:', {
+                qty1: !!document.getElementById('qty-1'),
+                qty2: !!document.getElementById('qty-2'),
+                log: !!document.getElementById('log'),
+                status: !!document.getElementById('carrinho-status')
+            });
+        });
+    </script>
+</body>
+</html>

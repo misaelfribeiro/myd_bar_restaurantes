@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Dashboard API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+        }
+        .error {
+            color: red;
+            border-left-color: red;
+        }
+        .success {
+            color: green;
+            border-left-color: green;
+        }
+        pre {
+            background: #f1f1f1;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .mesa-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .mesa-card {
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .ocupada {
+            background: #fee;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        .disponivel {
+            background: #efe;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste Dashboard API - Verificação de Duplicação</h1>
+        
+        <button onclick="testarEndpoint()">🔄 Testar Endpoint Dashboard</button>
+        
+        <div id="resultado" class="section">
+            <p>Clique no botão para testar...</p>
+        </div>
+        
+        <div id="mesas-visual" class="section" style="display: none;">
+            <h3>Visualização das Mesas:</h3>
+            <div id="mesas-grid" class="mesa-grid"></div>
+        </div>
+        
+        <div id="dados-raw" class="section" style="display: none;">
+            <h3>Dados JSON Brutos:</h3>
+            <pre id="json-output"></pre>
+        </div>
+    </div>
+
+    <script>
+        async function testarEndpoint() {
+            const resultado = document.getElementById('resultado');
+            const mesasVisual = document.getElementById('mesas-visual');
+            const dadosRaw = document.getElementById('dados-raw');
+            
+            resultado.innerHTML = '<p>🔄 Carregando...</p>';
+            
+            try {
+                const response = await fetch('/garcom/dashboard-data', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Mostrar resultado básico
+                resultado.innerHTML = `
+                    <div class="success">
+                        <h3>✅ Sucesso!</h3>
+                        <p><strong>Mesas Ocupadas:</strong> ${data.mesasOcupadas}</p>
+                        <p><strong>Mesas Disponíveis:</strong> ${data.mesasDisponiveis}</p>
+                        <p><strong>Mesas Ocupadas Info:</strong> ${data.mesasOcupadasInfo ? data.mesasOcupadasInfo.length : 0}</p>
+                        <p><strong>Mesas Disponíveis Info:</strong> ${data.mesasDisponiveisInfo ? data.mesasDisponiveisInfo.length : 0}</p>
+                    </div>
+                `;
+                
+                // Verificar duplicações
+                verificarDuplicacao(data);
+                
+                // Mostrar visualização das mesas
+                mostrarMesasVisual(data);
+                
+                // Mostrar dados brutos
+                document.getElementById('json-output').textContent = JSON.stringify(data, null, 2);
+                dadosRaw.style.display = 'block';
+                
+            } catch (error) {
+                resultado.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Erro!</h3>
+                        <p><strong>Erro:</strong> ${error.message}</p>
+                    </div>
+                `;
+                console.error('Erro:', error);
+            }
+        }
+        
+        function verificarDuplicacao(data) {
+            const resultado = document.getElementById('resultado');
+            
+            // Verificar duplicação entre ocupadas e disponíveis
+            const ocupadasIds = (data.mesasOcupadasInfo || []).map(m => m.id);
+            const disponiveisIds = (data.mesasDisponiveisInfo || []).map(m => m.id);
+            
+            const duplicadas = ocupadasIds.filter(id => disponiveisIds.includes(id));
+            
+            if (duplicadas.length > 0) {
+                resultado.innerHTML += `
+                    <div class="error">
+                        <h4>⚠️ DUPLICAÇÃO DETECTADA!</h4>
+                        <p>Mesas que aparecem tanto como ocupadas quanto disponíveis:</p>
+                        <p><strong>IDs Duplicados:</strong> ${duplicadas.join(', ')}</p>
+                    </div>
+                `;
+            } else {
+                resultado.innerHTML += `
+                    <div class="success">
+                        <h4>✅ Nenhuma Duplicação Detectada</h4>
+                        <p>Todas as mesas estão corretamente categorizadas.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function mostrarMesasVisual(data) {
+            const mesasVisual = document.getElementById('mesas-visual');
+            const grid = document.getElementById('mesas-grid');
+            
+            let html = '';
+            
+            // Adicionar mesas ocupadas
+            (data.mesasOcupadasInfo || []).forEach(mesa => {
+                const nome = mesa.identificador || `Mesa ${mesa.numero}`;
+                html += `
+                    <div class="mesa-card ocupada">
+                        <div>${nome}</div>
+                        <small>Ocupada</small>
+                        <small>Pedido #${mesa.pedido_id || 'N/A'}</small>
+                    </div>
+                `;
+            });
+            
+            // Adicionar mesas disponíveis
+            (data.mesasDisponiveisInfo || []).forEach(mesa => {
+                const nome = mesa.identificador || `Mesa ${mesa.numero}`;
+                html += `
+                    <div class="mesa-card disponivel">
+                        <div>${nome}</div>
+                        <small>Disponível</small>
+                    </div>
+                `;
+            });
+            
+            grid.innerHTML = html;
+            mesasVisual.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>🔍 Análise Específica - Problema do Carrinho</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { border: 2px solid #007bff; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .error { color: red; font-weight: bold; }
+        .success { color: green; font-weight: bold; }
+        .warning { color: orange; font-weight: bold; }
+        .code { background: #f5f5f5; padding: 5px; font-family: monospace; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Análise Específica - Problema do Carrinho</h1>
+    
+    <div class="test-section">
+        <h3>Verificação 1: Elementos HTML</h3>
+        <p>Vamos verificar se todos os elementos necessários existem:</p>
+        
+        <div>
+            <button onclick="verificarElementos()">🔍 Verificar Elementos</button>
+            <div id="resultado-elementos"></div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Verificação 2: Dados de Produtos</h3>
+        <div id="dados-produtos-teste" style="display:none;">
+            {"1":{"id":1,"nome":"Teste Produto","preco":10.5},"2":{"id":2,"nome":"Outro Produto","preco":15.0}}
+        </div>
+        
+        <button onclick="verificarDados()">📦 Verificar Dados</button>
+        <div id="resultado-dados"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Verificação 3: Função de Adição</h3>
+        
+        <!-- Elemento de teste -->
+        <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+            <strong>Produto Teste</strong><br>
+            Quantidade: <input type="number" id="qty-1" value="1" min="0" max="10">
+            <button onclick="testarAdicao()">➕ Testar Adição</button>
+        </div>
+        
+        <div id="resultado-funcao"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Verificação 4: Console de Erros</h3>
+        <p>Verifique o Console do navegador (F12) para erros JavaScript.</p>
+        
+        <button onclick="forcarErro()">⚠️ Forçar Erro para Teste</button>
+        <button onclick="limparConsole()">🧹 Limpar Console</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Estado do Sistema</h3>
+        <div id="estado-sistema">
+            <p>Mesa selecionada: <span id="mesa-status">Nenhuma</span></p>
+            <p>Itens no carrinho: <span id="carrinho-count">0</span></p>
+            <p>Produtos disponíveis: <span id="produtos-count">0</span></p>
+        </div>
+    </div>
+
+    <script>
+        // Simulação das variáveis globais
+        let mesaSelecionada = null;
+        let carrinho = [];
+        let produtos = {};
+
+        function verificarElementos() {
+            const resultado = document.getElementById('resultado-elementos');
+            let html = '<h4>Resultados:</h4>';
+            
+            const elementos = [
+                { nome: 'qty-1', id: 'qty-1' },
+                { nome: 'dados-produtos-teste', id: 'dados-produtos-teste' },
+                { nome: 'mesa-status', id: 'mesa-status' },
+                { nome: 'carrinho-count', id: 'carrinho-count' }
+            ];
+            
+            elementos.forEach(el => {
+                const elemento = document.getElementById(el.id);
+                if (elemento) {
+                    html += `<div class="success">✅ ${el.nome}: ENCONTRADO</div>`;
+                    if (el.id.startsWith('qty-')) {
+                        html += `<div>   Valor: ${elemento.value}</div>`;
+                    }
+                } else {
+                    html += `<div class="error">❌ ${el.nome}: NÃO ENCONTRADO</div>`;
+                }
+            });
+            
+            // Verificar funções
+            const funcoes = ['selecionarMesa', 'adicionarProduto', 'alterarQuantidade'];
+            funcoes.forEach(func => {
+                if (typeof window[func] === 'function') {
+                    html += `<div class="success">✅ Função ${func}: EXISTE</div>`;
+                } else {
+                    html += `<div class="error">❌ Função ${func}: NÃO EXISTE</div>`;
+                }
+            });
+            
+            resultado.innerHTML = html;
+        }
+
+        function verificarDados() {
+            const resultado = document.getElementById('resultado-dados');
+            let html = '<h4>Resultados:</h4>';
+            
+            try {
+                const dadosElement = document.getElementById('dados-produtos-teste');
+                if (!dadosElement) {
+                    html += '<div class="error">❌ Elemento de dados não encontrado</div>';
+                } else {
+                    const dadosJson = dadosElement.textContent;
+                    html += `<div class="success">✅ JSON bruto encontrado</div>`;
+                    html += `<div class="code">${dadosJson.substring(0, 100)}...</div>`;
+                    
+                    try {
+                        const dadosParsed = JSON.parse(dadosJson);
+                        html += `<div class="success">✅ JSON válido - ${Object.keys(dadosParsed).length} produtos</div>`;
+                        
+                        produtos = dadosParsed; // Atualizar global
+                        document.getElementById('produtos-count').textContent = Object.keys(produtos).length;
+                        
+                        // Mostrar primeiro produto
+                        const primeiroId = Object.keys(dadosParsed)[0];
+                        if (primeiroId) {
+                            const primeiro = dadosParsed[primeiroId];
+                            html += `<div>Primeiro produto: ${primeiro.nome} - R$ ${primeiro.preco}</div>`;
+                        }
+                    } catch (parseError) {
+                        html += `<div class="error">❌ Erro ao fazer parse: ${parseError.message}</div>`;
+                    }
+                }
+            } catch (error) {
+                html += `<div class="error">❌ Erro geral: ${error.message}</div>`;
+            }
+            
+            resultado.innerHTML = html;
+        }
+
+        function selecionarMesa(id, numero) {
+            console.log('Mesa selecionada:', id, numero);
+            mesaSelecionada = { id, numero };
+            document.getElementById('mesa-status').textContent = numero;
+        }
+
+        function alterarQuantidade(produtoId, delta) {
+            const input = document.getElementById(`qty-${produtoId}`);
+            if (input) {
+                let valor = parseInt(input.value || 0) + delta;
+                valor = Math.max(0, Math.min(10, valor));
+                input.value = valor;
+                console.log(`Quantidade ${produtoId} alterada para ${valor}`);
+            }
+        }
+
+        function adicionarProduto(produtoId) {
+            console.log('=== TESTE ADIÇÃO PRODUTO ===', produtoId);
+            
+            const input = document.getElementById(`qty-${produtoId}`);
+            if (!input) {
+                console.error('Input não encontrado:', produtoId);
+                return;
+            }
+            
+            const quantidade = parseInt(input.value || 0);
+            console.log('Quantidade:', quantidade);
+            
+            if (quantidade <= 0) {
+                console.warn('Quantidade inválida');
+                return;
+            }
+            
+            const produto = produtos[produtoId];
+            if (!produto) {
+                console.error('Produto não encontrado:', produtoId);
+                return;
+            }
+            
+            console.log('Produto encontrado:', produto);
+            
+            const itemExistente = carrinho.find(item => item.id == produtoId);
+            if (itemExistente) {
+                itemExistente.quantidade += quantidade;
+                console.log('Item atualizado:', itemExistente);
+            } else {
+                const novoItem = {
+                    id: produtoId,
+                    nome: produto.nome,
+                    preco: produto.preco,
+                    quantidade: quantidade
+                };
+                carrinho.push(novoItem);
+                console.log('Novo item adicionado:', novoItem);
+            }
+            
+            input.value = 0;
+            document.getElementById('carrinho-count').textContent = carrinho.length;
+            
+            console.log('Carrinho atual:', carrinho);
+        }
+
+        function testarAdicao() {
+            const resultado = document.getElementById('resultado-funcao');
+            let html = '<h4>Teste de Adição:</h4>';
+            
+            try {
+                // Garantir que temos dados
+                if (Object.keys(produtos).length === 0) {
+                    verificarDados(); // Carregar dados primeiro
+                }
+                
+                html += '<div>1. Executando adicionarProduto(1)...</div>';
+                adicionarProduto(1);
+                
+                html += `<div class="success">✅ Função executada sem erros</div>`;
+                html += `<div>Carrinho atual: ${carrinho.length} itens</div>`;
+                
+                if (carrinho.length > 0) {
+                    html += '<div>Último item: ' + JSON.stringify(carrinho[carrinho.length - 1]) + '</div>';
+                }
+                
+            } catch (error) {
+                html += `<div class="error">❌ Erro na execução: ${error.message}</div>`;
+                console.error('Erro no teste:', error);
+            }
+            
+            resultado.innerHTML = html;
+        }
+
+        function forcarErro() {
+            try {
+                // Tentar acessar elemento inexistente
+                document.getElementById('elemento-inexistente').value = 'teste';
+            } catch (error) {
+                console.error('Erro forçado capturado:', error);
+                alert('Erro forçado gerado. Verifique o Console (F12).');
+            }
+        }
+
+        function limparConsole() {
+            console.clear();
+            alert('Console limpo. Você pode verificar no DevTools (F12).');
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página de análise carregada');
+            setTimeout(verificarDados, 500); // Carregar dados automaticamente
+        });
+    </script>
+</body>
+</html>

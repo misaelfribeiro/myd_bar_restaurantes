@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Debug Completo - Modo Garçom</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .debug-panel { 
+            position: fixed; 
+            bottom: 20px; 
+            right: 20px; 
+            width: 400px; 
+            background: rgba(0,0,0,0.9); 
+            color: #0f0; 
+            padding: 15px; 
+            border-radius: 8px; 
+            font-family: monospace; 
+            font-size: 12px; 
+            max-height: 300px; 
+            overflow-y: auto; 
+            z-index: 9999;
+        }
+        .debug-toggle { 
+            position: fixed; 
+            bottom: 20px; 
+            left: 20px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 10px; 
+            border-radius: 50%; 
+            z-index: 10000;
+        }
+        .produto-debug { 
+            border: 2px solid #28a745; 
+            margin: 5px 0; 
+            padding: 10px; 
+            background: rgba(40, 167, 69, 0.1);
+        }
+        .debug-info { 
+            font-size: 10px; 
+            color: #666; 
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <h1>🔧 Debug Completo - Sistema de Carrinho</h1>
+        
+        <!-- Debug Panel -->
+        <div class="debug-panel" id="debug-panel">
+            <strong>📊 DEBUG CONSOLE</strong><br>
+            <div id="debug-log">Carregando...</div>
+        </div>
+        
+        <button class="debug-toggle" onclick="toggleDebug()">🐛</button>
+        
+        <!-- Área de Teste -->
+        <div class="row">
+            <div class="col-md-8">
+                <h3>🧪 Simulação Modo Garçom</h3>
+                
+                <!-- Mesa -->
+                <div class="card mb-3">
+                    <div class="card-header">1. Seleção de Mesa</div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3" onclick="selecionarMesa(1, 'Mesa 1')" style="cursor: pointer; border: 2px solid #ddd; padding: 15px; text-align: center; margin: 5px; border-radius: 8px;" data-mesa-id="1">
+                                <strong>Mesa 1</strong><br>
+                                <small>4 lugares</small>
+                            </div>
+                            <div class="col-md-3" onclick="selecionarMesa(2, 'Mesa 2')" style="cursor: pointer; border: 2px solid #ddd; padding: 15px; text-align: center; margin: 5px; border-radius: 8px;" data-mesa-id="2">
+                                <strong>Mesa 2</strong><br>
+                                <small>2 lugares</small>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <strong>Mesa selecionada:</strong> <span id="mesa-status">Nenhuma</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Produtos -->
+                <div class="card">
+                    <div class="card-header">2. Produtos Disponíveis</div>
+                    <div class="card-body">
+                        <div id="produtos-lista">
+                            <!-- Produtos serão carregados via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <!-- Carrinho -->
+                <div class="card">
+                    <div class="card-header">🛒 Carrinho</div>
+                    <div class="card-body">
+                        <div id="carrinho-itens">Carrinho vazio</div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <strong>Total:</strong>
+                            <strong id="total-valor">R$ 0,00</strong>
+                        </div>
+                        <button class="btn btn-success w-100 mt-3" id="btn-finalizar" onclick="finalizarPedidoTeste()" disabled>
+                            Finalizar Pedido
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Status Debug -->
+                <div class="card mt-3">
+                    <div class="card-header">📊 Status Debug</div>
+                    <div class="card-body">
+                        <div id="status-debug">
+                            <div>Mesa: <span id="debug-mesa">❌</span></div>
+                            <div>Carrinho: <span id="debug-carrinho">❌</span></div>
+                            <div>Produtos: <span id="debug-produtos">❌</span></div>
+                            <div>Eventos: <span id="debug-eventos">❌</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Teste Automático -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">🤖 Testes Automáticos</div>
+                    <div class="card-body">
+                        <button class="btn btn-primary" onclick="executarTesteCompleto()">🧪 Executar Teste Completo</button>
+                        <button class="btn btn-warning" onclick="simularProblemReal()">⚠️ Simular Problema Real</button>
+                        <button class="btn btn-secondary" onclick="limparTudo()">🗑️ Limpar Tudo</button>
+                        <button class="btn btn-info" onclick="testarConectividade()">🌐 Testar Conectividade</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estados globais
+        let mesaSelecionada = null;
+        let carrinho = [];
+        let debugVisible = true;
+        let produtos = {
+            1: { id: 1, nome: 'Hambúrguer Artesanal', preco: 25.90 },
+            2: { id: 2, nome: 'Refrigerante Coca-Cola', preco: 5.50 },
+            3: { id: 3, nome: 'Batata Frita Especial', preco: 12.90 },
+            4: { id: 4, nome: 'Cerveja Heineken', preco: 8.50 },
+            5: { id: 5, nome: 'Pizza Margherita', preco: 35.90 }
+        };
+
+        // Função de log
+        function log(message, data = null, tipo = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = tipo === 'error' ? '❌' : tipo === 'success' ? '✅' : tipo === 'warning' ? '⚠️' : 'ℹ️';
+            const logDiv = document.getElementById('debug-log');
+            
+            const entry = `[${timestamp}] ${prefix} ${message}${data ? '\n   Data: ' + JSON.stringify(data, null, 2) : ''}`;
+            logDiv.innerHTML = entry + '<br>' + logDiv.innerHTML;
+            
+            // Limitar log
+            const lines = logDiv.innerHTML.split('<br>');
+            if (lines.length > 50) {
+                logDiv.innerHTML = lines.slice(0, 50).join('<br>');
+            }
+            
+            console.log(entry, data);
+        }
+
+        function toggleDebug() {
+            const panel = document.getElementById('debug-panel');
+            debugVisible = !debugVisible;
+            panel.style.display = debugVisible ? 'block' : 'none';
+        }
+
+        function atualizarStatusDebug() {
+            document.getElementById('debug-mesa').innerHTML = mesaSelecionada ? '✅ ' + mesaSelecionada.numero : '❌ Nenhuma';
+            document.getElementById('debug-carrinho').innerHTML = carrinho.length > 0 ? `✅ ${carrinho.length} itens` : '❌ Vazio';
+            document.getElementById('debug-produtos').innerHTML = Object.keys(produtos).length > 0 ? `✅ ${Object.keys(produtos).length} produtos` : '❌ Nenhum';
+            
+            // Verificar eventos
+            const botoesAdd = document.querySelectorAll('[onclick*="adicionarProduto"]');
+            document.getElementById('debug-eventos').innerHTML = botoesAdd.length > 0 ? `✅ ${botoesAdd.length} botões` : '❌ Sem eventos';
+        }
+
+        function carregarProdutos() {
+            log('Carregando produtos para interface...');
+            const container = document.getElementById('produtos-lista');
+            
+            let html = '';
+            Object.values(produtos).forEach(produto => {
+                html += `
+                    <div class="produto-debug" data-produto-id="${produto.id}">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <strong>${produto.nome}</strong><br>
+                                <span class="text-success">R$ ${produto.preco.toFixed(2).replace('.', ',')}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group input-group-sm">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="alterarQty(${produto.id}, -1)">-</button>
+                                    <input type="number" class="form-control text-center" id="qty-${produto.id}" value="0" min="0" max="10" style="max-width: 60px;">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="alterarQty(${produto.id}, 1)">+</button>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-primary btn-sm w-100" onclick="adicionarProduto(${produto.id})">
+                                    ➕ Adicionar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="debug-info">
+                            ID: ${produto.id} | Input: qty-${produto.id} | Função: adicionarProduto(${produto.id})
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            log('Produtos carregados na interface', { total: Object.keys(produtos).length });
+            atualizarStatusDebug();
+        }
+
+        function selecionarMesa(id, numero) {
+            log('Selecionando mesa', { id, numero });
+            
+            // Limpar seleção anterior
+            document.querySelectorAll('[data-mesa-id]').forEach(el => {
+                el.style.borderColor = '#ddd';
+                el.style.backgroundColor = '';
+            });
+            
+            // Selecionar nova
+            const mesa = document.querySelector(`[data-mesa-id="${id}"]`);
+            if (mesa) {
+                mesa.style.borderColor = '#007bff';
+                mesa.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
+            }
+            
+            mesaSelecionada = { id, numero };
+            document.getElementById('mesa-status').innerHTML = `<strong style="color: #007bff;">${numero}</strong>`;
+            
+            log('Mesa selecionada com sucesso', mesaSelecionada, 'success');
+            atualizarStatusDebug();
+            verificarPodeFinalizarPedido();
+        }
+
+        function alterarQty(produtoId, delta) {
+            log(`Alterando quantidade produto ${produtoId} em ${delta}`);
+            
+            const input = document.getElementById(`qty-${produtoId}`);
+            if (!input) {
+                log(`ERRO: Input qty-${produtoId} não encontrado!`, null, 'error');
+                return;
+            }
+            
+            let valor = parseInt(input.value || 0);
+            valor = Math.max(0, Math.min(10, valor + delta));
+            input.value = valor;
+            
+            log(`Quantidade alterada para ${valor}`, { produtoId, valor }, 'success');
+        }
+
+        function adicionarProduto(produtoId) {
+            log(`=== ADICIONANDO PRODUTO ${produtoId} ===`);
+            
+            // Verificações detalhadas
+            const input = document.getElementById(`qty-${produtoId}`);
+            if (!input) {
+                log(`ERRO CRÍTICO: Input qty-${produtoId} não existe!`, null, 'error');
+                alert('ERRO: Input de quantidade não encontrado!');
+                return;
+            }
+            
+            const quantidade = parseInt(input.value || 0);
+            log('Quantidade capturada', { produtoId, quantidade, valorOriginal: input.value });
+            
+            if (quantidade <= 0) {
+                log('Quantidade inválida', { quantidade }, 'warning');
+                alert('Defina uma quantidade antes de adicionar!');
+                return;
+            }
+            
+            const produto = produtos[produtoId];
+            if (!produto) {
+                log('Produto não encontrado', { produtoId }, 'error');
+                alert('Erro: Produto não encontrado!');
+                return;
+            }
+            
+            // Verificar se já existe
+            const itemExistente = carrinho.find(item => item.id == produtoId);
+            
+            if (itemExistente) {
+                log('Atualizando item existente', itemExistente);
+                itemExistente.quantidade += quantidade;
+            } else {
+                const novoItem = {
+                    id: produtoId,
+                    nome: produto.nome,
+                    preco: produto.preco,
+                    quantidade: quantidade
+                };
+                carrinho.push(novoItem);
+                log('Novo item adicionado', novoItem, 'success');
+            }
+            
+            // Resetar input
+            input.value = 0;
+            
+            log('Carrinho atualizado', carrinho);
+            atualizarCarrinho();
+            verificarPodeFinalizarPedido();
+            atualizarStatusDebug();
+        }
+
+        function removerItem(produtoId) {
+            log(`Removendo produto ${produtoId} do carrinho`);
+            carrinho = carrinho.filter(item => item.id != produtoId);
+            log('Item removido', { carrinho });
+            atualizarCarrinho();
+            verificarPodeFinalizarPedido();
+            atualizarStatusDebug();
+        }
+
+        function atualizarCarrinho() {
+            const container = document.getElementById('carrinho-itens');
+            
+            if (carrinho.length === 0) {
+                container.innerHTML = '<em class="text-muted">Carrinho vazio</em>';
+                document.getElementById('total-valor').textContent = 'R$ 0,00';
+                return;
+            }
+            
+            let html = '';
+            let total = 0;
+            
+            carrinho.forEach(item => {
+                const subtotal = item.preco * item.quantidade;
+                total += subtotal;
+                
+                html += `
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                        <div>
+                            <strong>${item.nome}</strong><br>
+                            <small>R$ ${item.preco.toFixed(2)} x ${item.quantidade}</small>
+                        </div>
+                        <div class="text-end">
+                            <div>R$ ${subtotal.toFixed(2)}</div>
+                            <button class="btn btn-sm btn-danger" onclick="removerItem(${item.id})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            document.getElementById('total-valor').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            
+            log('Interface do carrinho atualizada', { itens: carrinho.length, total });
+        }
+
+        function verificarPodeFinalizarPedido() {
+            const btn = document.getElementById('btn-finalizar');
+            const pode = mesaSelecionada && carrinho.length > 0;
+            
+            btn.disabled = !pode;
+            btn.className = pode ? 'btn btn-success w-100 mt-3' : 'btn btn-secondary w-100 mt-3';
+            btn.textContent = pode ? 'Finalizar Pedido' : 'Selecione mesa e produtos';
+            
+            log('Status botão finalizar atualizado', { pode, mesa: !!mesaSelecionada, itens: carrinho.length });
+        }
+
+        function finalizarPedidoTeste() {
+            if (!mesaSelecionada || carrinho.length === 0) {
+                alert('Complete o pedido primeiro!');
+                return;
+            }
+            
+            const dados = {
+                mesa_id: mesaSelecionada.id,
+                itens: carrinho.map(item => ({
+                    produto_id: item.id,
+                    quantidade: item.quantidade
+                })),
+                observacoes: 'Teste via debug'
+            };
+            
+            log('Dados preparados para envio', dados, 'success');
+            alert(`Pedido preparado com sucesso!
+Mesa: ${mesaSelecionada.numero}
+Itens: ${carrinho.length}
+Total: ${document.getElementById('total-valor').textContent}
+
+Verifique o console para detalhes.`);
+        }
+
+        function executarTesteCompleto() {
+            log('=== INICIANDO TESTE AUTOMÁTICO COMPLETO ===');
+            
+            // 1. Selecionar mesa
+            selecionarMesa(1, 'Mesa 1');
+            
+            // 2. Adicionar produtos com delay
+            setTimeout(() => {
+                document.getElementById('qty-1').value = 2;
+                adicionarProduto(1);
+            }, 500);
+            
+            setTimeout(() => {
+                document.getElementById('qty-2').value = 1;
+                adicionarProduto(2);
+            }, 1000);
+            
+            setTimeout(() => {
+                document.getElementById('qty-3').value = 3;
+                adicionarProduto(3);
+            }, 1500);
+            
+            setTimeout(() => {
+                log('=== TESTE AUTOMÁTICO CONCLUÍDO ===', null, 'success');
+                alert('Teste automático concluído! Verifique o carrinho.');
+            }, 2000);
+        }
+
+        function simularProblemReal() {
+            log('=== SIMULANDO PROBLEMA REAL ===');
+            
+            // Simular problema de elemento não encontrado
+            try {
+                const inputInexistente = document.getElementById('qty-999');
+                if (!inputInexistente) {
+                    throw new Error('Input qty-999 não encontrado (simulação)');
+                }
+            } catch (error) {
+                log('Erro simulado capturado', { error: error.message }, 'error');
+            }
+            
+            // Simular problema de dados inválidos
+            try {
+                adicionarProduto(999); // Produto inexistente
+            } catch (error) {
+                log('Erro de produto inexistente capturado', { error: error.message }, 'error');
+            }
+        }
+
+        function limparTudo() {
+            log('Limpando tudo...');
+            carrinho = [];
+            mesaSelecionada = null;
+            
+            // Limpar interface
+            document.getElementById('mesa-status').textContent = 'Nenhuma';
+            document.querySelectorAll('[data-mesa-id]').forEach(el => {
+                el.style.borderColor = '#ddd';
+                el.style.backgroundColor = '';
+            });
+            
+            // Resetar quantidades
+            document.querySelectorAll('[id^="qty-"]').forEach(input => {
+                input.value = 0;
+            });
+            
+            atualizarCarrinho();
+            verificarPodeFinalizarPedido();
+            atualizarStatusDebug();
+            
+            log('Sistema limpo', null, 'success');
+        }
+
+        function testarConectividade() {
+            log('Testando conectividade com servidor Laravel...');
+            
+            fetch('/diagnostic/current-state')
+                .then(response => response.json())
+                .then(data => {
+                    log('Conectividade OK - Resposta do servidor', data, 'success');
+                    alert('✅ Conectividade OK!\nServidor Laravel respondendo normalmente.');
+                })
+                .catch(error => {
+                    log('Erro de conectividade', { error: error.message }, 'error');
+                    alert('❌ Erro de conectividade!\nVerifique se o servidor Laravel está rodando.');
+                });
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Sistema de debug carregado', null, 'success');
+            carregarProdutos();
+            atualizarStatusDebug();
+            log('Pronto para testes!', { produtos: Object.keys(produtos).length }, 'success');
+        });
+    </script>
+</body>
+</html>

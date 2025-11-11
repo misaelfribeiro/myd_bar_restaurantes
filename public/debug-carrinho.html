@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Teste Carrinho</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        button { padding: 8px 15px; margin: 5px; cursor: pointer; }
+        .produto { border: 1px solid #ddd; padding: 10px; margin: 5px; border-radius: 3px; }
+        .carrinho { background: #f5f5f5; padding: 15px; border-radius: 5px; }
+        .log { background: #000; color: #0f0; padding: 10px; font-family: monospace; max-height: 200px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Debug - Teste de Carrinho</h1>
+    
+    <div class="debug-section">
+        <h3>1. Mesa</h3>
+        <button onclick="selecionarMesa(1, 'Mesa 1')">Selecionar Mesa 1</button>
+        <button onclick="selecionarMesa(2, 'Mesa 2')">Selecionar Mesa 2</button>
+        <div>Mesa selecionada: <span id="mesa-info">Nenhuma</span></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>2. Produtos de Teste</h3>
+        <div class="produto">
+            <strong>Produto 1 - Hambúrguer - R$ 25,90</strong><br>
+            Quantidade: <input type="number" id="qty-1" value="1" min="1" max="10">
+            <button onclick="adicionarProduto(1)">Adicionar ao Carrinho</button>
+        </div>
+        <div class="produto">
+            <strong>Produto 2 - Refrigerante - R$ 5,50</strong><br>
+            Quantidade: <input type="number" id="qty-2" value="1" min="1" max="10">
+            <button onclick="adicionarProduto(2)">Adicionar ao Carrinho</button>
+        </div>
+        <div class="produto">
+            <strong>Produto 3 - Batata Frita - R$ 12,90</strong><br>
+            Quantidade: <input type="number" id="qty-3" value="1" min="1" max="10">
+            <button onclick="adicionarProduto(3)">Adicionar ao Carrinho</button>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h3>3. Carrinho</h3>
+        <div class="carrinho">
+            <div id="carrinho-itens">Carrinho vazio</div>
+            <div style="margin-top: 10px; font-weight: bold;">
+                Total: <span id="valor-total">R$ 0,00</span>
+            </div>
+            <button id="finalizar-pedido" onclick="finalizarPedido()" disabled style="margin-top: 10px;">
+                Finalizar Pedido
+            </button>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h3>4. Log de Debug</h3>
+        <button onclick="limparLog()">Limpar Log</button>
+        <div class="log" id="debug-log"></div>
+    </div>
+
+    <script>
+        // Simular dados dos produtos
+        let produtos = {
+            1: { id: 1, nome: 'Hambúrguer', preco: 25.90 },
+            2: { id: 2, nome: 'Refrigerante', preco: 5.50 },
+            3: { id: 3, nome: 'Batata Frita', preco: 12.90 }
+        };
+
+        let mesaSelecionada = null;
+        let carrinho = [];
+
+        function log(message, data = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('debug-log');
+            const logEntry = `[${timestamp}] ${message}${data ? ' | Data: ' + JSON.stringify(data) : ''}\n`;
+            logDiv.textContent += logEntry;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message, data);
+        }
+
+        function limparLog() {
+            document.getElementById('debug-log').textContent = '';
+        }
+
+        function selecionarMesa(id, nome) {
+            log('Selecionando mesa', { id, nome });
+            mesaSelecionada = { id, numero: nome };
+            document.getElementById('mesa-info').textContent = nome;
+            verificarPodeFinalizarPedido();
+        }
+
+        function adicionarProduto(produtoId) {
+            log('Iniciando adição de produto', { produtoId });
+            
+            const qtyInput = document.getElementById(`qty-${produtoId}`);
+            if (!qtyInput) {
+                log('ERRO: Input de quantidade não encontrado', { produtoId });
+                return;
+            }
+            
+            const quantidade = parseInt(qtyInput.value || 0);
+            log('Quantidade selecionada', { quantidade });
+            
+            if (quantidade <= 0) {
+                log('ERRO: Quantidade inválida', { quantidade });
+                alert('Selecione uma quantidade válida!');
+                return;
+            }
+
+            const produto = produtos[produtoId];
+            if (!produto) {
+                log('ERRO: Produto não encontrado', { produtoId });
+                return;
+            }
+            
+            log('Produto encontrado', produto);
+
+            const itemExistente = carrinho.find(item => item.produto_id == produtoId);
+
+            if (itemExistente) {
+                log('Item já existe, aumentando quantidade', itemExistente);
+                itemExistente.quantidade += quantidade;
+            } else {
+                log('Adicionando novo item ao carrinho');
+                const novoItem = {
+                    produto_id: parseInt(produtoId),
+                    nome: produto.nome,
+                    preco: parseFloat(produto.preco),
+                    quantidade: quantidade
+                };
+                carrinho.push(novoItem);
+                log('Item adicionado', novoItem);
+            }
+
+            log('Carrinho atual', carrinho);
+            atualizarCarrinho();
+            verificarPodeFinalizarPedido();
+        }
+
+        function removerItem(produtoId) {
+            log('Removendo item', { produtoId });
+            carrinho = carrinho.filter(item => item.produto_id != produtoId);
+            log('Carrinho após remoção', carrinho);
+            atualizarCarrinho();
+            verificarPodeFinalizarPedido();
+        }
+
+        function atualizarCarrinho() {
+            log('Atualizando carrinho', carrinho);
+            const carrinhoDiv = document.getElementById('carrinho-itens');
+            
+            if (carrinho.length === 0) {
+                carrinhoDiv.innerHTML = 'Carrinho vazio';
+                document.getElementById('valor-total').textContent = 'R$ 0,00';
+                return;
+            }
+
+            let html = '';
+            let total = 0;
+
+            carrinho.forEach(item => {
+                const subtotal = parseFloat(item.preco) * parseInt(item.quantidade);
+                total += subtotal;
+                
+                html += `
+                    <div style="border-bottom: 1px solid #ccc; padding: 5px 0; display: flex; justify-content: space-between;">
+                        <div>
+                            <strong>${item.nome}</strong><br>
+                            R$ ${parseFloat(item.preco).toFixed(2).replace('.', ',')} x ${item.quantidade}
+                        </div>
+                        <div>
+                            R$ ${subtotal.toFixed(2).replace('.', ',')}
+                            <button onclick="removerItem(${item.produto_id})" style="margin-left: 5px; background: red; color: white;">X</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            carrinhoDiv.innerHTML = html;
+            document.getElementById('valor-total').textContent = 
+                'R$ ' + total.toFixed(2).replace('.', ',');
+            
+            log('Carrinho atualizado', { itens: carrinho.length, total });
+        }
+
+        function verificarPodeFinalizarPedido() {
+            const btn = document.getElementById('finalizar-pedido');
+            const podeFinalizarPedido = mesaSelecionada && carrinho.length > 0;
+            
+            log('Verificando se pode finalizar', {
+                temMesa: !!mesaSelecionada,
+                temItens: carrinho.length > 0,
+                podeFinalizarPedido
+            });
+            
+            btn.disabled = !podeFinalizarPedido;
+            
+            if (podeFinalizarPedido) {
+                btn.textContent = 'Finalizar Pedido';
+                btn.style.background = 'green';
+            } else {
+                btn.textContent = 'Complete o pedido';
+                btn.style.background = 'gray';
+            }
+        }
+
+        function finalizarPedido() {
+            log('Finalizando pedido', {
+                mesa: mesaSelecionada,
+                carrinho: carrinho
+            });
+
+            if (!mesaSelecionada || carrinho.length === 0) {
+                alert('Selecione uma mesa e adicione produtos ao pedido');
+                return;
+            }
+
+            const dados = {
+                mesa_id: mesaSelecionada.id,
+                itens: carrinho.map(item => ({
+                    produto_id: item.produto_id,
+                    quantidade: item.quantidade
+                })),
+                observacoes: ''
+            };
+
+            log('Dados para envio', dados);
+            alert('Dados preparados com sucesso!\nVerifique o log para detalhes.');
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Página carregada');
+            log('Produtos disponíveis', produtos);
+        });
+    </script>
+</body>
+</html>

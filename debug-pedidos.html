@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Pedidos - Modo Garçom</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; padding: 20px; }
+        .debug-section { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; border: 1px solid #dee2e6; }
+        .error { color: #dc3545; }
+        .success { color: #198754; }
+        .info { color: #0dcaf0; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛠️ Debug - Sistema de Pedidos</h1>
+        
+        <div class="debug-section">
+            <h3>1. Teste de Conectividade</h3>
+            <button onclick="testarConectividade()" class="btn btn-primary">Testar Conexão</button>
+            <div id="resultado-conectividade"></div>
+        </div>
+        
+        <div class="debug-section">
+            <h3>2. Obter CSRF Token</h3>
+            <button onclick="obterCSRF()" class="btn btn-info">Obter Token</button>
+            <div id="resultado-csrf"></div>
+        </div>
+        
+        <div class="debug-section">
+            <h3>3. Listar Dados</h3>
+            <button onclick="listarMesas()" class="btn btn-secondary me-2">Listar Mesas</button>
+            <button onclick="listarProdutos()" class="btn btn-secondary">Listar Produtos</button>
+            <div id="resultado-dados"></div>
+        </div>
+        
+        <div class="debug-section">
+            <h3>4. Teste de Pedido</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Mesa ID:</label>
+                    <input type="number" id="mesa-id" class="form-control" value="1">
+                </div>
+                <div class="col-md-6">
+                    <label>Produto ID:</label>
+                    <input type="number" id="produto-id" class="form-control" value="1">
+                </div>
+            </div>
+            <div class="mt-2">
+                <label>Observações:</label>
+                <textarea id="obs" class="form-control" rows="2" placeholder="Observações do pedido..."></textarea>
+            </div>
+            <button onclick="criarPedidoTeste()" class="btn btn-success mt-2">Criar Pedido de Teste</button>
+            <div id="resultado-pedido"></div>
+        </div>
+        
+        <div class="debug-section">
+            <h3>5. Log de Requisições</h3>
+            <button onclick="limparLog()" class="btn btn-warning btn-sm">Limpar Log</button>
+            <pre id="log-requisicoes">Aguardando testes...</pre>
+        </div>
+    </div>
+
+    <script>
+        let logElement = document.getElementById('log-requisicoes');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function limparLog() {
+            logElement.textContent = 'Log limpo...\n';
+        }
+        
+        async function testarConectividade() {
+            const div = document.getElementById('resultado-conectividade');
+            div.innerHTML = '<div class="info">Testando conectividade...</div>';
+            log('Iniciando teste de conectividade...');
+            
+            try {
+                const response = await fetch('/garcom/dashboard');
+                if (response.ok) {
+                    div.innerHTML = '<div class="success">✅ Servidor Laravel respondendo (Status: ' + response.status + ')</div>';
+                    log('✅ Conectividade OK - Status: ' + response.status);
+                } else {
+                    div.innerHTML = '<div class="error">❌ Erro na resposta (Status: ' + response.status + ')</div>';
+                    log('❌ Erro de conectividade - Status: ' + response.status);
+                }
+            } catch (error) {
+                div.innerHTML = '<div class="error">❌ Falha na conexão: ' + error.message + '</div>';
+                log('❌ Falha na conexão: ' + error.message);
+            }
+        }
+        
+        async function obterCSRF() {
+            const div = document.getElementById('resultado-csrf');
+            div.innerHTML = '<div class="info">Obtendo CSRF token...</div>';
+            log('Obtendo CSRF token...');
+            
+            try {
+                const response = await fetch('/garcom/pedido-rapido');
+                const html = await response.text();
+                const match = html.match(/name="csrf-token" content="([^"]+)"/);
+                
+                if (match) {
+                    const token = match[1];
+                    div.innerHTML = `<div class="success">✅ Token obtido: <code>${token.substring(0, 10)}...</code></div>`;
+                    log('✅ CSRF token obtido: ' + token.substring(0, 10) + '...');
+                    window.csrfToken = token;
+                } else {
+                    div.innerHTML = '<div class="error">❌ Token não encontrado no HTML</div>';
+                    log('❌ CSRF token não encontrado');
+                }
+            } catch (error) {
+                div.innerHTML = '<div class="error">❌ Erro ao obter token: ' + error.message + '</div>';
+                log('❌ Erro ao obter CSRF: ' + error.message);
+            }
+        }
+        
+        async function listarMesas() {
+            const div = document.getElementById('resultado-dados');
+            div.innerHTML = '<div class="info">Carregando mesas...</div>';
+            log('Listando mesas...');
+            
+            try {
+                // Como não temos API específica, vamos fazer pelo dashboard
+                const response = await fetch('/garcom/dashboard');
+                if (response.ok) {
+                    div.innerHTML = '<div class="success">✅ Resposta do dashboard OK. Mesas disponíveis no sistema.</div>';
+                    log('✅ Dashboard respondeu - mesas disponíveis');
+                } else {
+                    div.innerHTML = '<div class="error">❌ Erro ao acessar dashboard</div>';
+                    log('❌ Erro no dashboard');
+                }
+            } catch (error) {
+                div.innerHTML = '<div class="error">❌ Erro: ' + error.message + '</div>';
+                log('❌ Erro ao listar mesas: ' + error.message);
+            }
+        }
+        
+        async function listarProdutos() {
+            const div = document.getElementById('resultado-dados');
+            div.innerHTML = '<div class="info">Carregando produtos...</div>';
+            log('Listando produtos...');
+            
+            try {
+                const response = await fetch('/garcom/cardapio');
+                if (response.ok) {
+                    div.innerHTML = '<div class="success">✅ Cardápio carregado. Produtos disponíveis no sistema.</div>';
+                    log('✅ Cardápio respondeu - produtos disponíveis');
+                } else {
+                    div.innerHTML = '<div class="error">❌ Erro ao acessar cardápio</div>';
+                    log('❌ Erro no cardápio');
+                }
+            } catch (error) {
+                div.innerHTML = '<div class="error">❌ Erro: ' + error.message + '</div>';
+                log('❌ Erro ao listar produtos: ' + error.message);
+            }
+        }
+        
+        async function criarPedidoTeste() {
+            const div = document.getElementById('resultado-pedido');
+            div.innerHTML = '<div class="info">Criando pedido de teste...</div>';
+            
+            const mesaId = document.getElementById('mesa-id').value;
+            const produtoId = document.getElementById('produto-id').value;
+            const obs = document.getElementById('obs').value;
+            
+            log(`Criando pedido: Mesa ${mesaId}, Produto ${produtoId}`);
+            
+            if (!window.csrfToken) {
+                div.innerHTML = '<div class="error">❌ CSRF token não obtido. Execute o teste 2 primeiro.</div>';
+                log('❌ CSRF token ausente');
+                return;
+            }
+            
+            const dados = {
+                mesa_id: parseInt(mesaId),
+                itens: [
+                    {
+                        produto_id: parseInt(produtoId),
+                        quantidade: 1
+                    }
+                ],
+                observacoes: obs || 'Teste via debug'
+            };
+            
+            log('Dados do pedido: ' + JSON.stringify(dados));
+            
+            try {
+                const response = await fetch('/garcom/pedido-rapido', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': window.csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(dados)
+                });
+                
+                log(`Resposta recebida - Status: ${response.status}`);
+                
+                const contentType = response.headers.get('content-type');
+                log('Content-Type: ' + contentType);
+                
+                if (contentType && contentType.includes('application/json')) {
+                    const resultado = await response.json();
+                    log('Resposta JSON: ' + JSON.stringify(resultado));
+                    
+                    if (resultado.success) {
+                        div.innerHTML = `<div class="success">✅ Pedido criado com sucesso! ID: ${resultado.pedido_id || 'N/A'}</div>`;
+                        log('✅ Sucesso! Pedido ID: ' + (resultado.pedido_id || 'N/A'));
+                    } else {
+                        div.innerHTML = `<div class="error">❌ Erro: ${resultado.message || 'Erro desconhecido'}</div>`;
+                        log('❌ Erro na criação: ' + (resultado.message || 'Erro desconhecido'));
+                    }
+                } else {
+                    const texto = await response.text();
+                    log('Resposta não-JSON (primeiros 200 chars): ' + texto.substring(0, 200));
+                    div.innerHTML = `<div class="error">❌ Resposta inesperada (não JSON). Status: ${response.status}</div>`;
+                }
+                
+            } catch (error) {
+                div.innerHTML = '<div class="error">❌ Erro na requisição: ' + error.message + '</div>';
+                log('❌ Erro na requisição: ' + error.message);
+            }
+        }
+        
+        // Auto-executar teste de conectividade
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Página carregada - iniciando auto-teste...');
+            setTimeout(testarConectividade, 500);
+        });
+    </script>
+</body>
+</html>

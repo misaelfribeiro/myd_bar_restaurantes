@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Pedido Rápido</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 10px 5px; }
+        button:hover { background: #0056b3; }
+        .resultado { margin-top: 20px; padding: 10px; border-radius: 4px; }
+        .sucesso { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .erro { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste de Pedido Rápido</h1>
+        <p>Teste da funcionalidade de criar pedidos via AJAX</p>
+        
+        <div>
+            <button onclick="testarPedidoSimples()">Testar Pedido Simples</button>
+            <button onclick="testarPedidoCompleto()">Testar Pedido Completo</button>
+            <button onclick="listarMesas()">Listar Mesas</button>
+            <button onclick="listarProdutos()">Listar Produtos</button>
+        </div>
+        
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8000';
+        
+        async function obterCSRFToken() {
+            try {
+                const response = await fetch(`${BASE_URL}/garcom/pedido-rapido`);
+                const text = await response.text();
+                const match = text.match(/name="csrf-token" content="([^"]+)"/);
+                return match ? match[1] : null;
+            } catch (error) {
+                console.error('Erro ao obter CSRF token:', error);
+                return null;
+            }
+        }
+        
+        async function testarPedidoSimples() {
+            mostrarResultado('Enviando pedido simples...', 'info');
+            
+            const token = await obterCSRFToken();
+            if (!token) {
+                mostrarResultado('Erro: Não foi possível obter o CSRF token', 'erro');
+                return;
+            }
+            
+            const dados = {
+                mesa_id: 1,
+                itens: [
+                    { produto_id: 1, quantidade: 2 }
+                ],
+                observacoes: 'Teste simples via API'
+            };
+            
+            try {
+                const response = await fetch(`${BASE_URL}/garcom/pedido-rapido`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(dados)
+                });
+                
+                const resultado = await response.json();
+                
+                if (resultado.success) {
+                    mostrarResultado(`✅ Sucesso! Pedido criado com ID: ${resultado.pedido_id}`, 'sucesso');
+                } else {
+                    mostrarResultado(`❌ Erro: ${resultado.message}`, 'erro');
+                }
+                
+            } catch (error) {
+                mostrarResultado(`❌ Erro na requisição: ${error.message}`, 'erro');
+            }
+        }
+        
+        async function testarPedidoCompleto() {
+            mostrarResultado('Enviando pedido completo...', 'info');
+            
+            const token = await obterCSRFToken();
+            if (!token) {
+                mostrarResultado('Erro: Não foi possível obter o CSRF token', 'erro');
+                return;
+            }
+            
+            const dados = {
+                mesa_id: 2,
+                itens: [
+                    { produto_id: 1, quantidade: 1 },
+                    { produto_id: 2, quantidade: 2 },
+                    { produto_id: 3, quantidade: 1 }
+                ],
+                observacoes: 'Pedido completo de teste - sem cebola no hambúrguer'
+            };
+            
+            try {
+                const response = await fetch(`${BASE_URL}/garcom/pedido-rapido`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(dados)
+                });
+                
+                const resultado = await response.json();
+                
+                if (resultado.success) {
+                    mostrarResultado(`✅ Sucesso! Pedido criado com ID: ${resultado.pedido_id}`, 'sucesso');
+                } else {
+                    mostrarResultado(`❌ Erro: ${resultado.message}`, 'erro');
+                }
+                
+            } catch (error) {
+                mostrarResultado(`❌ Erro na requisição: ${error.message}`, 'erro');
+            }
+        }
+        
+        async function listarMesas() {
+            try {
+                const response = await fetch(`${BASE_URL}/api/mesas`);
+                const mesas = await response.json();
+                mostrarResultado(`📋 Mesas disponíveis:\n${JSON.stringify(mesas, null, 2)}`, 'info');
+            } catch (error) {
+                mostrarResultado(`❌ Erro ao listar mesas: ${error.message}`, 'erro');
+            }
+        }
+        
+        async function listarProdutos() {
+            try {
+                const response = await fetch(`${BASE_URL}/api/produtos`);
+                const produtos = await response.json();
+                mostrarResultado(`🍽️ Produtos disponíveis:\n${JSON.stringify(produtos, null, 2)}`, 'info');
+            } catch (error) {
+                mostrarResultado(`❌ Erro ao listar produtos: ${error.message}`, 'erro');
+            }
+        }
+        
+        function mostrarResultado(mensagem, tipo) {
+            const div = document.getElementById('resultado');
+            div.innerHTML = `
+                <div class="resultado ${tipo}">
+                    <pre>${mensagem}</pre>
+                    <small>Timestamp: ${new Date().toLocaleString()}</small>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
