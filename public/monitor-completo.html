@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Monitor Completo de APIs - MyD Bar & Restaurantes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin: 20px;
+            padding: 30px;
+        }
+        
+        .status-card {
+            border: none;
+            border-radius: 15px;
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+        
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .status-online {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+        
+        .status-offline {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+        
+        .status-testing {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: white;
+        }
+        
+        .endpoint-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .endpoint-item {
+            background: #f8f9fa;
+            border-left: 4px solid transparent;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .endpoint-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .endpoint-success {
+            border-left-color: var(--success);
+        }
+        
+        .endpoint-error {
+            border-left-color: var(--danger);
+        }
+        
+        .endpoint-pending {
+            border-left-color: var(--warning);
+        }
+        
+        .method-badge {
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.75rem;
+        }
+        
+        .method-GET { background: #17a2b8; color: white; }
+        .method-POST { background: #28a745; color: white; }
+        .method-PUT { background: #ffc107; color: #000; }
+        .method-DELETE { background: #dc3545; color: white; }
+        .method-PATCH { background: #6f42c1; color: white; }
+        
+        .response-time {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        .metric-card {
+            text-align: center;
+            padding: 20px;
+            border-radius: 15px;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+        
+        .tab-content {
+            padding: 20px;
+            background: white;
+            border-radius: 0 0 15px 15px;
+        }
+        
+        .nav-tabs .nav-link {
+            border-radius: 10px 10px 0 0;
+            font-weight: 600;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: white;
+            border-color: #dee2e6 #dee2e6 #fff;
+        }
+        
+        .log-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+        
+        .log-success { color: #4ec9b0; }
+        .log-error { color: #f48771; }
+        .log-warning { color: #dcdcaa; }
+        .log-info { color: #9cdcfe; }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+        
+        .refresh-btn:hover {
+            transform: scale(1.1) rotate(180deg);
+        }
+        
+        .refresh-btn:active {
+            transform: scale(0.95);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .testing {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="mb-0">
+                    <i class="fas fa-chart-line me-2 text-primary"></i>
+                    Monitor Completo de APIs
+                </h1>
+                <p class="text-muted mb-0">MyD Bar & Restaurantes - Sistema Unificado</p>
+            </div>
+            <div class="text-end">
+                <div class="badge bg-info mb-2" id="last-update">Nunca atualizado</div>
+                <br>
+                <button class="btn btn-primary" onclick="testarTodasAPIs()">
+                    <i class="fas fa-sync-alt me-2"></i>Testar Tudo
+                </button>
+            </div>
+        </div>
+
+        <!-- Métricas Gerais -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                    <div class="metric-value text-success" id="total-online">0</div>
+                    <small class="text-muted">APIs Online</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <i class="fas fa-times-circle fa-2x text-danger"></i>
+                    <div class="metric-value text-danger" id="total-offline">0</div>
+                    <small class="text-muted">APIs Offline</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <i class="fas fa-clock fa-2x text-info"></i>
+                    <div class="metric-value text-info" id="avg-response">-</div>
+                    <small class="text-muted">Tempo Médio (ms)</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <i class="fas fa-percentage fa-2x text-warning"></i>
+                    <div class="metric-value text-warning" id="success-rate">-</div>
+                    <small class="text-muted">Taxa de Sucesso</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de Categorias -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#auth-tab">
+                    <i class="fas fa-lock me-2"></i>Autenticação
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#produtos-tab">
+                    <i class="fas fa-box me-2"></i>Produtos
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pedidos-tab">
+                    <i class="fas fa-shopping-cart me-2"></i>Pedidos
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pagamentos-tab">
+                    <i class="fas fa-dollar-sign me-2"></i>Pagamentos
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#mesas-tab">
+                    <i class="fas fa-table me-2"></i>Mesas
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#dashboard-tab">
+                    <i class="fas fa-chart-bar me-2"></i>Dashboard
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#logs-tab">
+                    <i class="fas fa-file-alt me-2"></i>Logs
+                </button>
+            </li>
+        </ul>
+
+        <!-- Conteúdo das Tabs -->
+        <div class="tab-content">
+            <!-- Autenticação -->
+            <div class="tab-pane fade show active" id="auth-tab">
+                <h4 class="mb-3">APIs de Autenticação</h4>
+                <div class="endpoint-list" id="auth-endpoints"></div>
+            </div>
+
+            <!-- Produtos -->
+            <div class="tab-pane fade" id="produtos-tab">
+                <h4 class="mb-3">APIs de Produtos e Categorias</h4>
+                <div class="endpoint-list" id="produtos-endpoints"></div>
+            </div>
+
+            <!-- Pedidos -->
+            <div class="tab-pane fade" id="pedidos-tab">
+                <h4 class="mb-3">APIs de Pedidos e Itens</h4>
+                <div class="endpoint-list" id="pedidos-endpoints"></div>
+            </div>
+
+            <!-- Pagamentos -->
+            <div class="tab-pane fade" id="pagamentos-tab">
+                <h4 class="mb-3">APIs de Pagamentos</h4>
+                <div class="endpoint-list" id="pagamentos-endpoints"></div>
+            </div>
+
+            <!-- Mesas -->
+            <div class="tab-pane fade" id="mesas-tab">
+                <h4 class="mb-3">APIs de Mesas</h4>
+                <div class="endpoint-list" id="mesas-endpoints"></div>
+            </div>
+
+            <!-- Dashboard -->
+            <div class="tab-pane fade" id="dashboard-tab">
+                <h4 class="mb-3">APIs de Dashboard e Relatórios</h4>
+                <div class="endpoint-list" id="dashboard-endpoints"></div>
+            </div>
+
+            <!-- Logs -->
+            <div class="tab-pane fade" id="logs-tab">
+                <h4 class="mb-3">Log de Testes</h4>
+                <div class="log-container" id="log-container">
+                    <div class="log-info">[INFO] Monitor inicializado. Aguardando testes...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão Flutuante de Refresh -->
+    <button class="refresh-btn" onclick="testarTodasAPIs()" title="Atualizar Tudo">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const BASE_URL = 'http://localhost:8000/api';
+        
+        // Definição de todos os endpoints
+        const endpoints = {
+            auth: [
+                { method: 'POST', path: '/auth/register', name: 'Registrar Usuário', needsAuth: false },
+                { method: 'POST', path: '/auth/login', name: 'Login', needsAuth: false },
+                { method: 'GET', path: '/auth/me', name: 'Dados do Usuário', needsAuth: true },
+                { method: 'POST', path: '/auth/logout', name: 'Logout', needsAuth: true },
+                { method: 'POST', path: '/auth/refresh', name: 'Refresh Token', needsAuth: true },
+            ],
+            produtos: [
+                { method: 'GET', path: '/produtos', name: 'Listar Produtos', needsAuth: false },
+                { method: 'GET', path: '/produtos/1', name: 'Ver Produto', needsAuth: false },
+                { method: 'GET', path: '/produtos/cache', name: 'Cache Produtos', needsAuth: false },
+                { method: 'GET', path: '/categorias', name: 'Listar Categorias', needsAuth: false },
+                { method: 'GET', path: '/categorias/61', name: 'Ver Categoria', needsAuth: false },
+                { method: 'GET', path: '/categorias/cache', name: 'Cache Categorias', needsAuth: false },
+            ],
+            pedidos: [
+                { method: 'GET', path: '/pedidos', name: 'Listar Pedidos', needsAuth: true },
+                { method: 'GET', path: '/pedidos/61', name: 'Ver Pedido', needsAuth: true },
+                { method: 'POST', path: '/pedidos/sync', name: 'Sincronizar Pedidos', needsAuth: true },
+                { method: 'GET', path: '/item-pedidos', name: 'Listar Itens', needsAuth: true },
+            ],
+            pagamentos: [
+                { method: 'GET', path: '/pagamentos/info/pedido/61', name: 'Info Pedido', needsAuth: true },
+                { method: 'GET', path: '/pagamentos/info/mesa/61', name: 'Info Mesa', needsAuth: true },
+                { method: 'POST', path: '/pagamentos/sync', name: 'Sync Pagamentos', needsAuth: true },
+            ],
+            mesas: [
+                { method: 'GET', path: '/mesas', name: 'Listar Mesas', needsAuth: false },
+                { method: 'GET', path: '/mesas/5', name: 'Ver Mesa', needsAuth: false },
+                { method: 'GET', path: '/mesas/cache', name: 'Cache Mesas', needsAuth: false },
+            ],
+            dashboard: [
+                { method: 'GET', path: '/dashboard/stats', name: 'Estatísticas', needsAuth: true },
+                { method: 'GET', path: '/dashboard/pedidos-status', name: 'Pedidos por Status', needsAuth: true },
+                { method: 'GET', path: '/dashboard/produtos-vendidos', name: 'Produtos Vendidos', needsAuth: true },
+                { method: 'GET', path: '/relatorios/status-pedidos', name: 'Relatório Pedidos', needsAuth: true },
+            ]
+        };
+
+        let testResults = {};
+        let totalOnline = 0;
+        let totalOffline = 0;
+        let totalResponses = [];
+
+        // Adicionar log
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('log-container');
+            const timestamp = new Date().toLocaleTimeString();
+            const logClass = `log-${type}`;
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : type === 'warning' ? '⚠' : 'ℹ';
+            
+            logContainer.innerHTML += `<div class="${logClass}">[${timestamp}] ${icon} ${message}</div>`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // Testar endpoint individual
+        async function testarEndpoint(endpoint) {
+            const startTime = performance.now();
+            
+            try {
+                const response = await fetch(BASE_URL + endpoint.path, {
+                    method: endpoint.method,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const endTime = performance.now();
+                const responseTime = Math.round(endTime - startTime);
+                
+                const isSuccess = response.status >= 200 && response.status < 300;
+                const status = isSuccess ? 'success' : 'error';
+                
+                if (isSuccess) {
+                    totalOnline++;
+                } else {
+                    totalOffline++;
+                }
+                
+                totalResponses.push(responseTime);
+                
+                return {
+                    status: status,
+                    statusCode: response.status,
+                    responseTime: responseTime,
+                    message: response.statusText
+                };
+            } catch (error) {
+                totalOffline++;
+                const endTime = performance.now();
+                const responseTime = Math.round(endTime - startTime);
+                
+                return {
+                    status: 'error',
+                    statusCode: 0,
+                    responseTime: responseTime,
+                    message: error.message
+                };
+            }
+        }
+
+        // Renderizar endpoint
+        function renderEndpoint(endpoint, result, containerId) {
+            const container = document.getElementById(containerId);
+            const statusClass = result.status === 'success' ? 'endpoint-success' : 
+                              result.status === 'error' ? 'endpoint-error' : 'endpoint-pending';
+            
+            const statusBadge = result.status === 'success' ? 
+                '<span class="badge bg-success"><i class="fas fa-check"></i> OK</span>' :
+                result.status === 'error' ?
+                '<span class="badge bg-danger"><i class="fas fa-times"></i> ERRO</span>' :
+                '<span class="badge bg-warning"><i class="fas fa-spinner fa-spin"></i> Testando...</span>';
+            
+            const authBadge = endpoint.needsAuth ? 
+                '<span class="badge bg-secondary ms-2"><i class="fas fa-lock"></i> Auth</span>' : '';
+            
+            const html = `
+                <div class="endpoint-item ${statusClass}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="mb-2">
+                                <span class="method-badge method-${endpoint.method}">${endpoint.method}</span>
+                                ${authBadge}
+                                <strong class="ms-2">${endpoint.name}</strong>
+                            </div>
+                            <div class="text-muted small">
+                                <code>${endpoint.path}</code>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            ${statusBadge}
+                            <div class="response-time mt-1">
+                                ${result.responseTime ? result.responseTime + 'ms' : '-'}
+                            </div>
+                            ${result.statusCode ? `<small class="text-muted">Status: ${result.statusCode}</small>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML += html;
+        }
+
+        // Testar categoria de endpoints
+        async function testarCategoria(categoria, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            addLog(`Testando ${endpoints[categoria].length} endpoints de ${categoria}...`, 'info');
+            
+            for (const endpoint of endpoints[categoria]) {
+                // Renderizar como "testando"
+                renderEndpoint(endpoint, { status: 'pending', responseTime: null }, containerId);
+                
+                // Testar
+                const result = await testarEndpoint(endpoint);
+                
+                // Atualizar resultado
+                container.innerHTML = '';
+                
+                // Re-renderizar todos com resultados
+                for (let i = 0; i <= endpoints[categoria].indexOf(endpoint); i++) {
+                    const ep = endpoints[categoria][i];
+                    const res = i === endpoints[categoria].indexOf(endpoint) ? result : 
+                               testResults[categoria]?.[i] || { status: 'success', responseTime: 0 };
+                    renderEndpoint(ep, res, containerId);
+                }
+                
+                // Salvar resultado
+                if (!testResults[categoria]) testResults[categoria] = [];
+                testResults[categoria].push(result);
+                
+                const logType = result.status === 'success' ? 'success' : 'error';
+                addLog(`${endpoint.method} ${endpoint.path} - ${result.statusCode} (${result.responseTime}ms)`, logType);
+            }
+        }
+
+        // Testar todas as APIs
+        async function testarTodasAPIs() {
+            const btn = event.target.closest('button');
+            const icon = btn.querySelector('i');
+            icon.classList.add('testing');
+            btn.disabled = true;
+            
+            // Reset contadores
+            totalOnline = 0;
+            totalOffline = 0;
+            totalResponses = [];
+            testResults = {};
+            
+            addLog('='.repeat(50), 'info');
+            addLog('Iniciando teste completo de todas as APIs...', 'info');
+            addLog('='.repeat(50), 'info');
+            
+            // Testar cada categoria
+            for (const [categoria, containerId] of [
+                ['auth', 'auth-endpoints'],
+                ['produtos', 'produtos-endpoints'],
+                ['pedidos', 'pedidos-endpoints'],
+                ['pagamentos', 'pagamentos-endpoints'],
+                ['mesas', 'mesas-endpoints'],
+                ['dashboard', 'dashboard-endpoints']
+            ]) {
+                await testarCategoria(categoria, containerId);
+            }
+            
+            // Atualizar métricas
+            document.getElementById('total-online').textContent = totalOnline;
+            document.getElementById('total-offline').textContent = totalOffline;
+            
+            const avgResponse = totalResponses.length > 0 ?
+                Math.round(totalResponses.reduce((a, b) => a + b, 0) / totalResponses.length) : 0;
+            document.getElementById('avg-response').textContent = avgResponse + 'ms';
+            
+            const successRate = totalOnline + totalOffline > 0 ?
+                Math.round((totalOnline / (totalOnline + totalOffline)) * 100) : 0;
+            document.getElementById('success-rate').textContent = successRate + '%';
+            
+            // Atualizar timestamp
+            document.getElementById('last-update').textContent = 
+                'Atualizado: ' + new Date().toLocaleTimeString();
+            
+            icon.classList.remove('testing');
+            btn.disabled = false;
+            
+            addLog('='.repeat(50), 'info');
+            addLog(`Teste concluído! ${totalOnline} online, ${totalOffline} offline`, 
+                   totalOffline === 0 ? 'success' : 'warning');
+            addLog('='.repeat(50), 'info');
+        }
+
+        // Inicializar ao carregar
+        window.addEventListener('load', () => {
+            addLog('Sistema de monitoramento carregado com sucesso!', 'success');
+            addLog('Clique em "Testar Tudo" para iniciar a verificação das APIs.', 'info');
+        });
+    </script>
+</body>
+</html>

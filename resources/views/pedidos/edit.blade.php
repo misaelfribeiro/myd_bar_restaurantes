@@ -1,606 +1,689 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Editar Pedido #{{ $pedido->id }} - Sistema Bar/Restaurante</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .navbar-glass {
-            background: rgba(255, 255, 255, 0.1) !important;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .navbar-glass .navbar-brand,
-        .navbar-glass .nav-link {
-            color: white !important;
-            font-weight: 600;
-        }
-        
-        .hero-section {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            margin: 20px 0;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            text-align: center;
-        }
-        
-        .form-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 35px;
-            margin-bottom: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        
-        .form-label {
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 8px;
-        }
-        
-        .form-control,
-        .form-select {
-            border: 2px solid rgba(99, 102, 241, 0.2);
-            border-radius: 12px;
-            padding: 12px 16px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-            outline: none;
-        }
-        
-        .btn-gradient {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border: none;
-            color: white;
-            font-weight: 600;
-            padding: 14px 28px;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            font-size: 1.1rem;
-        }
-        
-        .btn-gradient:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
-            color: white;
-        }
-        
-        .btn-outline-gradient {
-            background: transparent;
-            border: 2px solid #6366f1;
-            color: #6366f1;
-            font-weight: 600;
-            padding: 12px 26px;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline-gradient:hover {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-            transform: translateY(-2px);
-        }
-        
-        .info-card {
-            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 25px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-        }
-        
-        .info-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .info-item:last-child {
-            margin-bottom: 0;
-        }
-        
-        .info-icon {
-            width: 35px;
-            height: 35px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 12px;
-            color: white;
-            font-size: 0.9rem;
-        }
-        
-        .icon-id { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
-        .icon-date { background: linear-gradient(135deg, #f59e0b, #d97706); }
-        .icon-total { background: linear-gradient(135deg, #10b981, #059669); }
-        .icon-items { background: linear-gradient(135deg, #06b6d4, #0891b2); }
-        
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .status-pendente { background: #fff3cd; color: #856404; }
-        .status-em_preparo { background: #d1ecf1; color: #0c5460; }
-        .status-pronto { background: #d4edda; color: #155724; }
-        .status-entregue { background: #e2e3e5; color: #6c757d; }
-        .status-cancelado { background: #f8d7da; color: #721c24; }
-        
-        .mesa-preview {
-            background: rgba(99, 102, 241, 0.05);
-            border: 2px solid rgba(99, 102, 241, 0.2);
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 10px;
-        }
-        
-        .garcom-preview {
-            background: rgba(139, 92, 246, 0.05);
-            border: 2px solid rgba(139, 92, 246, 0.2);
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 10px;
-        }
-        
-        .alert-warning {
-            background: rgba(251, 191, 36, 0.1);
-            border: 1px solid rgba(251, 191, 36, 0.3);
-            color: #92400e;
-        }
-        
-        .form-help {
-            font-size: 0.875rem;
-            color: #6b7280;
-            margin-top: 5px;
-        }
-        
-        .quick-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        
-        .quick-btn {
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            color: #6366f1;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .quick-btn:hover {
-            background: #6366f1;
-            color: white;
-        }
-        
-        @media (max-width: 768px) {
-            .form-card { padding: 25px; }
-            .quick-actions { flex-direction: column; }
-        }
-    </style>
-</head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-glass">
-        <div class="container">
-            <a class="navbar-brand" href="{{ route('dashboard') }}">
-                <i class="fas fa-utensils me-2"></i>
-                Sistema Bar/Restaurante
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ route('dashboard') }}">
-                    <i class="fas fa-home me-1"></i>Dashboard
-                </a>
-                <a class="nav-link" href="{{ route('pedidos.index') }}">
-                    <i class="fas fa-receipt me-1"></i>Pedidos
-                </a>
-                <a class="nav-link" href="{{ route('pedidos.show', $pedido) }}">
-                    <i class="fas fa-eye me-1"></i>Visualizar
-                </a>
-            </div>
-        </div>
-    </nav>
+@extends('layouts.app')
 
-    <div class="container">
-        <!-- Hero Section -->
-        <div class="hero-section">
-            <h1>
-                <i class="fas fa-edit me-3"></i>
-                Editar Pedido #{{ $pedido->id }}
-            </h1>
-            <p class="lead mb-0">
-                Atualize as informações do pedido conforme necessário
-            </p>
-        </div>
+@section('title', 'Editar Pedido #' . $pedido->id)
 
-        <!-- Informações Atuais -->
-        <div class="info-card">
-            <h6 class="mb-3">
-                <i class="fas fa-info-circle me-2"></i>
-                Informações Atuais do Pedido
-            </h6>
-            
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="info-item">
-                        <div class="info-icon icon-id">
-                            <i class="fas fa-hashtag"></i>
-                        </div>
-                        <div>
-                            <small class="text-muted">Número</small>
-                            <div class="fw-bold">#{{ $pedido->id }}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="info-item">
-                        <div class="info-icon icon-date">
-                            <i class="fas fa-calendar"></i>
-                        </div>
-                        <div>
-                            <small class="text-muted">Criado em</small>
-                            <div class="fw-bold">{{ $pedido->created_at->format('d/m/Y H:i') }}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="info-item">
-                        <div class="info-icon icon-total">
-                            <i class="fas fa-dollar-sign"></i>
-                        </div>
-                        <div>
-                            <small class="text-muted">Total</small>
-                            <div class="fw-bold text-success">R$ {{ number_format($pedido->total, 2, ',', '.') }}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="info-item">
-                        <div class="info-icon icon-items">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <div>
-                            <small class="text-muted">Itens</small>
-                            <div class="fw-bold">{{ $pedido->itens->count() }} item{{ $pedido->itens->count() != 1 ? 's' : '' }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <form action="{{ route('pedidos.update', $pedido) }}" method="POST" id="editForm">
-            @csrf
-            @method('PUT')
-            
-            <!-- Formulário Principal -->
-            <div class="form-card">
-                <h5 class="mb-4">
+@section('content')
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="page-title">
                     <i class="fas fa-edit me-2"></i>
-                    Editar Informações
-                </h5>
-
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Atenção:</strong> Mudanças na mesa ou garçom podem afetar o fluxo do pedido. Certifique-se de que a alteração é necessária.
-                </div>
-
-                <div class="row">
-                    <!-- Seleção de Mesa -->
-                    <div class="col-md-6">
-                        <div class="mb-4">
-                            <label for="mesa_id" class="form-label">
-                                <i class="fas fa-table me-1"></i>
-                                Mesa
-                            </label>
-                            <select class="form-select" name="mesa_id" id="mesa_id" required>
-                                @foreach($mesas as $mesa)
-                                    <option value="{{ $mesa->id }}" 
-                                            {{ $mesa->id == $pedido->mesa_id ? 'selected' : '' }}
-                                            data-lugares="{{ $mesa->lugares }}"
-                                            data-status="{{ $mesa->pedidos->where('status', '!=', 'entregue')->where('id', '!=', $pedido->id)->count() > 0 ? 'ocupada' : 'livre' }}">
-                                        Mesa {{ $mesa->identificador }} ({{ $mesa->lugares }} lugares)
-                                        @if($mesa->pedidos->where('status', '!=', 'entregue')->where('id', '!=', $pedido->id)->count() > 0)
-                                            - OCUPADA
-                                        @endif
-                                    </option>
-                                @endforeach
-                            </select>
-                            <div class="form-help">
-                                Mesas ocupadas por outros pedidos são indicadas como "OCUPADA"
-                            </div>
-                            
-                            <!-- Preview da Mesa Atual -->
-                            <div class="mesa-preview">
-                                <small class="text-muted">Mesa atual:</small>
-                                <div class="fw-bold">
-                                    <i class="fas fa-table me-1"></i>
-                                    Mesa {{ $pedido->mesa->identificador }} ({{ $pedido->mesa->lugares }} lugares)
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Seleção de Garçom -->
-                    <div class="col-md-6">
-                        <div class="mb-4">
-                            <label for="usuario_id" class="form-label">
-                                <i class="fas fa-user me-1"></i>
-                                Garçom Responsável
-                            </label>
-                            <select class="form-select" name="usuario_id" id="usuario_id" required>
-                                @foreach($usuarios as $usuario)
-                                    <option value="{{ $usuario->id }}" 
-                                            {{ $usuario->id == $pedido->usuario_id ? 'selected' : '' }}
-                                            data-role="{{ $usuario->role }}">
-                                        {{ $usuario->nome }} ({{ ucfirst($usuario->role) }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            <div class="form-help">
-                                Selecione o garçom que ficará responsável por este pedido
-                            </div>
-                            
-                            <!-- Preview do Garçom Atual -->
-                            <div class="garcom-preview">
-                                <small class="text-muted">Garçom atual:</small>
-                                <div class="fw-bold">
-                                    <i class="fas fa-user me-1"></i>
-                                    {{ $pedido->usuario->nome }} ({{ ucfirst($pedido->usuario->role) }})
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <!-- Status do Pedido -->
-                    <div class="col-md-6">
-                        <div class="mb-4">
-                            <label for="status" class="form-label">
-                                <i class="fas fa-flag me-1"></i>
-                                Status do Pedido
-                            </label>
-                            
-                            <!-- Ações Rápidas de Status -->
-                            <div class="quick-actions">
-                                <button type="button" class="quick-btn" onclick="setStatus('pendente')">
-                                    <i class="fas fa-clock me-1"></i>Pendente
-                                </button>
-                                <button type="button" class="quick-btn" onclick="setStatus('em_preparo')">
-                                    <i class="fas fa-utensils me-1"></i>Em Preparo
-                                </button>
-                                <button type="button" class="quick-btn" onclick="setStatus('pronto')">
-                                    <i class="fas fa-check me-1"></i>Pronto
-                                </button>
-                                <button type="button" class="quick-btn" onclick="setStatus('entregue')">
-                                    <i class="fas fa-handshake me-1"></i>Entregue
-                                </button>
-                                <button type="button" class="quick-btn" onclick="setStatus('cancelado')">
-                                    <i class="fas fa-times me-1"></i>Cancelado
-                                </button>
-                            </div>
-                            
-                            <select class="form-select" name="status" id="status" required>
-                                <option value="pendente" {{ $pedido->status == 'pendente' ? 'selected' : '' }}>
-                                    Pendente
-                                </option>
-                                <option value="em_preparo" {{ $pedido->status == 'em_preparo' ? 'selected' : '' }}>
-                                    Em Preparo
-                                </option>
-                                <option value="pronto" {{ $pedido->status == 'pronto' ? 'selected' : '' }}>
-                                    Pronto
-                                </option>
-                                <option value="entregue" {{ $pedido->status == 'entregue' ? 'selected' : '' }}>
-                                    Entregue
-                                </option>
-                                <option value="cancelado" {{ $pedido->status == 'cancelado' ? 'selected' : '' }}>
-                                    Cancelado
-                                </option>
-                            </select>
-                            
-                            <!-- Preview do Status Atual -->
-                            <div class="mt-2">
-                                <small class="text-muted">Status atual:</small>
-                                <span class="status-badge status-{{ $pedido->status }} ms-2">
-                                    {{ ucfirst(str_replace('_', ' ', $pedido->status)) }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Total (Somente Leitura) -->
-                    <div class="col-md-6">
-                        <div class="mb-4">
-                            <label class="form-label">
-                                <i class="fas fa-calculator me-1"></i>
-                                Total do Pedido
-                            </label>
-                            <div class="form-control bg-light" readonly>
-                                R$ {{ number_format($pedido->total, 2, ',', '.') }}
-                            </div>
-                            <div class="form-help">
-                                O total é calculado automaticamente baseado nos itens do pedido
-                            </div>
-                            <div class="mt-2">
-                                <a href="{{ route('pedidos.detalhes', $pedido) }}" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-edit me-1"></i>
-                                    Gerenciar Itens
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Ações -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <a href="{{ route('pedidos.show', $pedido) }}" class="btn btn-outline-gradient me-2">
-                                    <i class="fas fa-eye me-2"></i>
-                                    Visualizar
-                                </a>
-                                <a href="{{ route('pedidos.index') }}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-arrow-left me-2"></i>
-                                    Voltar à Lista
-                                </a>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-gradient">
-                                <i class="fas fa-save me-2"></i>
-                                Salvar Alterações
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                    Editar Pedido #{{ $pedido->id }}
+                </h1>
+                <p class="page-subtitle">
+                    @if($pedido->mesa)
+                        Mesa {{ $pedido->mesa->identificador }} -
+                    @elseif($pedido->delivery)
+                        Delivery ({{ $pedido->delivery->cliente_nome }}) -
+                    @else
+                        Balcão -
+                    @endif
+                    Status: <span class="badge bg-{{ $pedido->status === 'pendente' ? 'warning' : ($pedido->status === 'em_preparo' ? 'info' : ($pedido->status === 'pronto' ? 'success' : 'danger')) }}">
+                        {{ ucfirst(str_replace('_', ' ', $pedido->status)) }}
+                    </span>
+                </p>
             </div>
-        </form>
-    </div>
-
-    <!-- Modal de Confirmação para Status Críticos -->
-    <div class="modal fade" id="confirmModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Confirmar Mudança de Status
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p id="confirmMessage"></p>
-                    <p class="text-warning">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Esta ação pode afetar o fluxo do pedido.
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>
-                        Cancelar
-                    </button>
-                    <button type="button" class="btn btn-warning" id="confirmStatus">
-                        <i class="fas fa-check me-1"></i>
-                        Confirmar
-                    </button>
-                </div>
+            <div class="btn-group">
+                <a href="{{ route('pedidos.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-list me-2"></i>
+                    Lista de Pedidos
+                </a>
+                <a href="{{ route('pedidos.show', $pedido->id) }}" class="btn btn-info">
+                    <i class="fas fa-eye me-2"></i>
+                    Visualizar
+                </a>
             </div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function setStatus(status) {
-            const statusSelect = document.getElementById('status');
-            
-            // Para status críticos, mostrar confirmação
-            if (status === 'cancelado' || status === 'entregue') {
-                const messages = {
-                    'cancelado': 'Tem certeza que deseja cancelar este pedido?',
-                    'entregue': 'Confirma que este pedido foi entregue ao cliente?'
-                };
+    <div class="row">
+        <!-- Formulário de Edição -->
+        <div class="col-lg-8">
+            <form method="POST" action="{{ route('pedidos.update', $pedido->id) }}" id="editPedidoForm">
+                @csrf
+                @method('PUT')
                 
-                document.getElementById('confirmMessage').textContent = messages[status];
-                const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
-                modal.show();
-                
-                document.getElementById('confirmStatus').onclick = function() {
-                    statusSelect.value = status;
-                    modal.hide();
-                };
-                
-                return;
-            }
-            
-            statusSelect.value = status;
-        }
+                <!-- Informações Básicas -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Informações Básicas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="mesa_id" class="form-label">
+                                    <i class="fas fa-chair me-1"></i>
+                                    Mesa
+                                </label>
+                                <select class="form-select @error('mesa_id') is-invalid @enderror" 
+                                        id="mesa_id" 
+                                        name="mesa_id"
+                                        {{ $pedido->status !== 'pendente' ? 'disabled' : '' }}>
+                                    @foreach($mesas as $mesa)
+                                        <option value="{{ $mesa->id }}" 
+                                                {{ $pedido->mesa_id == $mesa->id ? 'selected' : '' }}>
+                                            Mesa {{ $mesa->identificador }} - {{ $mesa->lugares }} lugares
+                                            @if($mesa->id != $pedido->mesa_id && $mesa->pedidos->count() > 0)
+                                                (Ocupada)
+                                            @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('mesa_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                @if($pedido->status !== 'pendente')
+                                    <small class="text-muted">Mesa não pode ser alterada após iniciar o preparo</small>
+                                @endif
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="status" class="form-label">
+                                    <i class="fas fa-flag me-1"></i>
+                                    Status
+                                </label>
+                                <select class="form-select @error('status') is-invalid @enderror" 
+                                        id="status" 
+                                        name="status"
+                                        onchange="updateStatusInfo()">
+                                    <option value="pendente" {{ $pedido->status === 'pendente' ? 'selected' : '' }}>Pendente</option>
+                                    <option value="em_preparo" {{ $pedido->status === 'em_preparo' ? 'selected' : '' }}>Em Preparo</option>
+                                    <option value="pronto" {{ $pedido->status === 'pronto' ? 'selected' : '' }}>Pronto</option>
+                                    <option value="entregue" {{ $pedido->status === 'entregue' ? 'selected' : '' }}>Entregue</option>
+                                    <option value="cancelado" {{ $pedido->status === 'cancelado' ? 'selected' : '' }}>Cancelado</option>
+                                </select>
+                                @error('status')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div id="statusInfo" class="mt-2"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <label for="observacoes" class="form-label">
+                                    <i class="fas fa-comment me-1"></i>
+                                    Observações
+                                </label>
+                                <textarea class="form-control @error('observacoes') is-invalid @enderror" 
+                                          id="observacoes" 
+                                          name="observacoes" 
+                                          rows="3"
+                                          placeholder="Observações especiais do pedido...">{{ old('observacoes', $pedido->observacoes) }}</textarea>
+                                @error('observacoes')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        // Validação de mesa ocupada
-        document.getElementById('mesa_id').addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const status = selectedOption.getAttribute('data-status');
-            
-            if (status === 'ocupada') {
-                const confirmChange = confirm('A mesa selecionada está ocupada por outro pedido. Deseja continuar mesmo assim?');
-                if (!confirmChange) {
-                    // Voltar para a mesa original
-                    this.value = '{{ $pedido->mesa_id }}';
-                }
-            }
-        });
+                <!-- Itens do Pedido -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            Itens do Pedido
+                        </h5>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                            <i class="fas fa-plus me-2"></i>
+                            Adicionar Item
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        @if($errors->has('itens'))
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                {{ $errors->first('itens') }}
+                            </div>
+                        @endif
 
-        // Animação dos elementos ao carregar
-        document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.form-card, .info-card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    card.style.transition = 'all 0.5s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 200);
-            });
-        });
+                        <div id="itensList">
+                            @forelse($pedido->itens as $index => $item)
+                                <div class="item-row border rounded p-3 mb-3" data-index="{{ $index }}">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-5">
+                                            <h6 class="mb-1">{{ $item->produto->nome }}</h6>
+                                            <small class="text-muted">{{ $item->produto->categoria->nome }}</small>
+                                            <input type="hidden" name="itens[{{ $index }}][id]" value="{{ $item->id }}">
+                                            <input type="hidden" name="itens[{{ $index }}][produto_id]" value="{{ $item->produto_id }}">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small">Preço Unit.</label>
+                                            <input type="number" 
+                                                   class="form-control form-control-sm" 
+                                                   name="itens[{{ $index }}][preco_unitario]" 
+                                                   value="{{ $item->preco_unitario }}"
+                                                   step="0.01"
+                                                   onchange="updateSubtotal({{ $index }})"
+                                                   {{ $pedido->status !== 'pendente' ? 'readonly' : '' }}>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small">Quantidade</label>
+                                            <input type="number" 
+                                                   class="form-control form-control-sm" 
+                                                   name="itens[{{ $index }}][quantidade]" 
+                                                   value="{{ $item->quantidade }}"
+                                                   min="1"
+                                                   onchange="updateSubtotal({{ $index }})"
+                                                   {{ $pedido->status !== 'pendente' ? 'readonly' : '' }}>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small">Subtotal</label>
+                                            <div class="fw-bold subtotal" id="subtotal-{{ $index }}">
+                                                R$ {{ number_format($item->preco_unitario * $item->quantidade, 2, ',', '.') }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1">
+                                            @if($pedido->status === 'pendente')
+                                                <button type="button" 
+                                                        class="btn btn-danger btn-sm" 
+                                                        onclick="removeItem({{ $index }})">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            @elseif(isset($currentUser) && in_array($currentUser->role, ['admin', 'gerente']))
+                                                <button type="button" 
+                                                        class="btn btn-danger btn-sm" 
+                                                        onclick="removeItemAdmin({{ $item->id }}, {{ $index }})"
+                                                        title="Excluir item (Admin/Gerente)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Observações do Item -->
+                                    <div class="mt-2">
+                                        <textarea class="form-control form-control-sm" 
+                                                  name="itens[{{ $index }}][observacoes]" 
+                                                  placeholder="Observações do item..."
+                                                  rows="2"
+                                                  {{ $pedido->status !== 'pendente' ? 'readonly' : '' }}>{{ $item->observacoes }}</textarea>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-shopping-cart fa-2x mb-3"></i>
+                                    <p>Nenhum item no pedido</p>
+                                </div>
+                            @endforelse
+                        </div>
+                        
+                        <!-- Total -->
+                        <div class="border-top pt-3 mt-3">
+                            <div class="row">
+                                <div class="col-md-8"></div>
+                                <div class="col-md-4">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <strong>Total:</strong>
+                                        <h4 class="text-success mb-0" id="totalPedido">
+                                            R$ {{ number_format($pedido->itens->sum(function($item) { return $item->preco_unitario * $item->quantidade; }), 2, ',', '.') }}
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        // Feedback visual para mudanças
-        const form = document.getElementById('editForm');
-        const originalValues = new FormData(form);
+                <!-- Botões de Ação -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                @if($pedido->status === 'pendente')
+                                    <button type="button" 
+                                            class="btn btn-danger" 
+                                            onclick="cancelarPedido()"
+                                            data-bs-toggle="tooltip"
+                                            title="Cancelar este pedido">
+                                        <i class="fas fa-times me-2"></i>
+                                        Cancelar Pedido
+                                    </button>
+                                @endif
+                            </div>
+                            <div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-2"></i>
+                                    Salvar Alterações
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Informações Laterais -->
+        <div class="col-lg-4">
+            <!-- Histórico de Status -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Histórico do Pedido
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Pedido Criado</h6>
+                                <small class="text-muted">{{ $pedido->created_at->format('d/m/Y H:i') }}</small>
+                            </div>
+                        </div>
+                        
+                        @if($pedido->status !== 'pendente')
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-info"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Em Preparo</h6>
+                                    <small class="text-muted">{{ $pedido->updated_at->format('d/m/Y H:i') }}</small>
+                                </div>
+                            </div>
+                        @endif
+                        
+                        @if(in_array($pedido->status, ['pronto', 'entregue']))
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-warning"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Pronto</h6>
+                                    <small class="text-muted">{{ $pedido->updated_at->format('d/m/Y H:i') }}</small>
+                                </div>
+                            </div>
+                        @endif
+                        
+                        @if($pedido->status === 'entregue')
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-success"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Entregue</h6>
+                                    <small class="text-muted">{{ $pedido->updated_at->format('d/m/Y H:i') }}</small>
+                                </div>
+                            </div>
+                        @endif
+                        
+                        @if($pedido->status === 'cancelado')
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-danger"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Cancelado</h6>
+                                    <small class="text-muted">{{ $pedido->updated_at->format('d/m/Y H:i') }}</small>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações da Mesa/Delivery -->
+            @if($pedido->mesa)
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-chair me-2"></i>
+                        Informações da Mesa
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Identificador:</strong><br>
+                        {{ $pedido->mesa->identificador }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Capacidade:</strong><br>
+                        {{ $pedido->mesa->lugares }} lugares
+                    </div>
+                    <div>
+                        <strong>Status da Mesa:</strong><br>
+                        <span class="badge bg-{{ $pedido->mesa->disponivel ? 'success' : 'warning' }}">
+                            {{ $pedido->mesa->disponivel ? 'Disponível' : 'Ocupada' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            @elseif($pedido->delivery)
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-motorcycle me-2"></i>
+                        Informações do Delivery
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Cliente:</strong><br>
+                        {{ $pedido->delivery->cliente_nome }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Telefone:</strong><br>
+                        {{ $pedido->delivery->cliente_telefone }}
+                    </div>
+                    <div>
+                        <strong>Endereço:</strong><br>
+                        {{ $pedido->delivery->endereco_completo }}
+                    </div>
+                </div>
+            </div>
+            @else
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-coffee me-2"></i>
+                        Informações do Pedido
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div>
+                        <strong>Tipo:</strong><br>
+                        Balcão - Retirada no local
+                    </div>
+                </div>
+            </div>
+            @endif
+        </div>
+    </div>
+</div>
+
+<!-- Modal Adicionar Item -->
+<div class="modal fade" id="addItemModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>
+                    Adicionar Item ao Pedido
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    @foreach($categorias as $categoria)
+                        @if($categoria->produtos->count() > 0)
+                            <div class="col-12 mb-4">
+                                <h6 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-tag me-2"></i>
+                                    {{ $categoria->nome }}
+                                </h6>
+                                <div class="row">
+                                    @foreach($categoria->produtos as $produto)
+                                        @if($produto->ativo)
+                                            <div class="col-md-6 mb-2">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <div class="d-flex justify-content-between align-items-start">
+                                                            <div>
+                                                                <h6 class="card-title mb-1">{{ $produto->nome }}</h6>
+                                                                <div class="text-success fw-bold">
+                                                                    R$ {{ number_format($produto->preco, 2, ',', '.') }}
+                                                                </div>
+                                                            </div>
+                                                            <button type="button" 
+                                                                    class="btn btn-outline-primary btn-sm" 
+                                                                    onclick="addNewItem('{{ $produto->id }}', '{{ $produto->nome }}', '{{ $produto->preco }}', '{{ $categoria->nome }}')">
+                                                                <i class="fas fa-plus"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@push('styles')
+<style>
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.timeline-item:before {
+    content: '';
+    position: absolute;
+    left: -15px;
+    top: 25px;
+    bottom: -20px;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item:last-child:before {
+    display: none;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -20px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.item-row {
+    transition: all 0.3s ease;
+}
+
+.item-row:hover {
+    background-color: #f8f9fa;
+}
+</style>
+@endpush
+
+@push('scripts')
+<script>
+let itemIndex = {{ $pedido->itens->count() }};
+
+function updateSubtotal(index) {
+    const preco = parseFloat(document.querySelector(`input[name="itens[${index}][preco_unitario]"]`).value) || 0;
+    const quantidade = parseInt(document.querySelector(`input[name="itens[${index}][quantidade]"]`).value) || 0;
+    const subtotal = preco * quantidade;
+    
+    document.getElementById(`subtotal-${index}`).textContent = 
+        'R$ ' + subtotal.toFixed(2).replace('.', ',');
+    
+    updateTotal();
+}
+
+function updateTotal() {
+    let total = 0;
+    document.querySelectorAll('.subtotal').forEach(el => {
+        const value = el.textContent.replace('R$ ', '').replace(',', '.');
+        total += parseFloat(value) || 0;
+    });
+    
+    document.getElementById('totalPedido').textContent = 
+        'R$ ' + total.toFixed(2).replace('.', ',');
+}
+
+function removeItem(index) {
+    if (confirm('Tem certeza que deseja remover este item?')) {
+        document.querySelector(`[data-index="${index}"]`).remove();
+        updateTotal();
+    }
+}
+
+function removeItemAdmin(itemId, index) {
+    if (confirm('Tem certeza que deseja remover este item?\n\nEsta ação irá excluir permanentemente o item do pedido.')) {
+        // Mostrar loading
+        const button = event.target.closest('button');
+        const originalContent = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
         
-        form.addEventListener('input', function() {
-            const currentValues = new FormData(form);
-            let hasChanges = false;
-            
-            for (let [key, value] of currentValues) {
-                if (originalValues.get(key) !== value) {
-                    hasChanges = true;
-                    break;
-                }
+        fetch(`/pedidos/{{ $pedido->id }}/itens/${itemId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
             }
-            
-            const submitBtn = form.querySelector('button[type="submit"]');
-            if (hasChanges) {
-                submitBtn.classList.add('btn-warning');
-                submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Salvar Alterações *';
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remover o item da interface
+                document.querySelector(`[data-index="${index}"]`).remove();
+                
+                // Atualizar total
+                document.getElementById('totalPedido').textContent = 
+                    'R$ ' + data.novo_total.toFixed(2).replace('.', ',');
+                
+                // Mostrar mensagem de sucesso
+                showToast('success', data.message);
             } else {
-                submitBtn.classList.remove('btn-warning');
-                submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Salvar Alterações';
+                // Mostrar mensagem de erro
+                showToast('error', data.message);
+                
+                // Restaurar botão
+                button.innerHTML = originalContent;
+                button.disabled = false;
             }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            showToast('error', 'Erro ao remover item. Tente novamente.');
+            
+            // Restaurar botão
+            button.innerHTML = originalContent;
+            button.disabled = false;
         });
-    </script>
-</body>
-</html>
+    }
+}
+
+function showToast(type, message) {
+    // Criar toast simples
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Remove automaticamente após 5 segundos
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 5000);
+}
+
+function addNewItem(produtoId, nome, preco, categoria) {
+    const container = document.getElementById('itensList');
+    const newItem = document.createElement('div');
+    newItem.className = 'item-row border rounded p-3 mb-3';
+    newItem.setAttribute('data-index', itemIndex);
+    
+    newItem.innerHTML = `
+        <div class="row align-items-center">
+            <div class="col-md-5">
+                <h6 class="mb-1">${nome}</h6>
+                <small class="text-muted">${categoria}</small>
+                <input type="hidden" name="itens[${itemIndex}][produto_id]" value="${produtoId}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Preço Unit.</label>
+                <input type="number" 
+                       class="form-control form-control-sm" 
+                       name="itens[${itemIndex}][preco_unitario]" 
+                       value="${preco}"
+                       step="0.01"
+                       onchange="updateSubtotal(${itemIndex})">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Quantidade</label>
+                <input type="number" 
+                       class="form-control form-control-sm" 
+                       name="itens[${itemIndex}][quantidade]" 
+                       value="1"
+                       min="1"
+                       onchange="updateSubtotal(${itemIndex})">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Subtotal</label>
+                <div class="fw-bold subtotal" id="subtotal-${itemIndex}">
+                    R$ ${parseFloat(preco).toFixed(2).replace('.', ',')}
+                </div>
+            </div>
+            <div class="col-md-1">
+                <button type="button" 
+                        class="btn btn-danger btn-sm" 
+                        onclick="removeItem(${itemIndex})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="mt-2">
+            <textarea class="form-control form-control-sm" 
+                      name="itens[${itemIndex}][observacoes]" 
+                      placeholder="Observações do item..."
+                      rows="2"></textarea>
+        </div>
+    `;
+    
+    container.appendChild(newItem);
+    itemIndex++;
+    updateTotal();
+    
+    // Fechar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('addItemModal'));
+    modal.hide();
+}
+
+function updateStatusInfo() {
+    const status = document.getElementById('status').value;
+    const info = document.getElementById('statusInfo');
+    
+    const messages = {
+        'pendente': '<small class="text-warning"><i class="fas fa-clock"></i> Aguardando preparo</small>',
+        'em_preparo': '<small class="text-info"><i class="fas fa-fire"></i> Sendo preparado na cozinha</small>',
+        'pronto': '<small class="text-success"><i class="fas fa-check"></i> Pronto para entrega</small>',
+        'entregue': '<small class="text-success"><i class="fas fa-thumbs-up"></i> Entregue ao cliente</small>',
+        'cancelado': '<small class="text-danger"><i class="fas fa-ban"></i> Pedido cancelado</small>'
+    };
+    
+    info.innerHTML = messages[status] || '';
+}
+
+function cancelarPedido() {
+    if (confirm('Tem certeza que deseja cancelar este pedido? Esta ação não pode ser desfeita.')) {
+        document.getElementById('status').value = 'cancelado';
+        document.getElementById('editPedidoForm').submit();
+    }
+}
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    updateStatusInfo();
+    
+    // Tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+@endpush

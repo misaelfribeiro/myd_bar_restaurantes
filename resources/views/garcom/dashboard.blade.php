@@ -268,7 +268,7 @@
                                 <i class="fas fa-home me-1"></i> Dashboard Geral
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                            <li><a class="dropdown-item" href="#" onclick="performLogout(event)">
                                 <i class="fas fa-sign-out-alt me-1"></i> Logout
                             </a></li>
                         </ul>
@@ -287,10 +287,23 @@
             <p class="mb-0">Interface otimizada para operações diárias do restaurante</p>
             <small class="text-light">Última atualização: <span id="ultimo-update">{{ now()->format('H:i:s') }}</span></small>
         </div>
-    </div>
-
-    <!-- Quick Actions -->
+    </div>    <!-- Quick Actions -->
     <div class="container">
+        <!-- Alerta de Caixa Fechado -->
+        @if(!$caixaAberto)
+        <div class="alert alert-warning alert-dismissible fade show" role="alert" style="border-radius: 15px; background: rgba(255, 193, 7, 0.9); backdrop-filter: blur(10px); border: none; color: #856404;">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                <div>
+                    <h6 class="alert-heading mb-1">⚠️ Caixa Fechado</h6>
+                    <p class="mb-0">O caixa está fechado. <strong>Não é possível criar novos pedidos</strong> até que o caixa seja aberto.</p>
+                    <small>Entre em contato com o gerente para abrir o caixa.</small>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        @endif
+        
         <div class="quick-actions">
             <h5 class="mb-4">⚡ Ações Rápidas</h5>
             <div class="row">
@@ -405,7 +418,19 @@
                             <strong>Pedido #{{ $pedido->id }}</strong>
                             <br><small class="text-muted">{{ $pedido->created_at->format('H:i') }}</small>
                         </div>                        <div class="col-md-2">
-                            <span class="badge bg-info">{{ $pedido->mesa->identificador ?? 'Mesa ' . $pedido->mesa->numero }}</span>
+                            @if($pedido->mesa)
+                                <span class="badge bg-info">{{ $pedido->mesa->identificador ?? 'Mesa ' . $pedido->mesa->numero }}</span>
+                            @elseif($pedido->delivery)
+                                <span class="badge bg-success">
+                                    <i class="fas fa-truck me-1"></i>
+                                    Delivery
+                                </span>
+                            @else
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-takeout-box me-1"></i>
+                                    Balcão
+                                </span>
+                            @endif
                         </div>
                         <div class="col-md-4">
                             <small class="text-muted">
@@ -445,8 +470,7 @@
                         <i class="fas fa-list me-1"></i> Ver Todos os Meus Pedidos
                     </a>
                 </div>
-            @endif
-        </div>
+            @endif        </div>
     </div>
 
     <!-- Botão de Refresh -->
@@ -457,10 +481,64 @@
     <!-- Form de Logout (hidden) -->
     <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
         @csrf
-    </form>    <!-- Scripts -->
+    </form>
+
+    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
         console.log('📊 Dashboard script carregado');
+        
+        // Função de logout
+        function performLogout(event) {
+            event.preventDefault();
+            
+            // Confirmar logout
+            if (confirm('Deseja realmente fazer logout?')) {
+                // Método 1: Tentar submeter formulário
+                const form = document.getElementById('logout-form');
+                if (form) {
+                    console.log('Tentando logout via formulário...');
+                    form.submit();
+                    return;
+                }
+                
+                // Método 2: Fazer requisição AJAX como fallback
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                
+                if (token) {
+                    console.log('Tentando logout via AJAX...');
+                    
+                    fetch('/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'same-origin'
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            console.log('Logout successful');
+                            window.location.href = '/login';
+                        } else {
+                            console.error('Erro no logout:', response.status);
+                            // Tentar redirecionar mesmo assim
+                            window.location.href = '/login';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro na requisição de logout:', error);
+                        // Forçar redirecionamento para login
+                        window.location.href = '/login';
+                    });
+                } else {
+                    console.error('Token CSRF não encontrado');
+                    // Forçar redirecionamento para login
+                    window.location.href = '/login';
+                }
+            }
+        }
         
         // Atualização automática a cada 30 segundos
         setInterval(atualizarDados, 30000);function atualizarDados() {
@@ -520,7 +598,7 @@
                 const nomeExibicao = mesa.identificador || `Mesa ${mesa.numero}`;
                 html += `
                     <div class="col-md-2 col-4">
-                        <div class="mesa-card ocupada" onclick="verDetalheMesa(${mesa.id})">
+                        <div class="mesa-card ocupada" onclick="verDetalheMesa(${nomeExibicao})">
                             <div class="mesa-numero">${nomeExibicao}</div>
                             <div class="mesa-status text-danger">Ocupada</div>
                             <small class="d-block mt-1">
@@ -620,8 +698,29 @@
                     card.style.opacity = '1';
                     card.style.transform = 'translateY(0)';
                 }, index * 100);
-            });
+            });        });
+        
+        // Controle de caixa fechado
+        @if(!$caixaAberto)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Desabilitar botão de novo pedido
+            const novoPedidoBtn = document.querySelector('a[href*="pedido-rapido"]');
+            if (novoPedidoBtn) {
+                novoPedidoBtn.style.opacity = '0.5';
+                novoPedidoBtn.style.pointerEvents = 'none';
+                novoPedidoBtn.style.cursor = 'not-allowed';
+                
+                // Adicionar tooltip explicativo
+                novoPedidoBtn.setAttribute('title', 'Caixa fechado - Não é possível criar pedidos');
+                novoPedidoBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    alert('⚠️ O caixa está fechado. Não é possível criar novos pedidos.');
+                });
+            }
         });
+        @endif
+  
     </script>
+
 </body>
 </html>

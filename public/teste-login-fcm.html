@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Login FCM</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .log {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste de Login e FCM</h1>
+    
+    <div id="logs"></div>
+    
+    <button onclick="testarLogin()">Simular Login</button>
+    <button onclick="verificarBridge()">Verificar Bridge</button>
+    
+    <script>
+        function log(msg) {
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = 'log';
+            div.textContent = new Date().toLocaleTimeString() + ' - ' + msg;
+            logs.insertBefore(div, logs.firstChild);
+            console.log(msg);
+        }
+        
+        function verificarBridge() {
+            if (window.AndroidBridge) {
+                log('✅ AndroidBridge encontrado!');
+                if (typeof window.AndroidBridge.onLoginSuccess === 'function') {
+                    log('✅ Função onLoginSuccess existe!');
+                } else {
+                    log('❌ Função onLoginSuccess NÃO existe!');
+                }
+            } else {
+                log('❌ AndroidBridge NÃO encontrado!');
+            }
+        }
+        
+        function testarLogin() {
+            log('Simulando login...');
+            
+            // Simular resposta de login
+            const clienteId = 23;
+            
+            if (window.AndroidBridge && window.AndroidBridge.onLoginSuccess) {
+                log('Chamando AndroidBridge.onLoginSuccess(' + clienteId + ')');
+                window.AndroidBridge.onLoginSuccess(clienteId.toString());
+                log('✅ Função chamada!');
+            } else {
+                log('❌ Bridge não disponível!');
+            }
+        }
+        
+        // Verificar automaticamente ao carregar
+        setTimeout(verificarBridge, 1000);
+    </script>
+</body>
+</html>

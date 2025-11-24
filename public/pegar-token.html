@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pegar Token FCM</title>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 { color: #333; margin-top: 0; }
+        .token-box {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 15px 0;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+        button:active { background: #45a049; }
+        .info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔑 Seu Token FCM</h2>
+        
+        <div class="info">
+            👇 Clique no botão abaixo para copiar o token
+        </div>
+        
+        <div id="tokenDisplay" class="token-box">
+            Carregando token...
+        </div>
+        
+        <button onclick="copiarToken()">📋 Copiar Token</button>
+        <button onclick="abrirTeste()" style="background: #2196F3;">🧪 Ir para Teste</button>
+        
+        <div id="status" style="margin-top: 15px; font-weight: bold;"></div>
+    </div>
+
+    <script>
+        let tokenAtual = '';
+        
+        // Obter token via URL parameter ou localStorage
+        window.addEventListener('load', function() {
+            // Tentar pegar do parâmetro URL
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+            
+            if (token) {
+                tokenAtual = token;
+                mostrarToken(token);
+                // Salvar no localStorage
+                localStorage.setItem('fcm_token', token);
+            } else {
+                // Tentar pegar do localStorage
+                const savedToken = localStorage.getItem('fcm_token');
+                if (savedToken) {
+                    tokenAtual = savedToken;
+                    mostrarToken(savedToken);
+                } else {
+                    document.getElementById('tokenDisplay').innerHTML = 
+                        '<span style="color: red;">❌ Token não encontrado. Abra o app primeiro!</span>';
+                }
+            }
+        });
+        
+        function mostrarToken(token) {
+            document.getElementById('tokenDisplay').textContent = token;
+        }
+        
+        function copiarToken() {
+            if (!tokenAtual) {
+                alert('Nenhum token disponível!');
+                return;
+            }
+            
+            navigator.clipboard.writeText(tokenAtual).then(function() {
+                document.getElementById('status').innerHTML = 
+                    '<span style="color: green;">✅ Token copiado!</span>';
+                setTimeout(() => {
+                    document.getElementById('status').innerHTML = '';
+                }, 3000);
+            }).catch(function(err) {
+                // Fallback para dispositivos mais antigos
+                const textarea = document.createElement('textarea');
+                textarea.value = tokenAtual;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                document.getElementById('status').innerHTML = 
+                    '<span style="color: green;">✅ Token copiado!</span>';
+            });
+        }
+        
+        function abrirTeste() {
+            if (!tokenAtual) {
+                alert('Copie o token primeiro!');
+                return;
+            }
+            window.location.href = '/testar-notificacao.html';
+        }
+    </script>
+</body>
+</html>

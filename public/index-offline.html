@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyD Bar - Sistema Offline</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            max-width: 900px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 20px;
+        }
+        .menu-item {
+            transition: all 0.3s;
+            cursor: pointer;
+            border-left: 5px solid transparent;
+        }
+        .menu-item:hover {
+            background: #f8f9fa;
+            border-left-color: #667eea;
+            transform: translateX(5px);
+        }
+        .status-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        .online { background: #28a745; color: white; }
+        .offline { background: #dc3545; color: white; }
+        .icon-large {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body>
+    <!-- Status Badge -->
+    <div id="statusBadge" class="status-badge offline">
+        <i class="fas fa-wifi-slash me-2"></i>Offline
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header text-center">
+                <h1 class="mb-0"><i class="fas fa-utensils me-3"></i>MyD Bar & Restaurantes</h1>
+                <p class="mb-0 mt-2">Sistema 100% Offline</p>
+            </div>
+            <div class="card-body p-0">
+                
+                <!-- Menu Principal -->
+                <div class="list-group list-group-flush">
+                    <a href="/caixa-offline.html" class="list-group-item list-group-item-action menu-item p-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-cash-register icon-large me-4"></i>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">💰 Caixa</h5>
+                                <p class="mb-0 text-muted">Gerenciar pagamentos e fechamento de mesas</p>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </div>
+                    </a>
+
+                    <a href="/" class="list-group-item list-group-item-action menu-item p-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-concierge-bell icon-large me-4"></i>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">🍽️ Garçom</h5>
+                                <p class="mb-0 text-muted">Criar e gerenciar pedidos (requer servidor online)</p>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </div>
+                    </a>
+
+                    <a href="/offline-panel.html" class="list-group-item list-group-item-action menu-item p-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-tachometer-alt icon-large me-4"></i>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">📊 Painel de Controle</h5>
+                                <p class="mb-0 text-muted">Monitorar sincronização e testar funcionalidades</p>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </div>
+                    </a>
+                </div>
+
+                <hr class="m-0">
+
+                <!-- Ferramentas -->
+                <div class="p-4">
+                    <h6 class="text-muted mb-3"><i class="fas fa-tools me-2"></i>Ferramentas</h6>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="sincronizar()">
+                            <i class="fas fa-sync-alt me-2"></i>Sincronizar com Servidor
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="location.href='/test-sqljs.html'">
+                            <i class="fas fa-flask me-2"></i>Testar Banco Local
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="location.href='/limpar-cache.html'">
+                            <i class="fas fa-broom me-2"></i>Limpar Cache
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Estatísticas -->
+                <div class="bg-light p-4" id="stats">
+                    <h6 class="text-muted mb-3"><i class="fas fa-chart-bar me-2"></i>Estatísticas do Banco Local</h6>
+                    <div class="row text-center">
+                        <div class="col-3">
+                            <i class="fas fa-tag fa-2x text-primary mb-2"></i>
+                            <div id="statCategorias" class="h4 mb-0">-</div>
+                            <small class="text-muted">Categorias</small>
+                        </div>
+                        <div class="col-3">
+                            <i class="fas fa-box fa-2x text-success mb-2"></i>
+                            <div id="statProdutos" class="h4 mb-0">-</div>
+                            <small class="text-muted">Produtos</small>
+                        </div>
+                        <div class="col-3">
+                            <i class="fas fa-table fa-2x text-warning mb-2"></i>
+                            <div id="statMesas" class="h4 mb-0">-</div>
+                            <small class="text-muted">Mesas</small>
+                        </div>
+                        <div class="col-3">
+                            <i class="fas fa-receipt fa-2x text-info mb-2"></i>
+                            <div id="statPedidos" class="h4 mb-0">-</div>
+                            <small class="text-muted">Pedidos</small>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div id="statPendentes" class="h5 mb-0 text-warning">-</div>
+                            <small class="text-muted">Pendentes</small>
+                        </div>
+                        <div class="col-4">
+                            <div id="statSincronizados" class="h5 mb-0 text-success">-</div>
+                            <small class="text-muted">Sincronizados</small>
+                        </div>
+                        <div class="col-4">
+                            <div id="statErros" class="h5 mb-0 text-danger">-</div>
+                            <small class="text-muted">Erros</small>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div class="text-center text-white mt-3">
+            <small>
+                <i class="fas fa-info-circle me-2"></i>
+                Sistema funcionando 100% no navegador
+                <br>
+                Dados serão sincronizados automaticamente quando houver internet
+            </small>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/libs/sql-wasm.js"></script>
+    <script src="/js/local-database.js"></script>
+
+    <script>
+        // Atualizar status de conexão
+        function atualizarStatus() {
+            const badge = document.getElementById('statusBadge');
+            if (navigator.onLine) {
+                badge.className = 'status-badge online';
+                badge.innerHTML = '<i class="fas fa-wifi me-2"></i>Online';
+            } else {
+                badge.className = 'status-badge offline';
+                badge.innerHTML = '<i class="fas fa-wifi-slash me-2"></i>Offline';
+            }
+        }
+
+        // Atualizar estatísticas
+        async function atualizarEstatisticas() {
+            // Aguardar banco estar pronto
+            let tentativas = 0;
+            while (!window.localDB?.isInitialized && tentativas < 50) {
+                await new Promise(r => setTimeout(r, 100));
+                tentativas++;
+            }
+
+            if (!window.localDB?.isInitialized) {
+                console.log('⚠️ Banco local não inicializou');
+                return;
+            }
+
+            try {
+                const categorias = window.localDB.getCategorias();
+                const produtos = window.localDB.getProdutos();
+                const mesas = window.localDB.getMesas();
+                const pedidos = window.localDB.query('SELECT * FROM pedidos');
+                const stats = window.localDB.getStats();
+
+                document.getElementById('statCategorias').textContent = categorias.length;
+                document.getElementById('statProdutos').textContent = produtos.length;
+                document.getElementById('statMesas').textContent = mesas.length;
+                document.getElementById('statPedidos').textContent = pedidos.length;
+
+                document.getElementById('statPendentes').textContent = stats.pendentes;
+                document.getElementById('statSincronizados').textContent = stats.sincronizados;
+                document.getElementById('statErros').textContent = stats.erros;
+
+                console.log('✅ Estatísticas atualizadas');
+            } catch (error) {
+                console.error('❌ Erro ao atualizar estatísticas:', error);
+            }
+        }
+
+        async function sincronizar() {
+            if (!navigator.onLine) {
+                alert('⚠️ Você está offline!\n\nA sincronização será feita automaticamente quando a internet voltar.');
+                return;
+            }
+
+            if (!window.localDB?.isInitialized) {
+                alert('⚠️ Banco local ainda não está pronto.\n\nAguarde alguns segundos e tente novamente.');
+                return;
+            }
+
+            const btn = event?.target;
+            const originalHTML = btn?.innerHTML;
+            
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sincronizando...';
+            }
+
+            try {
+                const resultado = await window.localDB.sincronizarComServidor();
+                
+                if (resultado.success) {
+                    alert(`✅ Sincronização concluída!\n\n${resultado.message}`);
+                    await atualizarEstatisticas();
+                } else {
+                    alert(`⚠️ Sincronização parcial\n\n${resultado.message}`);
+                }
+            } catch (error) {
+                alert(`❌ Erro na sincronização\n\n${error.message}`);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                }
+            }
+        }
+
+        // Inicializar
+        window.addEventListener('load', () => {
+            atualizarStatus();
+            atualizarEstatisticas();
+
+            // Atualizar stats a cada 10 segundos
+            setInterval(atualizarEstatisticas, 10000);
+
+            // Listeners de conexão
+            window.addEventListener('online', atualizarStatus);
+            window.addEventListener('offline', atualizarStatus);
+        });
+    </script>
+</body>
+</html>

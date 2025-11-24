@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicializar Sistema Offline</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 25px;
+        }
+        .log-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .log-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .log-error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+        .log-info { background: #d1ecf1; color: #0c5460; border-left: 4px solid #17a2b8; }
+        .log-warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+        #logContainer {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .progress {
+            height: 30px;
+            font-size: 16px;
+        }
+        .stat-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header text-center">
+            <h2 class="mb-0"><i class="fas fa-rocket me-2"></i>Inicializar Sistema Offline</h2>
+            <p class="mb-0 mt-2">Configure seu banco de dados local com dados de demonstração</p>
+        </div>
+        <div class="card-body p-4">
+            
+            <!-- Status -->
+            <div id="statusArea" class="mb-4">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Pronto para começar!</strong>
+                    <br>Clique no botão abaixo para criar um banco de dados local com dados de demonstração.
+                    <br><small class="text-muted">Isso permitirá usar o sistema completamente offline.</small>
+                </div>
+            </div>
+
+            <!-- Botão de Inicialização -->
+            <div id="btnArea" class="text-center mb-4">
+                <button class="btn btn-primary btn-lg px-5" onclick="inicializarSistema()">
+                    <i class="fas fa-play me-2"></i>Inicializar Sistema Offline
+                </button>
+            </div>
+
+            <!-- Progresso -->
+            <div id="progressArea" style="display: none;" class="mb-4">
+                <label class="form-label"><strong>Progresso:</strong></label>
+                <div class="progress">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 0%">0%</div>
+                </div>
+            </div>
+
+            <!-- Log -->
+            <div id="logArea" style="display: none;">
+                <label class="form-label"><strong><i class="fas fa-list me-2"></i>Log de Instalação:</strong></label>
+                <div id="logContainer"></div>
+            </div>
+
+            <!-- Estatísticas Finais -->
+            <div id="statsArea" style="display: none;" class="mt-4">
+                <h5 class="text-center mb-3"><i class="fas fa-chart-bar me-2"></i>Dados Criados</h5>
+                <div class="row">
+                    <div class="col-3">
+                        <div class="stat-box">
+                            <div class="stat-number" id="statCategorias">0</div>
+                            <small class="text-muted">Categorias</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="stat-box">
+                            <div class="stat-number" id="statProdutos">0</div>
+                            <small class="text-muted">Produtos</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="stat-box">
+                            <div class="stat-number" id="statMesas">0</div>
+                            <small class="text-muted">Mesas</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="stat-box">
+                            <div class="stat-number" id="statPedidos">0</div>
+                            <small class="text-muted">Pedidos</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de Ação Final -->
+            <div id="actionArea" style="display: none;" class="mt-4 text-center">
+                <hr>
+                <h5><i class="fas fa-check-circle text-success me-2"></i>Sistema Pronto!</h5>
+                <p class="text-muted">Escolha uma opção para começar:</p>
+                <div class="d-grid gap-2">
+                    <a href="/index-offline.html" class="btn btn-success btn-lg">
+                        <i class="fas fa-home me-2"></i>Ir para Menu Principal
+                    </a>
+                    <a href="/caixa-offline.html" class="btn btn-primary btn-lg">
+                        <i class="fas fa-cash-register me-2"></i>Abrir Caixa
+                    </a>
+                    <a href="/offline-panel.html" class="btn btn-info btn-lg">
+                        <i class="fas fa-tachometer-alt me-2"></i>Painel de Controle
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/libs/sql-wasm.js"></script>
+    <script src="/js/local-database.js"></script>
+
+    <script>
+        let logContainer;
+        let progressBar;
+
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `log-item log-${type}`;
+            div.innerHTML = `<i class="fas fa-${getIcon(type)} me-2"></i>${message}`;
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function getIcon(type) {
+            const icons = {
+                success: 'check-circle',
+                error: 'times-circle',
+                warning: 'exclamation-triangle',
+                info: 'info-circle'
+            };
+            return icons[type] || 'info-circle';
+        }
+
+        function updateProgress(percent, text) {
+            progressBar.style.width = percent + '%';
+            progressBar.textContent = text || percent + '%';
+        }
+
+        async function inicializarSistema() {
+            // Preparar UI
+            document.getElementById('btnArea').style.display = 'none';
+            document.getElementById('statusArea').style.display = 'none';
+            document.getElementById('progressArea').style.display = 'block';
+            document.getElementById('logArea').style.display = 'block';
+            
+            logContainer = document.getElementById('logContainer');
+            progressBar = document.getElementById('progressBar');
+
+            log('🚀 Iniciando configuração do sistema offline...', 'info');
+            updateProgress(5, 'Preparando...');
+
+            try {
+                // Aguardar banco estar pronto
+                log('⏳ Aguardando banco de dados local...', 'info');
+                let tentativas = 0;
+                while (!window.localDB?.isInitialized && tentativas < 100) {
+                    await new Promise(r => setTimeout(r, 100));
+                    tentativas++;
+                }
+
+                if (!window.localDB?.isInitialized) {
+                    throw new Error('Banco de dados local não inicializou. Recarregue a página.');
+                }
+
+                log('✅ Banco de dados local pronto!', 'success');
+                updateProgress(10, 'Banco OK');
+
+                // Limpar banco existente
+                log('🗑️ Limpando dados antigos (se existir)...', 'info');
+                try {
+                    window.localDB.execute('DELETE FROM sync_log');
+                    window.localDB.execute('DELETE FROM pagamentos');
+                    window.localDB.execute('DELETE FROM itens_pedido');
+                    window.localDB.execute('DELETE FROM pedidos');
+                    window.localDB.execute('DELETE FROM produtos');
+                    window.localDB.execute('DELETE FROM categorias');
+                    window.localDB.execute('DELETE FROM mesas');
+                    log('✅ Banco limpo', 'success');
+                } catch (e) {
+                    log('ℹ️ Nenhum dado anterior para limpar', 'info');
+                }
+                updateProgress(15, 'Banco limpo');
+
+                // 1. CRIAR CATEGORIAS
+                log('📁 Criando categorias...', 'info');
+                const categorias = [
+                    {nome: 'Bebidas', descricao: 'Bebidas diversas', cor: '#3498db', icone: 'fa-glass-water'},
+                    {nome: 'Petiscos', descricao: 'Porções e aperitivos', cor: '#e74c3c', icone: 'fa-drumstick-bite'},
+                    {nome: 'Pratos', descricao: 'Refeições completas', cor: '#2ecc71', icone: 'fa-utensils'},
+                    {nome: 'Sobremesas', descricao: 'Doces e sobremesas', cor: '#f39c12', icone: 'fa-ice-cream'},
+                    {nome: 'Cervejas', descricao: 'Cervejas artesanais e comuns', cor: '#f1c40f', icone: 'fa-beer-mug-empty'}
+                ];
+
+                for (let i = 0; i < categorias.length; i++) {
+                    const cat = categorias[i];
+                    window.localDB.execute(
+                        'INSERT INTO categorias (nome, descricao, cor, icone, ordem, created_at, updated_at, synced) VALUES (?, ?, ?, ?, ?, datetime("now"), datetime("now"), 0)',
+                        [cat.nome, cat.descricao, cat.cor, cat.icone, i + 1]
+                    );
+                    log(`✅ Categoria: ${cat.nome}`, 'success');
+                }
+                updateProgress(25, '5 Categorias criadas');
+
+                // 2. CRIAR PRODUTOS
+                log('🍔 Criando produtos...', 'info');
+                const produtos = [
+                    // Bebidas (cat 1)
+                    {nome: 'Coca-Cola Lata', preco: 5.00, cat: 1, codigo: 'BEB001'},
+                    {nome: 'Suco de Laranja', preco: 8.00, cat: 1, codigo: 'BEB002'},
+                    {nome: 'Água Mineral', preco: 3.50, cat: 1, codigo: 'BEB003'},
+                    {nome: 'Refrigerante 2L', preco: 10.00, cat: 1, codigo: 'BEB004'},
+                    // Petiscos (cat 2)
+                    {nome: 'Porção de Batata Frita', preco: 25.00, cat: 2, codigo: 'PET001'},
+                    {nome: 'Calabresa Acebolada', preco: 35.00, cat: 2, codigo: 'PET002'},
+                    {nome: 'Frango à Passarinho', preco: 32.00, cat: 2, codigo: 'PET003'},
+                    {nome: 'Pastéis Sortidos', preco: 28.00, cat: 2, codigo: 'PET004'},
+                    // Pratos (cat 3)
+                    {nome: 'Feijoada Completa', preco: 45.00, cat: 3, codigo: 'PRA001'},
+                    {nome: 'Bife à Parmegiana', preco: 38.00, cat: 3, codigo: 'PRA002'},
+                    {nome: 'Filé de Frango Grelhado', preco: 32.00, cat: 3, codigo: 'PRA003'},
+                    {nome: 'Moqueca de Peixe', preco: 55.00, cat: 3, codigo: 'PRA004'},
+                    // Sobremesas (cat 4)
+                    {nome: 'Pudim de Leite', preco: 12.00, cat: 4, codigo: 'SOB001'},
+                    {nome: 'Sorvete (2 bolas)', preco: 10.00, cat: 4, codigo: 'SOB002'},
+                    {nome: 'Petit Gateau', preco: 18.00, cat: 4, codigo: 'SOB003'},
+                    // Cervejas (cat 5)
+                    {nome: 'Brahma Chopp', preco: 7.00, cat: 5, codigo: 'CER001'},
+                    {nome: 'Heineken Long Neck', preco: 9.00, cat: 5, codigo: 'CER002'},
+                    {nome: 'Cerveja Artesanal IPA', preco: 15.00, cat: 5, codigo: 'CER003'},
+                    {nome: 'Budweiser Lata', preco: 6.50, cat: 5, codigo: 'CER004'},
+                    {nome: 'Corona Extra', preco: 10.00, cat: 5, codigo: 'CER005'}
+                ];
+
+                for (let i = 0; i < produtos.length; i++) {
+                    const prod = produtos[i];
+                    window.localDB.execute(
+                        'INSERT INTO produtos (nome, preco, categoria_id, disponivel, codigo, estoque, created_at, updated_at, synced) VALUES (?, ?, ?, 1, ?, 100, datetime("now"), datetime("now"), 0)',
+                        [prod.nome, prod.preco, prod.cat, prod.codigo]
+                    );
+                    log(`✅ Produto: ${prod.nome} - R$ ${prod.preco.toFixed(2)}`, 'success');
+                    updateProgress(25 + (i + 1) * 2, `${i + 1} produtos`);
+                }
+
+                // 3. CRIAR MESAS
+                log('🪑 Criando mesas...', 'info');
+                const mesas = [
+                    {num: 1, id: 'Mesa 01', cap: 4, status: 'livre'},
+                    {num: 2, id: 'Mesa 02', cap: 4, status: 'livre'},
+                    {num: 3, id: 'Mesa 03', cap: 2, status: 'livre'},
+                    {num: 4, id: 'Mesa 04', cap: 6, status: 'livre'},
+                    {num: 5, id: 'Mesa 05', cap: 4, status: 'livre'},
+                    {num: 6, id: 'Mesa 06', cap: 2, status: 'livre'},
+                    {num: 7, id: 'Mesa 07', cap: 8, status: 'livre'},
+                    {num: 8, id: 'Mesa 08', cap: 4, status: 'livre'},
+                    {num: 9, id: 'Mesa 09', cap: 4, status: 'livre'},
+                    {num: 10, id: 'Mesa 10', cap: 6, status: 'livre'}
+                ];
+
+                for (let i = 0; i < mesas.length; i++) {
+                    const mesa = mesas[i];
+                    window.localDB.execute(
+                        'INSERT INTO mesas (numero, identificador, capacidade, status, created_at, updated_at, synced) VALUES (?, ?, ?, ?, datetime("now"), datetime("now"), 0)',
+                        [mesa.num, mesa.id, mesa.cap, mesa.status]
+                    );
+                    log(`✅ Mesa: ${mesa.id} (Cap: ${mesa.cap})`, 'success');
+                }
+                updateProgress(75, '10 Mesas criadas');
+
+                // 4. CRIAR PEDIDOS DE EXEMPLO (opcional)
+                log('📝 Criando pedidos de exemplo...', 'info');
+                
+                // Pedido 1 - Mesa 1 - Aberto
+                window.localDB.execute(
+                    'INSERT INTO pedidos (mesa_id, usuario_id, status, total, data_hora, created_at, updated_at, synced) VALUES (1, 1, "aberto", 82.00, datetime("now"), datetime("now"), datetime("now"), 0)'
+                );
+                const pedido1Id = window.localDB.query('SELECT last_insert_rowid() as id')[0].id;
+                
+                // Itens do pedido 1
+                window.localDB.execute('INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, preco_unitario, subtotal, created_at, updated_at, synced) VALUES (?, 1, 2, 5.00, 10.00, datetime("now"), datetime("now"), 0)', [pedido1Id]);
+                window.localDB.execute('INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, preco_unitario, subtotal, created_at, updated_at, synced) VALUES (?, 5, 1, 25.00, 25.00, datetime("now"), datetime("now"), 0)', [pedido1Id]);
+                window.localDB.execute('INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, preco_unitario, subtotal, created_at, updated_at, synced) VALUES (?, 9, 1, 45.00, 45.00, datetime("now"), datetime("now"), 0)', [pedido1Id]);
+                window.localDB.execute('UPDATE mesas SET status = "ocupada" WHERE id = 1');
+                log('✅ Pedido #1: Mesa 01 - R$ 82,00 (aberto)', 'success');
+
+                // Pedido 2 - Mesa 3 - Aberto
+                window.localDB.execute(
+                    'INSERT INTO pedidos (mesa_id, usuario_id, status, total, data_hora, created_at, updated_at, synced) VALUES (3, 1, "aberto", 46.00, datetime("now"), datetime("now"), datetime("now"), 0)'
+                );
+                const pedido2Id = window.localDB.query('SELECT last_insert_rowid() as id')[0].id;
+                
+                window.localDB.execute('INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, preco_unitario, subtotal, created_at, updated_at, synced) VALUES (?, 3, 1, 3.50, 3.50, datetime("now"), datetime("now"), 0)', [pedido2Id]);
+                window.localDB.execute('INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, preco_unitario, subtotal, created_at, updated_at, synced) VALUES (?, 10, 1, 38.00, 38.00, datetime("now"), datetime("now"), 0)', [pedido2Id]);
+                window.localDB.execute('INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, preco_unitario, subtotal, created_at, updated_at, synced) VALUES (?, 2, 1, 8.00, 8.00, datetime("now"), datetime("now"), 0)', [pedido2Id]);
+                window.localDB.execute('UPDATE mesas SET status = "ocupada" WHERE id = 3');
+                log('✅ Pedido #2: Mesa 03 - R$ 46,00 (aberto)', 'success');
+
+                updateProgress(90, 'Pedidos criados');
+
+                // Salvar no localStorage
+                log('💾 Salvando banco de dados...', 'info');
+                window.localDB.saveToStorage();
+                log('✅ Banco salvo no navegador!', 'success');
+                updateProgress(100, 'Concluído!');
+
+                // Mostrar estatísticas
+                log('📊 Calculando estatísticas...', 'info');
+                const statCat = window.localDB.getCategorias().length;
+                const statProd = window.localDB.getProdutos().length;
+                const statMesas = window.localDB.getMesas().length;
+                const statPed = window.localDB.query('SELECT * FROM pedidos').length;
+
+                document.getElementById('statCategorias').textContent = statCat;
+                document.getElementById('statProdutos').textContent = statProd;
+                document.getElementById('statMesas').textContent = statMesas;
+                document.getElementById('statPedidos').textContent = statPed;
+
+                document.getElementById('statsArea').style.display = 'block';
+                document.getElementById('actionArea').style.display = 'block';
+
+                log('🎉 Sistema offline inicializado com sucesso!', 'success');
+                log('✅ Você já pode usar o sistema SEM INTERNET!', 'success');
+
+            } catch (error) {
+                log(`❌ ERRO: ${error.message}`, 'error');
+                console.error('Erro completo:', error);
+                
+                document.getElementById('btnArea').innerHTML = `
+                    <button class="btn btn-warning btn-lg" onclick="location.reload()">
+                        <i class="fas fa-redo me-2"></i>Tentar Novamente
+                    </button>
+                `;
+                document.getElementById('btnArea').style.display = 'block';
+            }
+        }
+
+        // Verificar se já está inicializado
+        window.addEventListener('load', async () => {
+            let tentativas = 0;
+            while (!window.localDB?.isInitialized && tentativas < 50) {
+                await new Promise(r => setTimeout(r, 100));
+                tentativas++;
+            }
+
+            if (window.localDB?.isInitialized) {
+                const produtos = window.localDB.getProdutos();
+                if (produtos.length > 0) {
+                    document.getElementById('statusArea').innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>Sistema já inicializado!</strong>
+                            <br>Você já tem ${produtos.length} produtos no banco local.
+                            <br><small class="text-muted">Pode começar a usar o sistema offline.</small>
+                        </div>
+                    `;
+                    document.getElementById('btnArea').innerHTML = `
+                        <a href="/index-offline.html" class="btn btn-primary btn-lg me-2">
+                            <i class="fas fa-home me-2"></i>Menu Principal
+                        </a>
+                        <button class="btn btn-warning btn-lg" onclick="if(confirm('Tem certeza? Isso vai apagar todos os dados!')) inicializarSistema()">
+                            <i class="fas fa-redo me-2"></i>Reinicializar
+                        </button>
+                    `;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

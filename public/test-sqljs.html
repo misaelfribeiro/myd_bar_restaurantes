@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste SQL.js</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .status {
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        pre {
+            background: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+        h1 { color: #333; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        #log { max-height: 400px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnóstico SQL.js</h1>
+    
+    <div id="status"></div>
+    
+    <button onclick="testarSQLjs()">🔄 Testar SQL.js</button>
+    <button onclick="testarBancoDados()">💾 Testar Banco Local</button>
+    <button onclick="limparLog()">🗑️ Limpar Log</button>
+    
+    <h2>📋 Log de Testes</h2>
+    <div id="log"></div>
+
+    <!-- Carregar SQL.js ANTES de tudo - VERSÃO LOCAL -->
+    <script src="/libs/sql-wasm.js"></script>
+    
+    <script>
+        let logCount = 0;
+
+        function addLog(message, type = 'info') {
+            logCount++;
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML = `
+                <div class="status ${type}">
+                    <strong>#${logCount} [${time}]</strong><br>
+                    ${message}
+                </div>
+            ` + logDiv.innerHTML;
+            console.log(`[${time}] ${message}`);
+        }
+
+        function limparLog() {
+            document.getElementById('log').innerHTML = '';
+            logCount = 0;
+            addLog('Log limpo', 'info');
+        }
+
+        async function testarSQLjs() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<div class="status info">🔄 Testando SQL.js...</div>';
+            
+            addLog('Iniciando teste do SQL.js...', 'info');
+
+            // Teste 1: Verificar se initSqlJs existe
+            if (typeof initSqlJs === 'undefined') {
+                statusDiv.innerHTML = '<div class="status error">❌ ERRO: initSqlJs não está definido!<br>O script SQL.js não foi carregado corretamente.</div>';
+                addLog('❌ initSqlJs não está definido', 'error');
+                return;
+            }
+            addLog('✅ initSqlJs está definido', 'success');
+
+            try {
+                // Teste 2: Inicializar SQL.js
+                addLog('Chamando initSqlJs()...', 'info');
+                const SQL = await initSqlJs({
+                    locateFile: file => `/libs/${file}`
+                });
+                addLog('✅ SQL.js inicializado com sucesso!', 'success');
+
+                // Teste 3: Criar banco de dados
+                addLog('Criando banco de dados em memória...', 'info');
+                const db = new SQL.Database();
+                addLog('✅ Banco de dados criado!', 'success');
+
+                // Teste 4: Criar tabela
+                addLog('Criando tabela de teste...', 'info');
+                db.run('CREATE TABLE teste (id INTEGER PRIMARY KEY, nome TEXT, valor REAL)');
+                addLog('✅ Tabela criada!', 'success');
+
+                // Teste 5: Inserir dados
+                addLog('Inserindo dados de teste...', 'info');
+                db.run('INSERT INTO teste (nome, valor) VALUES (?, ?)', ['Produto 1', 10.50]);
+                db.run('INSERT INTO teste (nome, valor) VALUES (?, ?)', ['Produto 2', 25.00]);
+                db.run('INSERT INTO teste (nome, valor) VALUES (?, ?)', ['Produto 3', 15.75]);
+                addLog('✅ 3 registros inseridos!', 'success');
+
+                // Teste 6: Consultar dados
+                addLog('Consultando dados...', 'info');
+                const result = db.exec('SELECT * FROM teste');
+                const data = result[0];
+                addLog(`✅ Consulta executada! ${data.values.length} registros encontrados`, 'success');
+                
+                let tableHTML = '<table border="1" style="width:100%; border-collapse: collapse; margin-top: 10px;">';
+                tableHTML += '<tr><th>ID</th><th>Nome</th><th>Valor</th></tr>';
+                data.values.forEach(row => {
+                    tableHTML += `<tr><td>${row[0]}</td><td>${row[1]}</td><td>R$ ${row[2].toFixed(2)}</td></tr>`;
+                });
+                tableHTML += '</table>';
+                
+                addLog('Dados da consulta:<br>' + tableHTML, 'success');
+
+                // Teste 7: Testar localStorage
+                addLog('Testando persistência em localStorage...', 'info');
+                const dbData = db.export();
+                const dataArray = Array.from(dbData);
+                localStorage.setItem('teste_sqljs_db', JSON.stringify(dataArray));
+                addLog(`✅ Banco salvo no localStorage (${dataArray.length} bytes)`, 'success');
+
+                // Teste 8: Carregar do localStorage
+                addLog('Carregando banco do localStorage...', 'info');
+                const savedData = JSON.parse(localStorage.getItem('teste_sqljs_db'));
+                const db2 = new SQL.Database(new Uint8Array(savedData));
+                const result2 = db2.exec('SELECT COUNT(*) as total FROM teste');
+                const total = result2[0].values[0][0];
+                addLog(`✅ Banco carregado! ${total} registros encontrados`, 'success');
+
+                // Limpar
+                db.close();
+                db2.close();
+                localStorage.removeItem('teste_sqljs_db');
+
+                statusDiv.innerHTML = '<div class="status success">✅ TODOS OS TESTES PASSARAM!<br>SQL.js está funcionando perfeitamente!</div>';
+                addLog('🎉 Todos os testes concluídos com sucesso!', 'success');
+
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">❌ ERRO: ${error.message}<br><pre>${error.stack}</pre></div>`;
+                addLog(`❌ Erro durante os testes: ${error.message}`, 'error');
+                console.error('Erro completo:', error);
+            }
+        }
+
+        async function testarBancoDados() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<div class="status info">🔄 Testando Banco Local...</div>';
+            
+            addLog('Verificando banco local do sistema...', 'info');
+
+            // Verificar se existe banco salvo
+            const savedDb = localStorage.getItem('myd_bar_local.db');
+            if (!savedDb) {
+                statusDiv.innerHTML = '<div class="status warning">⚠️ Nenhum banco local encontrado.<br>O sistema ainda não criou o banco de dados.</div>';
+                addLog('⚠️ Banco local não encontrado no localStorage', 'warning');
+                return;
+            }
+
+            addLog(`✅ Banco encontrado! Tamanho: ${savedDb.length} caracteres`, 'success');
+
+            try {
+                addLog('Inicializando SQL.js...', 'info');
+                const SQL = await initSqlJs({
+                    locateFile: file => `/libs/${file}`
+                });
+                
+                addLog('Carregando banco de dados...', 'info');
+                const dataArray = JSON.parse(savedDb);
+                const db = new SQL.Database(new Uint8Array(dataArray));
+                
+                addLog('✅ Banco carregado! Verificando tabelas...', 'success');
+
+                // Listar tabelas
+                const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name");
+                if (tables.length > 0) {
+                    const tableNames = tables[0].values.map(row => row[0]);
+                    addLog(`📊 Tabelas encontradas: ${tableNames.join(', ')}`, 'info');
+
+                    // Contar registros em cada tabela
+                    let summary = '<ul style="margin:10px 0; padding-left: 20px;">';
+                    for (const tableName of tableNames) {
+                        try {
+                            const count = db.exec(`SELECT COUNT(*) as total FROM ${tableName}`);
+                            const total = count[0].values[0][0];
+                            summary += `<li><strong>${tableName}</strong>: ${total} registro(s)</li>`;
+                        } catch (e) {
+                            summary += `<li><strong>${tableName}</strong>: erro ao contar</li>`;
+                        }
+                    }
+                    summary += '</ul>';
+                    addLog('Resumo do banco:' + summary, 'success');
+                }
+
+                db.close();
+                statusDiv.innerHTML = '<div class="status success">✅ Banco local está OK!</div>';
+
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">❌ ERRO ao carregar banco: ${error.message}</div>`;
+                addLog(`❌ Erro ao testar banco local: ${error.message}`, 'error');
+                console.error('Erro completo:', error);
+            }
+        }
+
+        // Executar teste automático ao carregar
+        window.addEventListener('load', () => {
+            addLog('Página carregada. Pronto para testar!', 'info');
+            
+            // Verificar se SQL.js está disponível
+            if (typeof initSqlJs !== 'undefined') {
+                document.getElementById('status').innerHTML = 
+                    '<div class="status success">✅ SQL.js carregado com sucesso!<br>Clique em "Testar SQL.js" para executar os testes.</div>';
+                addLog('✅ SQL.js detectado e pronto para uso', 'success');
+            } else {
+                document.getElementById('status').innerHTML = 
+                    '<div class="status error">❌ SQL.js NÃO foi carregado!<br>Verifique sua conexão com a internet.</div>';
+                addLog('❌ SQL.js não foi carregado', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Logout Android</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .box { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        button { padding: 15px 25px; font-size: 16px; margin: 5px; border: none; border-radius: 5px; width: 100%; cursor: pointer; }
+        .danger { background: #f44336; color: white; }
+        .primary { background: #2196F3; color: white; }
+        .success { background: #4CAF50; color: white; }
+        .log { background: #f9f9f9; padding: 10px; margin: 5px 0; border-left: 3px solid #2196F3; font-family: monospace; font-size: 12px; }
+        h1 { text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>🔓 Teste Logout Android</h1>
+    
+    <div class="box">
+        <h3>Status do Bridge:</h3>
+        <div id="bridgeStatus"></div>
+    </div>
+    
+    <div class="box">
+        <h3>Testes Disponíveis:</h3>
+        <button class="primary" onclick="verificarBridge()">1. Verificar AndroidBridge</button>
+        <button class="primary" onclick="testarClearCache()">2. Testar Clear Cache</button>
+        <button class="primary" onclick="testarReload()">3. Testar Force Reload</button>
+        <button class="danger" onclick="testarLogoutCompleto()">4. LOGOUT COMPLETO</button>
+    </div>
+    
+    <div class="box">
+        <h3>Estado Atual:</h3>
+        <button class="success" onclick="verificarLocalStorage()">Ver LocalStorage</button>
+    </div>
+    
+    <div class="box">
+        <h3>Logs:</h3>
+        <div id="logs"></div>
+    </div>
+    
+    <script>
+        function log(msg) {
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = 'log';
+            div.innerHTML = new Date().toLocaleTimeString() + ' - ' + msg;
+            logs.insertBefore(div, logs.firstChild);
+            console.log(msg);
+        }
+        
+        function verificarBridge() {
+            log('🔍 Verificando AndroidBridge...');
+            
+            const status = document.getElementById('bridgeStatus');
+            
+            if (typeof window.AndroidBridge === 'undefined') {
+                status.innerHTML = '<div style="color: #f44336;">❌ AndroidBridge NÃO encontrado!</div>';
+                log('❌ AndroidBridge não existe');
+                return false;
+            }
+            
+            const metodos = ['vibrate', 'showMessage', 'onLoginSuccess', 'forceReload', 'clearCache'];
+            let html = '<div style="color: #4CAF50;">✅ AndroidBridge OK!</div><ul>';
+            
+            metodos.forEach(metodo => {
+                const existe = typeof window.AndroidBridge[metodo] === 'function';
+                const icone = existe ? '✅' : '❌';
+                html += `<li>${icone} ${metodo}</li>`;
+                log(`${icone} Método ${metodo} ${existe ? 'encontrado' : 'NÃO encontrado'}`);
+            });
+            
+            html += '</ul>';
+            status.innerHTML = html;
+            return true;
+        }
+        
+        function testarClearCache() {
+            log('🗑️ Testando clearCache...');
+            
+            if (!window.AndroidBridge) {
+                log('❌ AndroidBridge não disponível');
+                alert('AndroidBridge não disponível!');
+                return;
+            }
+            
+            try {
+                window.AndroidBridge.clearCache();
+                log('✅ clearCache() chamado com sucesso!');
+                alert('✅ Cache limpo! Verifique os logs do Android.');
+            } catch (e) {
+                log('❌ Erro ao chamar clearCache: ' + e.message);
+                alert('❌ Erro: ' + e.message);
+            }
+        }
+        
+        function testarReload() {
+            log('🔄 Testando forceReload...');
+            
+            if (!window.AndroidBridge) {
+                log('❌ AndroidBridge não disponível');
+                alert('AndroidBridge não disponível!');
+                return;
+            }
+            
+            try {
+                log('⚠️ A página vai recarregar em 2 segundos...');
+                alert('A página vai recarregar!');
+                
+                setTimeout(() => {
+                    window.AndroidBridge.forceReload();
+                }, 2000);
+            } catch (e) {
+                log('❌ Erro ao chamar forceReload: ' + e.message);
+                alert('❌ Erro: ' + e.message);
+            }
+        }
+        
+        function testarLogoutCompleto() {
+            log('🔓 INICIANDO LOGOUT COMPLETO...');
+            
+            // 1. Limpar localStorage
+            log('🗑️ Limpando localStorage...');
+            localStorage.clear();
+            log('✅ LocalStorage limpo!');
+            
+            // 2. Limpar cache do Android (se disponível)
+            if (window.AndroidBridge) {
+                try {
+                    log('🗑️ Limpando cache do Android...');
+                    window.AndroidBridge.clearCache();
+                    log('✅ Cache do Android limpo!');
+                } catch (e) {
+                    log('❌ Erro ao limpar cache: ' + e.message);
+                }
+            }
+            
+            // 3. Forçar reload
+            log('🔄 Forçando reload em 1 segundo...');
+            
+            setTimeout(() => {
+                if (window.AndroidBridge) {
+                    try {
+                        window.AndroidBridge.forceReload();
+                    } catch (e) {
+                        log('❌ Erro ao recarregar: ' + e.message);
+                        window.location.reload();
+                    }
+                } else {
+                    window.location.reload();
+                }
+            }, 1000);
+        }
+        
+        function verificarLocalStorage() {
+            log('📦 Verificando localStorage...');
+            
+            const keys = ['app_token', 'app_user', 'app_cart'];
+            let found = false;
+            
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    log(`🔑 ${key}: ${value.substring(0, 50)}...`);
+                    found = true;
+                } else {
+                    log(`⭕ ${key}: (vazio)`);
+                }
+            });
+            
+            if (!found) {
+                log('✅ LocalStorage está limpo!');
+            }
+        }
+        
+        // Auto-verificar ao carregar
+        setTimeout(() => {
+            log('🚀 Página carregada');
+            verificarBridge();
+            verificarLocalStorage();
+        }, 500);
+    </script>
+</body>
+</html>

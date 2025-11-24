@@ -1,0 +1,602 @@
+{
+  "info": {
+    "name": "MyD Bar & Restaurantes API",
+    "description": "Collection completa das APIs do sistema MyD Bar & Restaurantes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🔐 Autenticação",
+      "item": [
+        {
+          "name": "Registrar Usuário",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nome\": \"Teste API\",\n    \"email\": \"teste@api.com\",\n    \"password\": \"123456\",\n    \"tipo\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('token', response.token);",
+                  "    pm.test('Token obtido', () => {",
+                  "        pm.expect(response.token).to.be.a('string');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"teste@api.com\",\n    \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('token', response.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verificar Usuário",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📦 Produtos",
+      "item": [
+        {
+          "name": "Listar Produtos (Público)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos-public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "produtos-public"]
+            }
+          }
+        },
+        {
+          "name": "Buscar Produtos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos-public?search=hamburguer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "produtos-public"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "hamburguer"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar Produto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nome\": \"Pizza Margherita\",\n    \"descricao\": \"Pizza com molho de tomate, mozzarella e manjericão\",\n    \"preco\": 32.90,\n    \"categoria_id\": 1,\n    \"disponivel\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "produtos"]
+            }
+          }
+        },
+        {
+          "name": "Alternar Status Produto",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos/1/toggle-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "produtos", "1", "toggle-status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏷️ Categorias",
+      "item": [
+        {
+          "name": "Listar Categorias (Público)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categorias-public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categorias-public"]
+            }
+          }
+        },
+        {
+          "name": "Criar Categoria",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nome\": \"Pizzas\",\n    \"descricao\": \"Pizzas tradicionais e especiais\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/categorias",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categorias"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🪑 Mesas",
+      "item": [
+        {
+          "name": "Listar Mesas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/mesas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mesas"]
+            }
+          }
+        },
+        {
+          "name": "Criar Mesa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"numero\": 10,\n    \"capacidade\": 6,\n    \"status\": \"livre\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/mesas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mesas"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 Pedidos",
+      "item": [
+        {
+          "name": "Listar Pedidos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pedidos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pedidos"]
+            }
+          }
+        },
+        {
+          "name": "Criar Pedido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"mesa_id\": 1,\n    \"observacoes\": \"Cliente alérgico a amendoim\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pedidos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pedidos"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('pedido_id', response.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Adicionar Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"pedido_id\": {{pedido_id}},\n    \"produto_id\": 1,\n    \"quantidade\": 2,\n    \"observacoes\": \"Sem cebola\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/item-pedidos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "item-pedidos"]
+            }
+          }
+        },
+        {
+          "name": "Adicionar Múltiplos Itens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"pedido_id\": {{pedido_id}},\n    \"itens\": [\n        {\n            \"produto_id\": 1,\n            \"quantidade\": 2,\n            \"observacoes\": \"Bem passado\"\n        },\n        {\n            \"produto_id\": 3,\n            \"quantidade\": 1,\n            \"observacoes\": \"Gelado\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/item-pedidos/multiplos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "item-pedidos", "multiplos"]
+            }
+          }
+        },
+        {
+          "name": "Finalizar Pedido",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pedidos/{{pedido_id}}/finalizar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pedidos", "{{pedido_id}}", "finalizar"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Caixa & Pagamentos",
+      "item": [
+        {
+          "name": "Status do Caixa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/caixa/api/totais-tempo-real",
+              "host": ["{{baseUrl}}"],
+              "path": ["caixa", "api", "totais-tempo-real"]
+            }
+          }
+        },
+        {
+          "name": "Pagamento Simples",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"forma_pagamento\": \"dinheiro\",\n    \"valor_recebido\": 50.00,\n    \"observacoes\": \"Troco de R$ 15,50\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/caixa/processar-pagamento/{{pedido_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["caixa", "processar-pagamento", "{{pedido_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Múltiplos Pagamentos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"multiplos_pagamentos\": \"[{\\\"forma_pagamento\\\":\\\"dinheiro\\\",\\\"valor\\\":20.00},{\\\"forma_pagamento\\\":\\\"cartao_credito\\\",\\\"valor\\\":15.50}]\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/caixa/processar-pagamento/{{pedido_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["caixa", "processar-pagamento", "{{pedido_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Dashboard & Relatórios",
+      "item": [
+        {
+          "name": "Estatísticas Gerais",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Pedidos por Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/pedidos-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "pedidos-status"]
+            }
+          }
+        },
+        {
+          "name": "Produtos Mais Vendidos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/produtos-vendidos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "produtos-vendidos"]
+            }
+          }
+        },
+        {
+          "name": "Relatório de Vendas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/relatorios/vendas?data_inicio=2025-11-01&data_fim=2025-11-11",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "relatorios", "vendas"],
+              "query": [
+                {
+                  "key": "data_inicio",
+                  "value": "2025-11-01"
+                },
+                {
+                  "key": "data_fim",
+                  "value": "2025-11-11"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👨‍🍳 Modo Garçom",
+      "item": [
+        {
+          "name": "Dashboard Garçom",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/garcom/dashboard-data",
+              "host": ["{{baseUrl}}"],
+              "path": ["garcom", "dashboard-data"]
+            }
+          }
+        },
+        {
+          "name": "Buscar Produtos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/garcom/buscar-produtos?q=hamburguer",
+              "host": ["{{baseUrl}}"],
+              "path": ["garcom", "buscar-produtos"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "hamburguer"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Info Pagamento Mesa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/garcom/mesas/1/info-pagamento",
+              "host": ["{{baseUrl}}"],
+              "path": ["garcom", "mesas", "1", "info-pagamento"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧪 Debug & Testes",
+      "item": [
+        {
+          "name": "Teste Simples",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test-simple",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test-simple"]
+            }
+          }
+        },
+        {
+          "name": "Debug Pedido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/debug-pedido/{{pedido_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "debug-pedido", "{{pedido_id}}"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Testes globais",
+          "pm.test('Status code is success', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 202, 204]);",
+          "});",
+          "",
+          "pm.test('Response has valid JSON', function () {",
+          "    pm.response.to.have.jsonBody();",
+          "});"
+        ]
+      }
+    }
+  ]
+}

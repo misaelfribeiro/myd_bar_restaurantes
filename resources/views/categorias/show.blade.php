@@ -1,572 +1,259 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $categoria->nome }} - Sistema Bar/Restaurante</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .navbar-glass {
-            background: rgba(255, 255, 255, 0.1) !important;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .navbar-glass .navbar-brand,
-        .navbar-glass .nav-link {
-            color: white !important;
-            font-weight: 600;
-        }
-        
-        .hero-section {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            margin: 20px 0;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            text-align: center;
-        }
-        
-        .detail-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        
-        .categoria-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid rgba(99, 102, 241, 0.1);
-        }
-        
-        .categoria-icon-large {
-            width: 80px;
-            height: 80px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 2rem;
-            margin-right: 20px;
-        }
-        
-        .categoria-info h1 {
-            margin: 0;
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #1f2937;
-        }
-        
-        .categoria-desc {
-            color: #6b7280;
-            font-size: 1.1rem;
-            margin: 10px 0 0 0;
-        }
-        
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin: 25px 0;
-        }
-        
-        .stat-box {
-            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-        
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        
-        .produtos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 25px;
-        }
-        
-        .produto-card {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .produto-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            border-color: #6366f1;
-        }
-        
-        .produto-image {
-            width: 100%;
-            height: 120px;
-            border-radius: 10px;
-            object-fit: cover;
-            margin-bottom: 15px;
-        }
-        
-        .produto-placeholder {
-            width: 100%;
-            height: 120px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #e5e7eb, #d1d5db);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-            color: #6b7280;
-            font-size: 1.5rem;
-        }
-        
-        .produto-name {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 8px;
-        }
-        
-        .produto-price {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #059669;
-            margin-bottom: 10px;
-        }
-        
-        .produto-status {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 4px 8px;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .status-ativo { background: #dcfce7; color: #166534; }
-        .status-inativo { background: #fee2e2; color: #991b1b; }
-        
-        .produto-actions {
-            display: flex;
-            gap: 5px;
-            justify-content: flex-end;
-        }
-        
-        .btn-sm-custom {
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            border: none;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-view { background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; }
-        .btn-edit { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
-        
-        .btn-gradient {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border: none;
-            color: white;
-            font-weight: 600;
-            padding: 12px 24px;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-gradient:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
-            color: white;
-        }
-        
-        .btn-outline-gradient {
-            background: transparent;
-            border: 2px solid #6366f1;
-            color: #6366f1;
-            font-weight: 600;
-            padding: 10px 22px;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline-gradient:hover {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-            transform: translateY(-2px);
-        }
-        
-        .empty-produtos {
-            text-align: center;
-            padding: 60px 20px;
-            color: #6b7280;
-            grid-column: 1 / -1;
-        }
-        
-        .empty-produtos i {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-        
-        .categoria-meta {
-            background: rgba(99, 102, 241, 0.05);
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 20px;
-        }
-        
-        .meta-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-            color: #6b7280;
-        }
-        
-        .meta-item:last-child {
-            margin-bottom: 0;
-        }
-        
-        .meta-item i {
-            margin-right: 8px;
-            width: 16px;
-        }
-        
-        @media (max-width: 768px) {
-            .categoria-header {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .categoria-icon-large {
-                margin-right: 0;
-                margin-bottom: 15px;
-            }
-            
-            .categoria-info h1 {
-                font-size: 1.8rem;
-            }
-            
-            .stats-row {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .produtos-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-glass">
-        <div class="container">
-            <a class="navbar-brand" href="{{ route('dashboard') }}">
-                <i class="fas fa-utensils me-2"></i>
-                Sistema Bar/Restaurante
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ route('dashboard') }}">
-                    <i class="fas fa-home me-1"></i>Dashboard
-                </a>
-                <a class="nav-link" href="{{ route('categorias.index') }}">
-                    <i class="fas fa-tags me-1"></i>Categorias
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container">
-        <!-- Hero Section -->
-        <div class="hero-section">
-            <h1>
-                <i class="fas fa-tag me-3"></i>
-                Detalhes da Categoria
-            </h1>
-            <p class="lead mb-0">
-                Visualize todos os produtos desta categoria
-            </p>
-        </div>
-
-        <!-- Cabeçalho da Categoria -->
-        <div class="detail-card">
-            <div class="categoria-header">
-                <div class="categoria-icon-large">
-                    <i class="fas fa-tag"></i>
-                </div>
-                <div class="categoria-info">
-                    <h1>{{ $categoria->nome }}</h1>
-                    @if($categoria->descricao)
-                        <p class="categoria-desc">{{ $categoria->descricao }}</p>
-                    @else
-                        <p class="categoria-desc text-muted fst-italic">Esta categoria não possui descrição</p>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Estatísticas -->
-            <div class="stats-row">
-                <div class="stat-box">
-                    <div class="stat-number text-primary">{{ $categoria->produtos->count() }}</div>
-                    <div class="text-muted">Total de Produtos</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number text-success">{{ $categoria->produtos->where('ativo', true)->count() }}</div>
-                    <div class="text-muted">Produtos Ativos</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number text-warning">{{ $categoria->produtos->where('ativo', false)->count() }}</div>
-                    <div class="text-muted">Produtos Inativos</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number text-info">
-                        @if($categoria->produtos->count() > 0)
-                            R$ {{ number_format($categoria->produtos->avg('preco'), 2, ',', '.') }}
-                        @else
-                            R$ 0,00
-                        @endif
-                    </div>
-                    <div class="text-muted">Preço Médio</div>
-                </div>
-            </div>
-
-            <!-- Meta Informações -->
-            <div class="categoria-meta">
-                <div class="meta-item">
-                    <i class="fas fa-calendar-plus"></i>
-                    <span>Criado em {{ $categoria->created_at->format('d/m/Y \à\s H:i') }}</span>
-                </div>
-                @if($categoria->updated_at != $categoria->created_at)
-                    <div class="meta-item">
-                        <i class="fas fa-calendar-edit"></i>
-                        <span>Última atualização em {{ $categoria->updated_at->format('d/m/Y \à\s H:i') }}</span>
-                    </div>
-                @endif
-                <div class="meta-item">
-                    <i class="fas fa-hashtag"></i>
-                    <span>ID da categoria: {{ $categoria->id }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Produtos da Categoria -->
-        <div class="detail-card">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="mb-0">
-                    <i class="fas fa-box me-2"></i>
-                    Produtos desta Categoria
-                </h5>
-                <a href="{{ route('produtos.create') }}" class="btn btn-outline-gradient btn-sm">
-                    <i class="fas fa-plus me-1"></i>
-                    Adicionar Produto
-                </a>
-            </div>
-
-            <div class="produtos-grid">
-                @forelse($categoria->produtos as $produto)
-                    <div class="produto-card">
-                        <div class="produto-status status-{{ $produto->ativo ? 'ativo' : 'inativo' }}">
-                            {{ $produto->ativo ? 'Ativo' : 'Inativo' }}
-                        </div>
-                        
-                        @if($produto->imagem)
-                            <img src="{{ asset('storage/' . $produto->imagem) }}" 
-                                 alt="{{ $produto->nome }}" class="produto-image">
-                        @else
-                            <div class="produto-placeholder">
-                                <i class="fas fa-image"></i>
-                            </div>
-                        @endif
-                        
-                        <div class="produto-name">{{ $produto->nome }}</div>
-                        <div class="produto-price">R$ {{ number_format($produto->preco, 2, ',', '.') }}</div>
-                        
-                        @if($produto->descricao)
-                            <p class="text-muted small mb-2">{{ Str::limit($produto->descricao, 80) }}</p>
-                        @endif
-                        
-                        <div class="produto-actions">
-                            <a href="{{ route('produtos.show', $produto) }}" 
-                               class="btn btn-view btn-sm-custom" 
-                               title="Visualizar">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="{{ route('produtos.edit', $produto) }}" 
-                               class="btn btn-edit btn-sm-custom" 
-                               title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                        </div>
-                    </div>
-                @empty
-                    <div class="empty-produtos">
-                        <i class="fas fa-box-open"></i>
-                        <h4>Nenhum produto nesta categoria</h4>
-                        <p>Esta categoria ainda não possui produtos cadastrados</p>
-                        <a href="{{ route('produtos.create') }}" class="btn btn-gradient mt-3">
-                            <i class="fas fa-plus me-2"></i>
-                            Adicionar Primeiro Produto
-                        </a>
-                    </div>
-                @endforelse
-            </div>
-        </div>
-
-        <!-- Ações -->
-        <div class="detail-card">
-            <div class="row">
-                <div class="col-md-6">
-                    <h6 class="mb-3">
-                        <i class="fas fa-cogs me-2"></i>
-                        Ações da Categoria
-                    </h6>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <a href="{{ route('categorias.index') }}" class="btn btn-outline-gradient">
-                            <i class="fas fa-arrow-left me-2"></i>
-                            Voltar à Lista
-                        </a>
-                        <a href="{{ route('categorias.edit', $categoria) }}" class="btn btn-gradient">
-                            <i class="fas fa-edit me-2"></i>
-                            Editar Categoria
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <h6 class="mb-3">
-                        <i class="fas fa-tools me-2"></i>
-                        Ações Rápidas
-                    </h6>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <a href="{{ route('produtos.create') }}" class="btn btn-outline-primary">
-                            <i class="fas fa-plus me-1"></i>
-                            Novo Produto
-                        </a>
-                        @if($categoria->produtos->count() == 0)
-                            <button onclick="deleteCategoria()" class="btn btn-outline-danger">
-                                <i class="fas fa-trash me-1"></i>
-                                Excluir Categoria
-                            </button>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Confirmação -->
-    <div class="modal fade" id="deleteModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Confirmar Exclusão
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Tem certeza que deseja excluir a categoria "{{ $categoria->nome }}"?</p>
-                    <p class="text-danger">
-                        <i class="fas fa-warning me-1"></i>
-                        Esta ação não pode ser desfeita.
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>
-                        Cancelar
-                    </button>
-                    <button type="button" class="btn btn-danger" id="confirmDelete">
-                        <i class="fas fa-trash me-1"></i>
-                        Excluir Categoria
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function deleteCategoria() {
-            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            modal.show();
-        }
-
-        document.getElementById('confirmDelete').addEventListener('click', async function() {
-            try {
-                const response = await fetch(`/categorias/{{ $categoria->id }}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    window.location.href = '/categorias';
-                } else {
-                    const data = await response.json();
-                    alert('Erro ao excluir categoria: ' + (data.error || 'Erro desconhecido'));
-                }
-            } catch (error) {
-                console.error('Erro:', error);
-                alert('Erro ao excluir categoria');
-            }
-
-            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
-        });
-
-        // Animação dos cartões ao carregar
-        document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.produto-card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    card.style.transition = 'all 0.5s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
-
-            // Animação das estatísticas
-            const stats = document.querySelectorAll('.stat-number');
-            stats.forEach((stat, index) => {
-                setTimeout(() => {
-                    stat.style.transform = 'scale(1.1)';
-                    setTimeout(() => {
-                        stat.style.transform = 'scale(1)';
-                    }, 200);
-                }, index * 150);
-            });
-        });
-    </script>
-</body>
-</html>
+@extends('layouts.app')
+@section('title', 'Categoria: ' . $categoria->nome)
+@section('content')
+<div class="container-fluid">
+ <div class="page-header">
+ <div class="d-flex justify-content-between align-items-center">
+ <div>
+ <h1 class="page-title">
+ <i class="fas fa-tag me-2"></i>
+ {{ $categoria->nome }}
+ </h1>
+ <p class="page-subtitle">Categoria de produtos</p>
+ </div>
+ <div class="btn-group">
+ <a href="{{ route('categorias.edit', $categoria->id) }}" class="btn btn-warning">
+ <i class="fas fa-edit me-2"></i>
+ Editar
+ </a>
+ <a href="{{ route('categorias.index') }}" class="btn btn-secondary">
+ <i class="fas fa-arrow-left me-2"></i>
+ Voltar
+ </a>
+ </div>
+ </div>
+ </div>
+ <div class="row">
+ <!-- Informações da Categoria -->
+ <div class="col-lg-4 mb-4">
+ <div class="card">
+ <div class="card-header">
+ <h5 class="card-title mb-0">
+ <i class="fas fa-info-circle me-2"></i>
+ Informações da Categoria
+ </h5>
+ </div>
+ <div class="card-body">
+ <div class="mb-3">
+ <label class="form-label text-muted small">Nome</label>
+ <div class="fw-bold">{{ $categoria->nome }}</div>
+ </div>
+ @if($categoria->descricao)
+ <div class="mb-3">
+ <label class="form-label text-muted small">Descrição</label>
+ <div>{{ $categoria->descricao }}</div>
+ </div>
+ @endif
+ <div class="mb-3">
+ <label class="form-label text-muted small">Criada em</label>
+ <div>{{ $categoria->created_at->format('d/m/Y H:i') }}</div>
+ </div>
+ @if($categoria->updated_at != $categoria->created_at)
+ <div class="mb-3">
+ <label class="form-label text-muted small">Última atualização</label>
+ <div>{{ $categoria->updated_at->format('d/m/Y H:i') }}</div>
+ </div>
+ @endif
+ <div class="mb-3">
+ <label class="form-label text-muted small">Total de produtos</label>
+ <div class="fw-bold text-primary">{{ $categoria->produtos->count() }} produtos</div>
+ </div>
+ <div class="mb-3">
+ <label class="form-label text-muted small">Produtos ativos</label>
+ <div class="fw-bold text-success">{{ $categoria->produtos->where('ativo', true)->count() }} ativos</div>
+ </div>
+ @if($categoria->produtos->where('ativo', false)->count() > 0)
+ <div>
+ <label class="form-label text-muted small">Produtos inativos</label>
+ <div class="fw-bold text-warning">{{ $categoria->produtos->where('ativo', false)->count() }} inativos</div>
+ </div>
+ @endif
+ </div>
+ </div>
+ </div>
+ <!-- Lista de Produtos -->
+ <div class="col-lg-8">
+ <div class="card">
+ <div class="card-header d-flex justify-content-between align-items-center">
+ <h5 class="card-title mb-0">
+ <i class="fas fa-box me-2"></i>
+ Produtos desta Categoria
+ </h5>
+ <a href="{{ route('produtos.create') }}?categoria_id={{ $categoria->id }}" class="btn btn-primary btn-sm">
+ <i class="fas fa-plus me-2"></i>
+ Novo Produto
+ </a>
+ </div>
+ <div class="card-body">
+ @if($categoria->produtos->count() > 0)
+ <!-- Filtros -->
+ <div class="row mb-4">
+ <div class="col-md-6">
+ <input type="text" 
+ class="form-control" 
+ id="searchProduto" 
+ placeholder="Buscar produtos..."
+ onkeyup="filterProducts()">
+ </div>
+ <div class="col-md-6">
+ <select class="form-select" id="statusFilter" onchange="filterProducts()">
+ <option value="">Todos os status</option>
+ <option value="ativo">Apenas ativos</option>
+ <option value="inativo">Apenas inativos</option>
+ </select>
+ </div>
+ </div>
+ <!-- Grid de Produtos -->
+ <div class="row" id="produtosGrid">
+ @foreach($categoria->produtos as $produto)
+ <div class="col-lg-6 col-xl-4 mb-4 produto-item" 
+ data-nome="{{ strtolower($produto->nome) }}" 
+ data-status="{{ $produto->ativo ? 'ativo' : 'inativo' }}">
+ <div class="card h-100">
+ <div class="card-body">
+ <div class="d-flex justify-content-between align-items-start mb-2">
+ <h6 class="card-title mb-0">{{ $produto->nome }}</h6>
+ <span class="badge bg-{{ $produto->ativo ? 'success' : 'secondary' }}">
+ {{ $produto->ativo ? 'Ativo' : 'Inativo' }}
+ </span>
+ </div>
+ @if($produto->descricao)
+ <p class="card-text text-muted small">
+ {{ Str::limit($produto->descricao, 80) }}
+ </p>
+ @endif
+ <div class="row">
+ <div class="col-6">
+ <small class="text-muted">Preço</small>
+ <div class="fw-bold text-success">
+ R$ {{ number_format($produto->preco, 2, ',', '.') }}
+ </div>
+ </div>
+ @if($produto->codigo)
+ <div class="col-6">
+ <small class="text-muted">Código</small>
+ <div class="fw-bold">{{ $produto->codigo }}</div>
+ </div>
+ @endif
+ </div>
+ <div class="mt-3 d-flex gap-2">
+ <a href="{{ route('produtos.show', $produto->id) }}" 
+ class="btn btn-outline-primary btn-sm">
+ <i class="fas fa-eye"></i>
+ </a>
+ <a href="{{ route('produtos.edit', $produto->id) }}" 
+ class="btn btn-outline-warning btn-sm">
+ <i class="fas fa-edit"></i>
+ </a>
+ </div>
+ </div>
+ </div>
+ </div>
+ @endforeach
+ </div>
+ <!-- Resultado vazio da busca -->
+ <div id="emptySearch" class="text-center text-muted py-4" style="display: none;">
+ <i class="fas fa-search fa-2x mb-3"></i>
+ <h5>Nenhum produto encontrado</h5>
+ <p>Tente alterar os filtros de busca</p>
+ </div>
+ @else
+ <!-- Estado vazio -->
+ <div class="text-center text-muted py-5">
+ <i class="fas fa-box fa-3x mb-3"></i>
+ <h5>Nenhum produto cadastrado</h5>
+ <p>Esta categoria ainda não possui produtos.</p>
+ <a href="{{ route('produtos.create') }}?categoria_id={{ $categoria->id }}" 
+ class="btn btn-primary mt-3">
+ <i class="fas fa-plus me-2"></i>
+ Cadastrar Primeiro Produto
+ </a>
+ </div>
+ @endif
+ </div>
+ </div>
+ </div>
+ </div>
+ <!-- Estatísticas Adicionais -->
+ @if($categoria->produtos->count() > 0)
+ <div class="row mt-4">
+ <div class="col-12">
+ <div class="card">
+ <div class="card-header">
+ <h6 class="card-title mb-0">
+ <i class="fas fa-chart-bar me-2"></i>
+ Estatísticas da Categoria
+ </h6>
+ </div>
+ <div class="card-body">
+ <div class="row text-center">
+ <div class="col-md-3">
+ <div class="border-end">
+ <h4 class="text-primary mb-0">{{ $categoria->produtos->count() }}</h4>
+ <small class="text-muted">Total de Produtos</small>
+ </div>
+ </div>
+ <div class="col-md-3">
+ <div class="border-end">
+ <h4 class="text-success mb-0">{{ $categoria->produtos->where('ativo', true)->count() }}</h4>
+ <small class="text-muted">Produtos Ativos</small>
+ </div>
+ </div>
+ <div class="col-md-3">
+ <div class="border-end">
+ <h4 class="text-success mb-0">
+ R$ {{ number_format($categoria->produtos->where('ativo', true)->avg('preco') ?? 0, 2, ',', '.') }}
+ </h4>
+ <small class="text-muted">Preço Médio</small>
+ </div>
+ </div>
+ <div class="col-md-3">
+ <h4 class="text-info mb-0">
+ R$ {{ number_format($categoria->produtos->where('ativo', true)->sum('preco'), 2, ',', '.') }}
+ </h4>
+ <small class="text-muted">Valor Total Catálogo</small>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ @endif
+</div>
+@endsection
+@push('scripts')
+<script>
+function filterProducts() {
+ const searchTerm = document.getElementById('searchProduto').value.toLowerCase();
+ const statusFilter = document.getElementById('statusFilter').value;
+ const items = document.querySelectorAll('.produto-item');
+ let visibleCount = 0;
+ items.forEach(item => {
+ const nome = item.dataset.nome;
+ const status = item.dataset.status;
+ let show = true;
+ if (searchTerm && !nome.includes(searchTerm)) {
+ show = false;
+ }
+ if (statusFilter && status !== statusFilter) {
+ show = false;
+ }
+ if (show) {
+ item.style.display = 'block';
+ visibleCount++;
+ } else {
+ item.style.display = 'none';
+ }
+ });
+ const emptySearch = document.getElementById('emptySearch');
+ const produtosGrid = document.getElementById('produtosGrid');
+ if (visibleCount === 0 && items.length > 0) {
+ emptySearch.style.display = 'block';
+ produtosGrid.style.display = 'none';
+ } else {
+ emptySearch.style.display = 'none';
+ produtosGrid.style.display = 'block';
+ }
+}
+</script>
+@endpush

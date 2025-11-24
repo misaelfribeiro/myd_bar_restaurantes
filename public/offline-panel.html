@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Offline - MyD Bar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        .btn-sync {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+        }
+        .status-badge {
+            font-size: 1.2rem;
+            padding: 10px 20px;
+            border-radius: 25px;
+        }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12 text-center text-white">
+                <h1><i class="fas fa-database me-2"></i>Painel de Controle Offline</h1>
+                <p>Gerencie seu banco de dados local e sincronizações</p>
+            </div>
+        </div>
+
+        <!-- Status Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="stat-card text-center">
+                    <i class="fas fa-wifi fa-3x mb-3"></i>
+                    <div class="stat-number" id="status-online">--</div>
+                    <div>Status da Conexão</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card text-center">
+                    <i class="fas fa-database fa-3x mb-3"></i>
+                    <div class="stat-number" id="status-db">--</div>
+                    <div>Banco de Dados</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card text-center">
+                    <i class="fas fa-sync-alt fa-3x mb-3"></i>
+                    <div class="stat-number" id="status-pending">0</div>
+                    <div>Itens Pendentes</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <button class="btn btn-sync btn-lg me-2" onclick="sincronizar()">
+                    <i class="fas fa-sync-alt me-2"></i>Sincronizar Agora
+                </button>
+                <button class="btn btn-light btn-lg me-2" onclick="atualizarDados()">
+                    <i class="fas fa-refresh me-2"></i>Atualizar Dados
+                </button>
+                <button class="btn btn-danger btn-lg" onclick="limparBanco()">
+                    <i class="fas fa-trash me-2"></i>Limpar Banco
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center p-3">
+                    <i class="fas fa-tags fa-2x text-primary mb-2"></i>
+                    <h3 id="count-categorias">0</h3>
+                    <small>Categorias</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center p-3">
+                    <i class="fas fa-utensils fa-2x text-success mb-2"></i>
+                    <h3 id="count-produtos">0</h3>
+                    <small>Produtos</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center p-3">
+                    <i class="fas fa-table fa-2x text-warning mb-2"></i>
+                    <h3 id="count-mesas">0</h3>
+                    <small>Mesas</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center p-3">
+                    <i class="fas fa-shopping-cart fa-2x text-danger mb-2"></i>
+                    <h3 id="count-pedidos">0</h3>
+                    <small>Pedidos</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sync Log -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-list me-2"></i>Log de Sincronização</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="table table-hover" id="sync-log-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Tabela</th>
+                                        <th>Ação</th>
+                                        <th>Status</th>
+                                        <th>Data</th>
+                                        <th>Erro</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sync-log-body">
+                                    <tr>
+                                        <td colspan="6" class="text-center">Carregando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Area -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-flask me-2"></i>Área de Testes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <button class="btn btn-primary w-100 mb-2" onclick="testarCriarPedido()">
+                                    <i class="fas fa-plus me-2"></i>Criar Pedido Teste
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-success w-100 mb-2" onclick="testarPagamento()">
+                                    <i class="fas fa-dollar-sign me-2"></i>Criar Pagamento Teste
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-warning w-100 mb-2" onclick="verConsole()">
+                                    <i class="fas fa-terminal me-2"></i>Ver Console
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://sql.js.org/dist/sql-wasm.js"></script>
+    <script src="../js/local-database.js"></script>
+    <script src="../js/garcom-offline-helper.js"></script>
+
+    <script>
+        let updateInterval;
+
+        // Atualizar status
+        async function atualizarStatus() {
+            // Status de conexão
+            const statusOnline = navigator.onLine;
+            document.getElementById('status-online').innerHTML = statusOnline 
+                ? '<i class="fas fa-check-circle"></i> Online' 
+                : '<i class="fas fa-times-circle"></i> Offline';
+
+            // Aguardar banco estar pronto
+            if (!window.localDB || !window.localDB.isInitialized) {
+                document.getElementById('status-db').textContent = 'Carregando...';
+                return;
+            }
+
+            document.getElementById('status-db').innerHTML = '<i class="fas fa-check-circle"></i> Pronto';
+
+            // Estatísticas
+            const stats = window.localDB.getStats();
+            document.getElementById('status-pending').textContent = stats.pendentes;
+
+            // Contadores
+            const categorias = window.localDB.getCategorias();
+            const produtos = window.localDB.getProdutos();
+            const mesas = window.localDB.getMesas();
+            const pedidos = window.localDB.query('SELECT * FROM pedidos');
+
+            document.getElementById('count-categorias').textContent = categorias.length;
+            document.getElementById('count-produtos').textContent = produtos.length;
+            document.getElementById('count-mesas').textContent = mesas.length;
+            document.getElementById('count-pedidos').textContent = pedidos.length;
+
+            // Log de sincronização
+            const logs = window.localDB.query('SELECT * FROM sync_log ORDER BY created_at DESC LIMIT 50');
+            const tbody = document.getElementById('sync-log-body');
+            
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum log de sincronização</td></tr>';
+            } else {
+                tbody.innerHTML = logs.map(log => `
+                    <tr>
+                        <td>${log.id}</td>
+                        <td><span class="badge bg-secondary">${log.tabela}</span></td>
+                        <td><span class="badge bg-info">${log.acao}</span></td>
+                        <td>
+                            ${log.status === 'pendente' ? '<span class="badge bg-warning">Pendente</span>' : 
+                              log.status === 'sincronizado' ? '<span class="badge bg-success">Sincronizado</span>' : 
+                              '<span class="badge bg-danger">Erro</span>'}
+                        </td>
+                        <td><small>${log.created_at ? new Date(log.created_at).toLocaleString('pt-BR') : '-'}</small></td>
+                        <td><small class="text-danger">${log.erro || '-'}</small></td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Sincronizar
+        async function sincronizar() {
+            if (!navigator.onLine) {
+                alert('Você está offline. Conecte-se à internet para sincronizar.');
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sincronizando...';
+
+            const result = await window.localDB.sincronizarComServidor();
+
+            if (result.success) {
+                alert('Sincronização concluída com sucesso!');
+            } else {
+                alert('Erro na sincronização: ' + result.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Sincronizar Agora';
+            
+            await atualizarStatus();
+        }
+
+        // Atualizar dados
+        function atualizarDados() {
+            atualizarStatus();
+        }
+
+        // Limpar banco
+        function limparBanco() {
+            if (confirm('Tem certeza que deseja limpar TODO o banco local? Esta ação não pode ser desfeita!')) {
+                localStorage.removeItem('myd_bar_local.db');
+                alert('Banco local limpo! Recarregando página...');
+                location.reload();
+            }
+        }
+
+        // Testar criar pedido
+        async function testarCriarPedido() {
+            const pedidoId = await criarPedidoLocal(1, [
+                {
+                    produto_id: 1,
+                    quantidade: 2,
+                    preco_unitario: 15.50,
+                    observacoes: 'Teste do painel'
+                }
+            ], 'Pedido de teste criado pelo painel');
+
+            alert('Pedido criado com ID: ' + pedidoId);
+            await atualizarStatus();
+        }
+
+        // Testar pagamento
+        async function testarPagamento() {
+            const pedidos = window.localDB.query('SELECT * FROM pedidos WHERE status != ? LIMIT 1', ['finalizado']);
+            
+            if (pedidos.length === 0) {
+                alert('Crie um pedido primeiro!');
+                return;
+            }
+
+            const pedidoId = pedidos[0].id;
+            const pagamentoId = await registrarPagamentoLocal(pedidoId, 'dinheiro', 39.00, 50.00, 11.00);
+
+            alert('Pagamento criado com ID: ' + pagamentoId);
+            await atualizarStatus();
+        }
+
+        // Ver console
+        function verConsole() {
+            console.log('=== STATUS DO SISTEMA ===');
+            verificarStatus();
+            
+            console.log('\n=== DADOS LOCAIS ===');
+            console.table(window.localDB.getCategorias());
+            console.table(window.localDB.getProdutos());
+            console.table(window.localDB.getMesas());
+            
+            alert('Informações exibidas no console (F12)');
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                atualizarStatus();
+                updateInterval = setInterval(atualizarStatus, 5000);
+            }, 2000);
+        });
+
+        // Limpar intervalo ao sair
+        window.addEventListener('beforeunload', () => {
+            clearInterval(updateInterval);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Simples</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #000;
+            color: #0f0;
+        }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+    </style>
+</head>
+<body>
+    <h1>Teste SQL.js</h1>
+    <div id="output"></div>
+
+    <script src="/libs/sql-wasm.js"></script>
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(msg, isError = false) {
+            const p = document.createElement('p');
+            p.className = isError ? 'error' : 'success';
+            p.textContent = msg;
+            output.appendChild(p);
+            console.log(msg);
+        }
+
+        async function testar() {
+            try {
+                log('1. Verificando initSqlJs...');
+                
+                if (typeof initSqlJs === 'undefined') {
+                    log('❌ initSqlJs não está definido!', true);
+                    
+                    // Aguardar
+                    log('Aguardando 5 segundos...');
+                    await new Promise(r => setTimeout(r, 5000));
+                    
+                    if (typeof initSqlJs === 'undefined') {
+                        log('❌ SQL.js não carregou após 5 segundos', true);
+                        return;
+                    }
+                }
+                
+                log('✅ initSqlJs encontrado!');
+                log('');
+                
+                log('2. Inicializando SQL.js...');
+                const SQL = await initSqlJs({
+                    locateFile: file => `/libs/${file}`
+                });
+                log('✅ SQL.js inicializado!');
+                log('');
+                
+                log('3. Criando banco...');
+                const db = new SQL.Database();
+                log('✅ Banco criado!');
+                log('');
+                
+                log('4. Criando tabela...');
+                db.run('CREATE TABLE teste (id INTEGER PRIMARY KEY, nome TEXT)');
+                log('✅ Tabela criada!');
+                log('');
+                
+                log('5. Inserindo dados...');
+                db.run('INSERT INTO teste (nome) VALUES (?)', ['Teste 1']);
+                db.run('INSERT INTO teste (nome) VALUES (?)', ['Teste 2']);
+                log('✅ Dados inseridos!');
+                log('');
+                
+                log('6. Consultando...');
+                const result = db.exec('SELECT * FROM teste');
+                log(`✅ ${result[0].values.length} registros encontrados!`);
+                log('');
+                
+                log('7. Testando localStorage...');
+                const data = db.export();
+                localStorage.setItem('teste_db', JSON.stringify(Array.from(data)));
+                log(`✅ Salvo! (${data.length} bytes)`);
+                log('');
+                
+                log('8. Carregando do localStorage...');
+                const saved = JSON.parse(localStorage.getItem('teste_db'));
+                const db2 = new SQL.Database(new Uint8Array(saved));
+                const result2 = db2.exec('SELECT * FROM teste');
+                log(`✅ ${result2[0].values.length} registros carregados!`);
+                log('');
+                
+                log('🎉 TODOS OS TESTES PASSARAM!');
+                log('SQL.js está funcionando PERFEITAMENTE!');
+                
+                db.close();
+                db2.close();
+                localStorage.removeItem('teste_db');
+                
+            } catch (error) {
+                log(`❌ ERRO: ${error.message}`, true);
+                log(`Stack: ${error.stack}`, true);
+            }
+        }
+
+        window.addEventListener('load', () => {
+            log('Página carregada. Iniciando testes em 1 segundo...');
+            log('');
+            setTimeout(testar, 1000);
+        });
+    </script>
+</body>
+</html>

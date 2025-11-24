@@ -1,0 +1,16 @@
+﻿{
+    "tipo":  "standard",
+    "expires_at":  "2026-01-15 05:41:04",
+    "modulo_relatorios":  true,
+    "key":  "F7UV-GN96-ED8P-KUVD",
+    "cliente_cnpj":  "24223868000119",
+    "max_usuarios":  2,
+    "hardware_id":  "",
+    "cliente_email":  "mydengenhariadesoftware@gmail.com",
+    "modulo_delivery":  true,
+    "cliente_nome":  "MYD Facilyta Tecnhnology",
+    "max_mesas":  20,
+    "status":  "ativa",
+    "data_geracao":  "2025-11-16 05:41:04",
+    "modulo_caixa":  true
+}

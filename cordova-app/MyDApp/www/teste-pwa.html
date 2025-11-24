@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste PWA - MyD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f5f5f5; }
+        .test-card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; }
+        .status-ok { color: #10b981; }
+        .status-error { color: #ef4444; }
+        .status-warning { color: #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">🔍 Diagnóstico PWA</h1>
+        
+        <div class="test-card">
+            <h5>1. Service Worker</h5>
+            <p id="sw-status">Verificando...</p>
+        </div>
+        
+        <div class="test-card">
+            <h5>2. Manifest</h5>
+            <p id="manifest-status">Verificando...</p>
+        </div>
+        
+        <div class="test-card">
+            <h5>3. Ícones</h5>
+            <div id="icons-status">Verificando...</div>
+        </div>
+        
+        <div class="test-card">
+            <h5>4. HTTPS</h5>
+            <p id="https-status">Verificando...</p>
+        </div>
+        
+        <div class="test-card">
+            <h5>5. Instalação Disponível</h5>
+            <p id="install-status">Verificando...</p>
+        </div>
+        
+        <div class="test-card">
+            <button class="btn btn-primary" onclick="forceInstallPrompt()">
+                Forçar Prompt de Instalação
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Verificar Service Worker (aguardar 1 segundo para garantir registro)
+        if ('serviceWorker' in navigator) {
+            setTimeout(() => {
+                navigator.serviceWorker.getRegistration()
+                    .then(reg => {
+                        if (reg) {
+                            document.getElementById('sw-status').innerHTML = 
+                                '<span class="status-ok">✅ Service Worker registrado!</span><br>' +
+                                '<small>Scope: ' + reg.scope + '</small>';
+                        } else {
+                            document.getElementById('sw-status').innerHTML = 
+                                '<span class="status-error">❌ Service Worker não registrado</span>';
+                        }
+                    });
+            }, 1000);
+        } else {
+            document.getElementById('sw-status').innerHTML = 
+                '<span class="status-error">❌ Navegador não suporta Service Worker</span>';
+        }
+
+        // Verificar Manifest
+        fetch('./manifest.json')
+            .then(r => r.json())
+            .then(manifest => {
+                document.getElementById('manifest-status').innerHTML = 
+                    '<span class="status-ok">✅ Manifest encontrado!</span><br>' +
+                    '<small>Nome: ' + manifest.name + '</small>';
+            })
+            .catch(() => {
+                document.getElementById('manifest-status').innerHTML = 
+                    '<span class="status-error">❌ Manifest não encontrado</span>';
+            });
+
+        // Verificar Ícones
+        const iconSizes = [192, 512];
+        Promise.all(iconSizes.map(size => 
+            fetch(`./icons/icon-${size}x${size}.png`).then(r => r.ok ? size : null)
+        )).then(results => {
+            const found = results.filter(s => s);
+            document.getElementById('icons-status').innerHTML = 
+                found.length === iconSizes.length 
+                    ? '<span class="status-ok">✅ Todos os ícones encontrados!</span>'
+                    : '<span class="status-warning">⚠️ Alguns ícones faltando: ' + 
+                      iconSizes.filter(s => !found.includes(s)).join(', ') + '</span>';
+        });
+
+        // Verificar HTTPS
+        const isSecure = window.location.protocol === 'https:' || 
+                        window.location.hostname === 'localhost' ||
+                        window.location.hostname.includes('127.0.0.1');
+        document.getElementById('https-status').innerHTML = isSecure
+            ? '<span class="status-ok">✅ Conexão segura (HTTPS ou localhost)</span>'
+            : '<span class="status-warning">⚠️ PWA funciona melhor com HTTPS</span>';
+
+        // Verificar instalação
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-status').innerHTML = 
+                '<span class="status-ok">✅ Prompt de instalação disponível!</span>';
+        });
+
+        function forceInstallPrompt() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        alert('✅ App instalado com sucesso!');
+                    } else {
+                        alert('❌ Instalação cancelada');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                alert('⚠️ Prompt de instalação não disponível.\n\n' +
+                      'Possíveis motivos:\n' +
+                      '- App já está instalado\n' +
+                      '- Navegador não suporta\n' +
+                      '- Critérios PWA não atendidos');
+            }
+        }
+
+        // Status inicial
+        setTimeout(() => {
+            if (document.getElementById('install-status').textContent === 'Verificando...') {
+                document.getElementById('install-status').innerHTML = 
+                    '<span class="status-warning">⚠️ Prompt não disponível ainda</span><br>' +
+                    '<small>Aguarde alguns segundos ou recarregue a página</small>';
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

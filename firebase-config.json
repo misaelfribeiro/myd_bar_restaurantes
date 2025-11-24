@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "speedfood-b4495",
+  "private_key_id": "48e9c4e399e468596b4524700c758ef65b21499e",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDQRdWbqm3UKHAh\nuZg8DENv3l63cjDeb1h8b21Ag8FUVghU4+hTE71g1zmOz769yZkxo0ez72avF0tR\nPY74Kj/795X3/wQj4JxxuMi3ixf/hAfMa0miLm0IdrWNyu/8qkIojVp9XFd0Cpgx\nNP9DjFIYwEBLhAN7zrlWGr7o9RbbtryYoFoDeQnxZmsaNgpimAR4NuA77b0vMTN7\nChAB2hzAwRTM7uGs0P13+bSfGdktuM9y+zEZCAyvnApwU2fn1QpxcVcS9ybHrjVY\nYsLIhC/WTqqVUwUEOcK1lssFnZFNeDwZASRH4TNpV102VQoooKdozO4rSPEC/niC\nVSHDOrp5AgMBAAECggEAGfC6v1fRtFkhhzfNI9yAqT4sdKOEve2nGx+LP1vxsEoD\nYWRd/zvwDE/eL8EFADEr8xRjxb/hfZkUhM66oALuI3lFvOTOvJO5FIp3+HFa+LSW\nfpHV0tz+sE1NxVZzf9gqY4/gh4jg7Rd1N3rC+OQxJPtL/sPXZbwcliKAaPY+xbhi\nPVfuVqwO6eBFNM24W6sRO5L5JM97YvgJT6BTee4wGnnRC8Wqvo+LjWWXNdF+LbCn\nyGBzMTv6YqM7UBd/TDbra1WkU26PBVMuYwC6EAy6r7VNi/tPYpZOpErMYprMDyf+\njGpcZrxgNPXKFirbrx2S095PEMEJDHmXupS28NMgUQKBgQDoruBFGRtoA6Y9LfCv\n2YkbaG2qcCr4Bhay01HX98KZnh3tdb63YKmpP8mI4ttHOwJIprqxaFBuBodZrAKf\nMOzvIY8p9knlgvHRmeCmrcRcG26hauvN11fIzPRZ4/xK00+ZM1MQuVuex2B+cHg6\nMEa6rO69vsKtbcR+S40kbjn/0QKBgQDlJL/gRTbapVc87nTy7tjyUSaQv/v0E5BY\nl6Rc/fYQKMhvY53e3xfmJpzkrr+OYPkSGd7jiOW0AcAmjts6r9Xggd6ShS0bAowD\npNGekUxQzjDaUB37A3puBm5F0qZQywBrV2cx9Kcd4EMWXT02ptIFbwGKZ57009lU\n3ZuVZUciKQKBgH8XJYAYWpPRindYJGKoWu8RdvTlF1MpYDSEn+tqdGwbpRUSfv0C\nWykKojWWU1bwsCqmhspnw6aVAlDEVxpESuXCWsP8thgaEaL+fWoM93entCGOmQVx\nXY1cBQskL6VfDdcL5Y7470YmeFoXbFO8EqXb1vrkusinb+/brFf9rMhBAoGBAK4B\nXS/Kf6BDpF6h2e9MzzQbycRr9cFgReHwraDsPboBrktgA1dmZHiiY8wIo3BUVW+Y\nc7inkX9DQQ5Gt1X2htyo4kKznRAAvCBcPc5DGgfWvCRcaJfgCU2Z1o1xLFj3/waE\nZdn6phk63tcR0NU6kwwLQsk+bOgQI96dNnOZaA4ZAoGAP1gnQztx6fT7iN1ovC1X\nTGwlCsTMGaQeWRcrNtasbyaftCeCbIOR3m9LSWDM+LXTRjQBz7zRj4KIB0koVM0X\naOLi+KtPprBQhNu38tOb4UwEJqCAWTABwG1H+qkRQp71ITQd1pOiJl3Qoz6WI3NX\nvm40eOzUN8Tylq5fMWdykZk=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@speedfood-b4495.iam.gserviceaccount.com",
+  "client_id": "115834536345633126959",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40speedfood-b4495.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

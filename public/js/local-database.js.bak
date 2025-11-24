@@ -1,0 +1,661 @@
+/**
+ * Gerenciador de Banco de Dados Local (SQLite no navegador)
+ * Permite que o sistema funcione 100% offline com banco de dados completo
+ */
+
+class LocalDatabaseManager {
+    constructor() {
+        this.db = null;
+        this.SQL = null;
+        this.isInitialized = false;
+        this.dbName = 'myd_bar_local.db';
+    }
+
+    /**
+     * Inicializar banco de dados local
+     */
+    async init() {
+        try {
+            console.log('🗄️ Inicializando banco de dados local...');
+
+            // Aguardar SQL.js estar disponível
+            if (typeof initSqlJs === 'undefined') {
+                console.log('⏳ Aguardando SQL.js carregar...');
+                await this.aguardarSqlJs();
+            }
+
+            // Carregar SQL.js (LOCAL)
+            const SQL = await initSqlJs({
+                locateFile: file => `/libs/${file}`
+            });
+            this.SQL = SQL;
+
+            // Tentar carregar banco existente do localStorage
+            const savedDb = localStorage.getItem(this.dbName);
+            if (savedDb) {
+                const uint8Array = new Uint8Array(JSON.parse(savedDb));
+                this.db = new SQL.Database(uint8Array);
+                console.log('✅ Banco de dados local carregado');
+            } else {
+                // Criar novo banco
+                this.db = new SQL.Database();
+                await this.createTables();
+                console.log('✅ Novo banco de dados local criado');
+            }
+
+            this.isInitialized = true;
+            return true;
+        } catch (error) {
+            console.error('❌ Erro ao inicializar banco local:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Aguardar SQL.js estar disponível
+     */
+    aguardarSqlJs() {
+        return new Promise((resolve) => {
+            const checkInterval = setInterval(() => {
+                if (typeof initSqlJs !== 'undefined') {
+                    clearInterval(checkInterval);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout após 10 segundos
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * Criar estrutura de tabelas
+     */
+    async createTables() {
+        const tables = [
+            // Tabela de Categorias
+            `CREATE TABLE IF NOT EXISTS categorias (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL,
+                descricao TEXT,
+                cor TEXT,
+                icone TEXT,
+                ordem INTEGER DEFAULT 0,
+                created_at TEXT,
+                updated_at TEXT,
+                synced INTEGER DEFAULT 0
+            )`,
+
+            // Tabela de Produtos
+            `CREATE TABLE IF NOT EXISTS produtos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL,
+                descricao TEXT,
+                preco REAL NOT NULL,
+                categoria_id INTEGER,
+                disponivel INTEGER DEFAULT 1,
+                imagem TEXT,
+                codigo TEXT,
+                estoque INTEGER DEFAULT 0,
+                created_at TEXT,
+                updated_at TEXT,
+                synced INTEGER DEFAULT 0,
+                FOREIGN KEY (categoria_id) REFERENCES categorias(id)
+            )`,
+
+            // Tabela de Mesas
+            `CREATE TABLE IF NOT EXISTS mesas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                numero INTEGER NOT NULL,
+                identificador TEXT NOT NULL,
+                capacidade INTEGER DEFAULT 4,
+                status TEXT DEFAULT 'livre',
+                localizacao TEXT,
+                created_at TEXT,
+                updated_at TEXT,
+                synced INTEGER DEFAULT 0
+            )`,
+
+            // Tabela de Pedidos
+            `CREATE TABLE IF NOT EXISTS pedidos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                mesa_id INTEGER NOT NULL,
+                usuario_id INTEGER,
+                status TEXT DEFAULT 'pendente',
+                total REAL DEFAULT 0,
+                observacoes TEXT,
+                data_hora TEXT,
+                created_at TEXT,
+                updated_at TEXT,
+                synced INTEGER DEFAULT 0,
+                FOREIGN KEY (mesa_id) REFERENCES mesas(id)
+            )`,
+
+            // Tabela de Itens do Pedido
+            `CREATE TABLE IF NOT EXISTS itens_pedido (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                pedido_id INTEGER NOT NULL,
+                produto_id INTEGER NOT NULL,
+                quantidade INTEGER NOT NULL,
+                preco_unitario REAL NOT NULL,
+                subtotal REAL NOT NULL,
+                observacoes TEXT,
+                created_at TEXT,
+                updated_at TEXT,
+                synced INTEGER DEFAULT 0,
+                FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
+                FOREIGN KEY (produto_id) REFERENCES produtos(id)
+            )`,
+
+            // Tabela de Pagamentos
+            `CREATE TABLE IF NOT EXISTS pagamentos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                pedido_id INTEGER,
+                forma_pagamento TEXT NOT NULL,
+                valor REAL NOT NULL,
+                valor_recebido REAL,
+                troco REAL,
+                data_hora TEXT,
+                created_at TEXT,
+                updated_at TEXT,
+                synced INTEGER DEFAULT 0,
+                FOREIGN KEY (pedido_id) REFERENCES pedidos(id)
+            )`,
+
+            // Tabela de Log de Sincronização
+            `CREATE TABLE IF NOT EXISTS sync_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tabela TEXT NOT NULL,
+                registro_id INTEGER NOT NULL,
+                acao TEXT NOT NULL,
+                dados TEXT,
+                status TEXT DEFAULT 'pendente',
+                erro TEXT,
+                created_at TEXT
+            )`
+        ];
+
+        for (const sql of tables) {
+            this.db.run(sql);
+        }
+
+        this.saveToStorage();
+    }
+
+    /**
+     * Salvar banco no localStorage
+     */
+    saveToStorage() {
+        try {
+            const data = this.db.export();
+            const buffer = Array.from(data);
+            localStorage.setItem(this.dbName, JSON.stringify(buffer));
+            console.log('💾 Banco de dados salvo localmente');
+        } catch (error) {
+            console.error('❌ Erro ao salvar banco:', error);
+        }
+    }
+
+    /**
+     * Executar query SELECT
+     */
+    query(sql, params = []) {
+        try {
+            const stmt = this.db.prepare(sql);
+            stmt.bind(params);
+            
+            const results = [];
+            while (stmt.step()) {
+                results.push(stmt.getAsObject());
+            }
+            stmt.free();
+            
+            return results;
+        } catch (error) {
+            console.error('❌ Erro na query:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Executar INSERT, UPDATE, DELETE
+     */
+    execute(sql, params = []) {
+        try {
+            this.db.run(sql, params);
+            this.saveToStorage();
+            return this.db.exec("SELECT last_insert_rowid() as id")[0]?.values[0]?.[0];
+        } catch (error) {
+            console.error('❌ Erro ao executar:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Buscar todas as categorias
+     */
+    getCategorias() {
+        return this.query('SELECT * FROM categorias ORDER BY ordem, nome');
+    }
+
+    /**
+     * Buscar todos os produtos
+     */
+    getProdutos(categoriaId = null) {
+        if (categoriaId) {
+            return this.query(
+                'SELECT p.*, c.nome as categoria_nome FROM produtos p LEFT JOIN categorias c ON p.categoria_id = c.id WHERE p.categoria_id = ? AND p.disponivel = 1 ORDER BY p.nome',
+                [categoriaId]
+            );
+        }
+        return this.query(
+            'SELECT p.*, c.nome as categoria_nome FROM produtos p LEFT JOIN categorias c ON p.categoria_id = c.id WHERE p.disponivel = 1 ORDER BY p.nome'
+        );
+    }
+
+    /**
+     * Buscar todas as mesas
+     */
+    getMesas() {
+        return this.query('SELECT * FROM mesas ORDER BY numero');
+    }
+
+    /**
+     * Buscar pedidos de uma mesa
+     */
+    getPedidosMesa(mesaId) {
+        return this.query(
+            `SELECT p.*, 
+                (SELECT SUM(i.subtotal) FROM itens_pedido i WHERE i.pedido_id = p.id) as total
+             FROM pedidos p 
+             WHERE p.mesa_id = ? AND p.status != 'finalizado'
+             ORDER BY p.created_at DESC`,
+            [mesaId]
+        );
+    }
+
+    /**
+     * Buscar itens de um pedido
+     */
+    getItensPedido(pedidoId) {
+        return this.query(
+            `SELECT i.*, p.nome as produto_nome, p.preco as produto_preco
+             FROM itens_pedido i
+             INNER JOIN produtos p ON i.produto_id = p.id
+             WHERE i.pedido_id = ?`,
+            [pedidoId]
+        );
+    }
+
+    /**
+     * Criar pedido
+     */
+    criarPedido(mesaId, usuarioId, observacoes = null) {
+        const now = new Date().toISOString();
+        const pedidoId = this.execute(
+            'INSERT INTO pedidos (mesa_id, usuario_id, status, observacoes, data_hora, created_at, updated_at, synced) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [mesaId, usuarioId || 1, 'pendente', observacoes, now, now, now, 0]
+        );
+
+        // Registrar no log de sincronização
+        this.execute(
+            'INSERT INTO sync_log (tabela, registro_id, acao, created_at) VALUES (?, ?, ?, ?)',
+            ['pedidos', pedidoId, 'INSERT', now]
+        );
+
+        // Atualizar status da mesa
+        this.execute(
+            'UPDATE mesas SET status = ? WHERE id = ?',
+            ['ocupada', mesaId]
+        );
+
+        return pedidoId;
+    }
+
+    /**
+     * Adicionar item ao pedido
+     */
+    adicionarItemPedido(pedidoId, produtoId, quantidade, precoUnitario, observacoes = null) {
+        const now = new Date().toISOString();
+        const subtotal = quantidade * precoUnitario;
+        
+        const itemId = this.execute(
+            'INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, preco_unitario, subtotal, observacoes, created_at, updated_at, synced) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [pedidoId, produtoId, quantidade, precoUnitario, subtotal, observacoes, now, now, 0]
+        );
+
+        // Atualizar total do pedido
+        const total = this.query(
+            'SELECT SUM(subtotal) as total FROM itens_pedido WHERE pedido_id = ?',
+            [pedidoId]
+        )[0].total;
+
+        this.execute(
+            'UPDATE pedidos SET total = ?, updated_at = ? WHERE id = ?',
+            [total, now, pedidoId]
+        );
+
+        // Registrar no log
+        this.execute(
+            'INSERT INTO sync_log (tabela, registro_id, acao, created_at) VALUES (?, ?, ?, ?)',
+            ['itens_pedido', itemId, 'INSERT', now]
+        );
+
+        return itemId;
+    }
+
+    /**
+     * Registrar pagamento
+     */
+    registrarPagamento(pedidoId, formaPagamento, valor, valorRecebido = null, troco = null) {
+        const now = new Date().toISOString();
+        
+        const pagamentoId = this.execute(
+            'INSERT INTO pagamentos (pedido_id, forma_pagamento, valor, valor_recebido, troco, data_hora, created_at, updated_at, synced) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [pedidoId, formaPagamento, valor, valorRecebido, troco, now, now, now, 0]
+        );
+
+        // Atualizar status do pedido
+        this.execute(
+            'UPDATE pedidos SET status = ?, updated_at = ? WHERE id = ?',
+            ['finalizado', now, pedidoId]
+        );
+
+        // Registrar no log
+        this.execute(
+            'INSERT INTO sync_log (tabela, registro_id, acao, created_at) VALUES (?, ?, ?, ?)',
+            ['pagamentos', pagamentoId, 'INSERT', now]
+        );
+
+        return pagamentoId;
+    }
+
+    /**
+     * Sincronizar com servidor
+     */
+    async sincronizarComServidor() {
+        if (!navigator.onLine) {
+            console.log('⚠️ Sem conexão. Sincronização adiada.');
+            return { success: false, message: 'Sem conexão com internet' };
+        }
+
+        try {
+            console.log('🔄 Iniciando sincronização com servidor...');
+
+            // 1. Baixar dados do servidor (categorias, produtos, mesas)
+            await this.baixarDadosServidor();
+
+            // 2. Enviar dados pendentes para o servidor
+            await this.enviarDadosPendentes();
+
+            console.log('✅ Sincronização concluída!');
+            return { success: true, message: 'Sincronização concluída com sucesso' };
+
+        } catch (error) {
+            console.error('❌ Erro na sincronização:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Baixar dados do servidor
+     */
+    async baixarDadosServidor() {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+        // Baixar categorias
+        try {
+            const respCategorias = await fetch('/api/categorias', {
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
+            });
+            const categorias = await respCategorias.json();
+            
+            // Limpar e inserir categorias
+            this.execute('DELETE FROM categorias WHERE synced = 1');
+            for (const cat of categorias) {
+                this.execute(
+                    'INSERT OR REPLACE INTO categorias (id, nome, descricao, cor, icone, ordem, created_at, updated_at, synced) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [cat.id, cat.nome, cat.descricao, cat.cor, cat.icone, cat.ordem || 0, cat.created_at, cat.updated_at, 1]
+                );
+            }
+            console.log(`✅ ${categorias.length} categorias sincronizadas`);
+        } catch (error) {
+            console.error('❌ Erro ao baixar categorias:', error);
+        }
+
+        // Baixar produtos
+        try {
+            const respProdutos = await fetch('/api/produtos', {
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
+            });
+            const { produtos } = await respProdutos.json();
+            
+            // Limpar e inserir produtos
+            this.execute('DELETE FROM produtos WHERE synced = 1');
+            for (const prod of produtos) {
+                this.execute(
+                    'INSERT OR REPLACE INTO produtos (id, nome, descricao, preco, categoria_id, disponivel, imagem, codigo, created_at, updated_at, synced) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [prod.id, prod.nome, prod.descricao, prod.preco, prod.categoria_id, prod.disponivel ? 1 : 0, prod.imagem, prod.codigo, prod.created_at, prod.updated_at, 1]
+                );
+            }
+            console.log(`✅ ${produtos.length} produtos sincronizados`);
+        } catch (error) {
+            console.error('❌ Erro ao baixar produtos:', error);
+        }
+
+        // Baixar mesas
+        try {
+            const respMesas = await fetch('/api/mesas', {
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
+            });
+            const mesas = await respMesas.json();
+            
+            // Limpar e inserir mesas
+            this.execute('DELETE FROM mesas WHERE synced = 1');
+            for (const mesa of mesas) {
+                this.execute(
+                    'INSERT OR REPLACE INTO mesas (id, numero, identificador, capacidade, status, localizacao, created_at, updated_at, synced) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [mesa.id, mesa.numero, mesa.identificador, mesa.capacidade, mesa.status, mesa.localizacao, mesa.created_at, mesa.updated_at, 1]
+                );
+            }
+            console.log(`✅ ${mesas.length} mesas sincronizadas`);
+        } catch (error) {
+            console.error('❌ Erro ao baixar mesas:', error);
+        }
+    }
+
+    /**
+     * Enviar dados pendentes para o servidor
+     */
+    async enviarDadosPendentes() {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        const pendentes = this.query('SELECT * FROM sync_log WHERE status = ?', ['pendente']);
+
+        console.log(`📤 Enviando ${pendentes.length} registros pendentes...`);
+
+        for (const log of pendentes) {
+            try {
+                if (log.tabela === 'pedidos') {
+                    await this.sincronizarPedido(log.registro_id, csrfToken);
+                } else if (log.tabela === 'pagamentos') {
+                    await this.sincronizarPagamento(log.registro_id, csrfToken);
+                }
+
+                // Marcar como sincronizado
+                this.execute(
+                    'UPDATE sync_log SET status = ? WHERE id = ?',
+                    ['sincronizado', log.id]
+                );
+            } catch (error) {
+                console.error(`❌ Erro ao sincronizar ${log.tabela}:`, error);
+                this.execute(
+                    'UPDATE sync_log SET status = ?, erro = ? WHERE id = ?',
+                    ['erro', error.message, log.id]
+                );
+            }
+        }
+    }
+
+    /**
+     * Sincronizar pedido com servidor
+     */
+    async sincronizarPedido(pedidoId, csrfToken) {
+        const pedido = this.query('SELECT * FROM pedidos WHERE id = ?', [pedidoId])[0];
+        const itens = this.getItensPedido(pedidoId);
+
+        const response = await fetch('/api/pedidos/sync', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                mesa_id: pedido.mesa_id,
+                usuario_id: pedido.usuario_id,
+                observacoes: pedido.observacoes,
+                itens: itens.map(item => ({
+                    produto_id: item.produto_id,
+                    quantidade: item.quantidade,
+                    preco_unitario: item.preco_unitario,
+                    observacoes: item.observacoes
+                }))
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao sincronizar pedido');
+        }
+
+        const result = await response.json();
+        console.log('✅ Pedido sincronizado:', result);
+        
+        // Marcar como sincronizado
+        this.execute('UPDATE pedidos SET synced = 1 WHERE id = ?', [pedidoId]);
+        this.execute('UPDATE itens_pedido SET synced = 1 WHERE pedido_id = ?', [pedidoId]);
+    }
+
+    /**
+     * Sincronizar pagamento com servidor
+     */
+    async sincronizarPagamento(pagamentoId, csrfToken) {
+        const pagamento = this.query('SELECT * FROM pagamentos WHERE id = ?', [pagamentoId])[0];
+
+        const response = await fetch('/api/pagamentos/sync', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                pedido_id: pagamento.pedido_id,
+                tipo: 'pedido',
+                formas_pagamento: [{
+                    forma: pagamento.forma_pagamento,
+                    valor: pagamento.valor
+                }],
+                valor_recebido: pagamento.valor_recebido,
+                troco: pagamento.troco
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao sincronizar pagamento');
+        }
+
+        const result = await response.json();
+        console.log('✅ Pagamento sincronizado:', result);
+        
+        // Marcar como sincronizado
+        this.execute('UPDATE pagamentos SET synced = 1 WHERE id = ?', [pagamentoId]);
+    }
+
+    /**
+     * Obter estatísticas de sincronização
+     */
+    getStats() {
+        const pendentes = this.query('SELECT COUNT(*) as total FROM sync_log WHERE status = ?', ['pendente'])[0].total;
+        const sincronizados = this.query('SELECT COUNT(*) as total FROM sync_log WHERE status = ?', ['sincronizado'])[0].total;
+        const erros = this.query('SELECT COUNT(*) as total FROM sync_log WHERE status = ?', ['erro'])[0].total;
+
+        return {
+            pendentes,
+            sincronizados,
+            erros,
+            total: pendentes + sincronizados + erros
+        };
+    }
+}
+
+// Carregar SQL.js e criar instância global
+// Função de inicialização global
+async function initLocalDatabase() {
+    console.log('📦 Carregando SQL.js...');
+    
+    // Aguardar DOM estar pronto
+    if (document.readyState === 'loading') {
+        await new Promise(resolve => {
+            document.addEventListener('DOMContentLoaded', resolve);
+        });
+    }
+
+    try {
+        // Verificar se SQL.js já está disponível (carregado no HTML)
+        if (typeof initSqlJs === 'undefined') {
+            console.log('⏳ SQL.js não encontrado, aguardando...');
+            
+            // Aguardar até 5 segundos
+            for (let i = 0; i < 50; i++) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                if (typeof initSqlJs !== 'undefined') {
+                    break;
+                }
+            }
+            
+            if (typeof initSqlJs === 'undefined') {
+                console.error('❌ SQL.js não carregou. Verifique a conexão.');
+                return;
+            }
+        }
+
+        console.log('✅ SQL.js disponível, iniciando banco...');
+        
+        window.localDB = new LocalDatabaseManager();
+        const success = await window.localDB.init();
+        
+        if (success) {
+            console.log('✅ Banco de dados local pronto!');
+            console.log('✅ window.localDB.isInitialized =', window.localDB.isInitialized);
+            
+            // Sincronizar se tiver internet
+            if (navigator.onLine) {
+                console.log('🌐 Conectado! Iniciando sincronização...');
+                await window.localDB.sincronizarComServidor();
+            } else {
+                console.log('📡 Modo offline - Sincronização adiada');
+            }
+            
+            // Configurar sincronização automática
+            window.addEventListener('online', async () => {
+                console.log('🌐 Conexão restaurada! Sincronizando...');
+                if (window.localDB && window.localDB.isInitialized) {
+                    await window.localDB.sincronizarComServidor();
+                }
+            });
+        } else {
+            console.error('❌ Falha ao inicializar banco de dados');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao inicializar banco local:', error);
+    }
+}
+
+// Inicializar
+initLocalDatabase();
+
+// Exportar função globalmente
+window.initLocalDatabase = initLocalDatabase;

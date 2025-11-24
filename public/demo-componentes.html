@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demonstração de Componentes - Layout Moderno</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- CSS Extras -->
+    <link href="css/layout-extras.css" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            padding: 40px 20px;
+        }
+        
+        .demo-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .demo-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: 700;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .demo-section h3 {
+            color: #2d3748;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .code-sample {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid" style="max-width: 1400px;">
+        <div class="text-center mb-5">
+            <h1 style="color: #667eea; font-weight: 700;">
+                <i class="fas fa-palette me-3"></i>
+                Demonstração de Componentes
+            </h1>
+            <p style="color: #718096; font-size: 1.1rem;">Layout Moderno - MyD Bar & Restaurantes</p>
+        </div>
+
+        <!-- Page Header -->
+        <div class="demo-section">
+            <h2><i class="fas fa-heading me-2"></i> Page Header</h2>
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fas fa-tags me-2"></i>
+                    Título da Página
+                </h1>
+                <p class="page-subtitle">Subtítulo explicativo da funcionalidade</p>
+            </div>
+            <div class="code-sample">
+                &lt;div class="page-header"&gt;<br>
+                &nbsp;&nbsp;&lt;h1 class="page-title"&gt;Título da Página&lt;/h1&gt;<br>
+                &nbsp;&nbsp;&lt;p class="page-subtitle"&gt;Subtítulo explicativo&lt;/p&gt;<br>
+                &lt;/div&gt;
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="demo-section">
+            <h2><i class="fas fa-chart-line me-2"></i> Stats Cards</h2>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon bg-primary">
+                            <i class="fas fa-tags"></i>
+                        </div>
+                        <div class="stats-content">
+                            <h3>125</h3>
+                            <p>Total de Itens</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon bg-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stats-content">
+                            <h3>98</h3>
+                            <p>Concluídos</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon bg-warning">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stats-content">
+                            <h3>27</h3>
+                            <p>Pendentes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="code-sample">
+                &lt;div class="stats-card"&gt;<br>
+                &nbsp;&nbsp;&lt;div class="stats-icon bg-primary"&gt;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&lt;i class="fas fa-tags"&gt;&lt;/i&gt;<br>
+                &nbsp;&nbsp;&lt;/div&gt;<br>
+                &nbsp;&nbsp;&lt;div class="stats-content"&gt;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&lt;h3&gt;125&lt;/h3&gt;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&lt;p&gt;Total de Itens&lt;/p&gt;<br>
+                &nbsp;&nbsp;&lt;/div&gt;<br>
+                &lt;/div&gt;
+            </div>
+            <p><strong>Variantes disponíveis:</strong> bg-primary, bg-success, bg-warning, bg-danger, bg-info</p>
+        </div>
+
+        <!-- Filters Card -->
+        <div class="demo-section">
+            <h2><i class="fas fa-filter me-2"></i> Filters Card</h2>
+            <div class="filters-card">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Buscar itens..." class="form-control">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select">
+                            <option>Ordenar por Nome</option>
+                            <option>Ordenar por Data</option>
+                            <option>Ordenar por Valor</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100">
+                            <i class="fas fa-sync-alt me-2"></i>
+                            Atualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Badges -->
+        <div class="demo-section">
+            <h2><i class="fas fa-tags me-2"></i> Status Badges</h2>
+            <div class="d-flex flex-wrap gap-3">
+                <span class="badge badge-status-livre">
+                    <i class="fas fa-check-circle me-1"></i> Livre
+                </span>
+                <span class="badge badge-status-ocupada">
+                    <i class="fas fa-users me-1"></i> Ocupada
+                </span>
+                <span class="badge badge-status-reservada">
+                    <i class="fas fa-calendar me-1"></i> Reservada
+                </span>
+                <span class="badge badge-status-pendente">
+                    <i class="fas fa-clock me-1"></i> Pendente
+                </span>
+                <span class="badge badge-status-concluido">
+                    <i class="fas fa-check-double me-1"></i> Concluído
+                </span>
+                <span class="badge badge-status-cancelado">
+                    <i class="fas fa-times-circle me-1"></i> Cancelado
+                </span>
+            </div>
+            <div class="code-sample mt-3">
+                &lt;span class="badge badge-status-livre"&gt;Livre&lt;/span&gt;<br>
+                &lt;span class="badge badge-status-ocupada"&gt;Ocupada&lt;/span&gt;<br>
+                &lt;span class="badge badge-status-reservada"&gt;Reservada&lt;/span&gt;
+            </div>
+        </div>
+
+        <!-- Mesa Cards -->
+        <div class="demo-section">
+            <h2><i class="fas fa-chair me-2"></i> Mesa Cards</h2>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="mesa-card livre">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="mb-0">Mesa 01</h4>
+                            <span class="badge badge-status-livre">Livre</span>
+                        </div>
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-users me-2"></i>Capacidade: 4 pessoas
+                        </p>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-map-marker-alt me-2"></i>Área: Interna
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="mesa-card ocupada">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="mb-0">Mesa 02</h4>
+                            <span class="badge badge-status-ocupada">Ocupada</span>
+                        </div>
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-users me-2"></i>Capacidade: 6 pessoas
+                        </p>
+                        <p class="text-success mb-0 fw-bold">
+                            <i class="fas fa-receipt me-2"></i>Pedido #1234 - R$ 125,00
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="mesa-card reservada">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="mb-0">Mesa 03</h4>
+                            <span class="badge badge-status-reservada">Reservada</span>
+                        </div>
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-users me-2"></i>Capacidade: 2 pessoas
+                        </p>
+                        <p class="text-info mb-0 fw-bold">
+                            <i class="fas fa-calendar me-2"></i>Reserva: 19:00
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modern Table -->
+        <div class="demo-section">
+            <h2><i class="fas fa-table me-2"></i> Modern Table</h2>
+            <table class="table modern-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Status</th>
+                        <th>Valor</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#001</td>
+                        <td>Item de Exemplo 1</td>
+                        <td><span class="badge badge-status-concluido">Concluído</span></td>
+                        <td>R$ 50,00</td>
+                        <td>
+                            <button class="btn-action btn btn-sm btn-info" title="Visualizar">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action btn btn-sm btn-warning" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>#002</td>
+                        <td>Item de Exemplo 2</td>
+                        <td><span class="badge badge-status-pendente">Pendente</span></td>
+                        <td>R$ 75,00</td>
+                        <td>
+                            <button class="btn-action btn btn-sm btn-info" title="Visualizar">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action btn btn-sm btn-warning" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Category Grid -->
+        <div class="demo-section">
+            <h2><i class="fas fa-th me-2"></i> Category Grid</h2>
+            <div class="category-grid">
+                <div class="category-item">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Bebidas</h5>
+                        <span class="badge bg-primary">15</span>
+                    </div>
+                    <p class="text-muted mb-3">Sucos, refrigerantes e bebidas quentes</p>
+                    <button class="btn btn-sm btn-outline-primary">Ver Produtos</button>
+                </div>
+                <div class="category-item">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Pratos</h5>
+                        <span class="badge bg-success">28</span>
+                    </div>
+                    <p class="text-muted mb-3">Entrada, prato principal e sobremesas</p>
+                    <button class="btn btn-sm btn-outline-success">Ver Produtos</button>
+                </div>
+                <div class="category-item">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Lanches</h5>
+                        <span class="badge bg-warning">12</span>
+                    </div>
+                    <p class="text-muted mb-3">Sanduíches, hamburgueres e petiscos</p>
+                    <button class="btn btn-sm btn-outline-warning">Ver Produtos</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="demo-section">
+            <h2><i class="fas fa-inbox me-2"></i> Empty State</h2>
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h3>Nenhum item encontrado</h3>
+                <p>Não há itens para exibir no momento. Comece adicionando um novo item.</p>
+                <button class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Adicionar Primeiro Item
+                </button>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="demo-section">
+            <h2><i class="fas fa-history me-2"></i> Timeline</h2>
+            <div class="timeline-item">
+                <h5>Pedido Criado</h5>
+                <p class="text-muted">O pedido foi criado com sucesso</p>
+                <small class="text-muted">Há 5 minutos</small>
+            </div>
+            <div class="timeline-item">
+                <h5>Em Preparo</h5>
+                <p class="text-muted">Itens em preparação na cozinha</p>
+                <small class="text-muted">Há 2 minutos</small>
+            </div>
+            <div class="timeline-item">
+                <h5>Pronto para Entrega</h5>
+                <p class="text-muted">Pedido pronto, aguardando entrega</p>
+                <small class="text-muted">Agora</small>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="demo-section">
+            <h2><i class="fas fa-spinner me-2"></i> Loading State</h2>
+            <div class="loading-spinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <p class="mt-3 text-muted">Carregando dados...</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-5 mb-3">
+            <hr>
+            <p class="text-muted">
+                <i class="fas fa-palette me-2"></i>
+                Layout Moderno - MyD Bar & Restaurantes
+                <br>
+                <small>Todos os componentes utilizam o arquivo <code>layout-extras.css</code></small>
+            </p>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

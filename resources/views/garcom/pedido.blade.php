@@ -329,11 +329,25 @@
             <div class="row">
                 <div class="col-md-4">
                     <div class="info-card">
-                        <div class="info-label">Mesa</div>
-                        <div class="info-value">
-                            <i class="fas fa-chair me-2 text-primary"></i>
-                            {{ $pedido->mesa->identificador }}
-                        </div>
+                        @if($pedido->mesa)
+                            <div class="info-label">Mesa</div>
+                            <div class="info-value">
+                                <i class="fas fa-chair me-2 text-primary"></i>
+                                {{ $pedido->mesa->identificador }}
+                            </div>
+                        @elseif($pedido->delivery)
+                            <div class="info-label">Delivery</div>
+                            <div class="info-value">
+                                <i class="fas fa-motorcycle me-2 icon-delivery"></i>
+                                {{ $pedido->delivery->cliente_nome }}
+                            </div>
+                        @else
+                            <div class="info-label">Tipo</div>
+                            <div class="info-value">
+                                <i class="fas fa-coffee me-2 icon-balcao"></i>
+                                Balcão
+                            </div>
+                        @endif
                     </div>
                 </div>
                 <div class="col-md-4">

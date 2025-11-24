@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Modal Pagamento</title>
+    <meta name="csrf-token" content="test-token">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <button class="btn btn-primary" onclick="testarModal()">Testar Modal</button>
+        
+        <!-- Modal de teste -->
+        <div class="modal fade" id="modalPagamentoMesa" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">💳 Finalizar Pagamento da Mesa</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <strong>🪑 Mesa:</strong> <span id="info-mesa-pagamento">-</span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>👥 Capacidade:</strong> <span id="info-capacidade-mesa">-</span> lugares
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>📋 Pedidos:</strong> <span id="info-pedidos-count">-</span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>💰 Total:</strong> R$ <span id="info-total-pagamento">0,00</span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>📊 Status:</strong> <span id="info-status-mesa" class="badge">-</span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>🕐 Tempo:</strong> <span id="info-tempo-mesa">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function testarModal() {
+            console.log('Testando modal...');
+            
+            const mesa = {
+                id: 2,
+                identificador: 'Mesa-02',
+                numero: 2,
+                capacidade: 4,
+                lugares: 4,
+                status: 'ativa'
+            };
+            
+            const pedidos = [
+                {
+                    id: 30,
+                    total: 67.80,
+                    created_at: new Date().toISOString(),
+                    status: 'finalizado',
+                    usuario: { id: 1, nome: 'Garçom Teste' }
+                }
+            ];
+            
+            abrirModalPagamento(mesa, pedidos, 67.80);
+        }
+        
+        function abrirModalPagamento(mesa, pedidos, total) {
+            console.log('Abrindo modal de pagamento:', mesa, pedidos, total);
+            
+            // Converter total para número
+            const totalNumerico = parseFloat(total);
+            
+            // Preencher informações básicas da mesa
+            document.getElementById('info-mesa-pagamento').textContent = mesa.identificador || `Mesa ${mesa.numero}`;
+            document.getElementById('info-pedidos-count').textContent = pedidos.length;
+            document.getElementById('info-total-pagamento').textContent = totalNumerico.toFixed(2).replace('.', ',');
+            
+            // Preencher informações adicionais da mesa
+            document.getElementById('info-capacidade-mesa').textContent = mesa.capacidade || mesa.lugares || '-';
+            
+            // Status da mesa baseado nos pedidos
+            const statusElement = document.getElementById('info-status-mesa');
+            if (pedidos.length > 0) {
+                statusElement.textContent = '🔴 Ocupada';
+                statusElement.className = 'badge bg-danger';
+            } else {
+                statusElement.textContent = '🟢 Disponível';
+                statusElement.className = 'badge bg-success';
+            }
+            
+            // Tempo desde o primeiro pedido
+            const tempoElement = document.getElementById('info-tempo-mesa');
+            if (pedidos.length > 0) {
+                const primeiroPedido = pedidos.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0];
+                const tempoDecorrido = calcularTempoDecorrido(primeiroPedido.created_at);
+                tempoElement.textContent = tempoDecorrido;
+            } else {
+                tempoElement.textContent = '-';
+            }
+            
+            // Abrir modal
+            try {
+                new bootstrap.Modal(document.getElementById('modalPagamentoMesa')).show();
+            } catch (error) {
+                console.error('Erro ao abrir modal:', error);
+                alert('Erro ao abrir modal de pagamento.');
+            }
+        }
+        
+        function calcularTempoDecorrido(dataString) {
+            const agora = new Date();
+            const data = new Date(dataString);
+            const diffMs = agora - data;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHoras = Math.floor(diffMins / 60);
+            const diffDias = Math.floor(diffHoras / 24);
+            
+            if (diffDias > 0) {
+                return `${diffDias} dia${diffDias > 1 ? 's' : ''}`;
+            } else if (diffHoras > 0) {
+                return `${diffHoras}h ${diffMins % 60}min`;
+            } else if (diffMins > 0) {
+                return `${diffMins} min`;
+            } else {
+                return 'agora';
+            }
+        }
+    </script>
+</body>
+</html>

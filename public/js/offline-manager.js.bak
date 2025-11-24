@@ -1,0 +1,492 @@
+/**
+ * Gerenciador de Modo Offline
+ * Gerencia armazenamento local, sincronização e estado online/offline
+ */
+
+class OfflineManager {
+    constructor() {
+        this.db = null;
+        this.isOnline = navigator.onLine;
+        this.syncInProgress = false;
+        this.pendingRequests = [];
+        
+        this.init();
+    }
+
+    /**
+     * Inicializar gerenciador offline
+     */
+    async init() {
+        // Abrir IndexedDB
+        await this.openDatabase();
+        
+        // Registrar Service Worker
+        await this.registerServiceWorker();
+        
+        // Configurar listeners de conexão
+        this.setupConnectionListeners();
+        
+        // Atualizar UI
+        this.updateOnlineStatus();
+        
+        // Verificar e sincronizar dados pendentes
+        if (this.isOnline) {
+            await this.syncPendingData();
+        }
+    }
+
+    /**
+     * Abrir banco de dados IndexedDB
+     */
+    openDatabase() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('MydBarDB', 2);
+
+            request.onerror = () => {
+                console.error('Erro ao abrir IndexedDB:', request.error);
+                reject(request.error);
+            };
+
+            request.onsuccess = () => {
+                this.db = request.result;
+                console.log('IndexedDB aberto com sucesso');
+                resolve(this.db);
+            };
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+
+                // Pedidos pendentes
+                if (!db.objectStoreNames.contains('pedidos_pendentes')) {
+                    const pedidosStore = db.createObjectStore('pedidos_pendentes', { 
+                        keyPath: 'id', 
+                        autoIncrement: true 
+                    });
+                    pedidosStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    pedidosStore.createIndex('mesa_id', 'data.mesa_id', { unique: false });
+                }
+
+                // Pagamentos pendentes
+                if (!db.objectStoreNames.contains('pagamentos_pendentes')) {
+                    const pagamentosStore = db.createObjectStore('pagamentos_pendentes', { 
+                        keyPath: 'id', 
+                        autoIncrement: true 
+                    });
+                    pagamentosStore.createIndex('timestamp', 'timestamp', { unique: false });
+                }
+
+                // Cache de produtos
+                if (!db.objectStoreNames.contains('produtos_cache')) {
+                    const produtosStore = db.createObjectStore('produtos_cache', { 
+                        keyPath: 'id' 
+                    });
+                    produtosStore.createIndex('nome', 'nome', { unique: false });
+                    produtosStore.createIndex('categoria_id', 'categoria_id', { unique: false });
+                }
+
+                // Cache de mesas
+                if (!db.objectStoreNames.contains('mesas_cache')) {
+                    db.createObjectStore('mesas_cache', { keyPath: 'id' });
+                }
+
+                // Cache de categorias
+                if (!db.objectStoreNames.contains('categorias_cache')) {
+                    db.createObjectStore('categorias_cache', { keyPath: 'id' });
+                }
+
+                // Log de sincronização
+                if (!db.objectStoreNames.contains('sync_log')) {
+                    const syncStore = db.createObjectStore('sync_log', { 
+                        keyPath: 'id', 
+                        autoIncrement: true 
+                    });
+                    syncStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    syncStore.createIndex('status', 'status', { unique: false });
+                }
+
+                console.log('Estrutura do IndexedDB criada/atualizada');
+            };
+        });
+    }
+
+    /**
+     * Registrar Service Worker
+     */
+    async registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                console.log('Service Worker registrado:', registration.scope);
+
+                // Escutar mensagens do Service Worker
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    if (event.data.type === 'SYNC_SUCCESS') {
+                        this.showNotification(event.data.message, 'success');
+                    }
+                });
+
+                // Atualizar Service Worker quando houver nova versão
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            this.showUpdateNotification();
+                        }
+                    });
+                });
+
+            } catch (error) {
+                console.error('Erro ao registrar Service Worker:', error);
+            }
+        }
+    }
+
+    /**
+     * Configurar listeners de conexão
+     */
+    setupConnectionListeners() {
+        window.addEventListener('online', async () => {
+            console.log('Conexão restaurada');
+            this.isOnline = true;
+            this.updateOnlineStatus();
+            this.showNotification('Conexão restaurada! Sincronizando dados...', 'success');
+            await this.syncPendingData();
+        });
+
+        window.addEventListener('offline', () => {
+            console.log('Conexão perdida');
+            this.isOnline = false;
+            this.updateOnlineStatus();
+            this.showNotification('Modo offline ativado. Dados serão sincronizados quando a conexão for restaurada.', 'warning');
+        });
+    }
+
+    /**
+     * Atualizar indicador de status online/offline na UI
+     */
+    updateOnlineStatus() {
+        const statusIndicator = document.getElementById('connection-status');
+        if (statusIndicator) {
+            if (this.isOnline) {
+                statusIndicator.innerHTML = `
+                    <span class="badge bg-success">
+                        <i class="fas fa-wifi me-1"></i> Online
+                    </span>
+                `;
+            } else {
+                statusIndicator.innerHTML = `
+                    <span class="badge bg-warning text-dark">
+                        <i class="fas fa-wifi-slash me-1"></i> Offline
+                    </span>
+                `;
+            }
+        }
+
+        // Adicionar classe ao body para estilização condicional
+        document.body.classList.toggle('offline-mode', !this.isOnline);
+    }
+
+    /**
+     * Salvar pedido localmente (modo offline)
+     */
+    async savePedidoOffline(pedidoData) {
+        try {
+            const transaction = this.db.transaction(['pedidos_pendentes'], 'readwrite');
+            const store = transaction.objectStore('pedidos_pendentes');
+
+            const pedido = {
+                data: pedidoData,
+                timestamp: Date.now(),
+                csrfToken: document.querySelector('meta[name="csrf-token"]')?.content,
+                synced: false
+            };
+
+            await new Promise((resolve, reject) => {
+                const request = store.add(pedido);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+
+            console.log('Pedido salvo offline:', pedidoData);
+            this.showNotification('Pedido salvo localmente. Será enviado quando a conexão for restaurada.', 'info');
+            
+            return true;
+        } catch (error) {
+            console.error('Erro ao salvar pedido offline:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Salvar pagamento localmente (modo offline)
+     */
+    async savePagamentoOffline(pagamentoData) {
+        try {
+            const transaction = this.db.transaction(['pagamentos_pendentes'], 'readwrite');
+            const store = transaction.objectStore('pagamentos_pendentes');
+
+            const pagamento = {
+                data: pagamentoData,
+                timestamp: Date.now(),
+                csrfToken: document.querySelector('meta[name="csrf-token"]')?.content,
+                synced: false
+            };
+
+            await new Promise((resolve, reject) => {
+                const request = store.add(pagamento);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+
+            console.log('Pagamento salvo offline:', pagamentoData);
+            this.showNotification('Pagamento salvo localmente. Será enviado quando a conexão for restaurada.', 'info');
+            
+            return true;
+        } catch (error) {
+            console.error('Erro ao salvar pagamento offline:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Cachear produtos para uso offline
+     */
+    async cacheProdutos(produtos) {
+        try {
+            const transaction = this.db.transaction(['produtos_cache'], 'readwrite');
+            const store = transaction.objectStore('produtos_cache');
+
+            // Limpar cache antigo
+            await new Promise((resolve, reject) => {
+                const clearRequest = store.clear();
+                clearRequest.onsuccess = () => resolve();
+                clearRequest.onerror = () => reject(clearRequest.error);
+            });
+
+            // Adicionar novos produtos
+            for (const produto of produtos) {
+                await new Promise((resolve, reject) => {
+                    const request = store.add(produto);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            console.log(`${produtos.length} produtos cacheados para uso offline`);
+        } catch (error) {
+            console.error('Erro ao cachear produtos:', error);
+        }
+    }
+
+    /**
+     * Obter produtos do cache
+     */
+    async getProdutosFromCache() {
+        try {
+            const transaction = this.db.transaction(['produtos_cache'], 'readonly');
+            const store = transaction.objectStore('produtos_cache');
+
+            return await new Promise((resolve, reject) => {
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            console.error('Erro ao obter produtos do cache:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Sincronizar dados pendentes
+     */
+    async syncPendingData() {
+        if (this.syncInProgress || !this.isOnline) {
+            return;
+        }
+
+        this.syncInProgress = true;
+        console.log('Iniciando sincronização de dados pendentes...');
+
+        try {
+            // Sincronizar pedidos
+            await this.syncPedidos();
+
+            // Sincronizar pagamentos
+            await this.syncPagamentos();
+
+            console.log('Sincronização concluída com sucesso');
+            this.showNotification('Todos os dados foram sincronizados!', 'success');
+
+        } catch (error) {
+            console.error('Erro na sincronização:', error);
+            this.showNotification('Erro ao sincronizar dados. Tentaremos novamente.', 'error');
+        } finally {
+            this.syncInProgress = false;
+        }
+    }
+
+    /**
+     * Sincronizar pedidos pendentes
+     */
+    async syncPedidos() {
+        const transaction = this.db.transaction(['pedidos_pendentes'], 'readwrite');
+        const store = transaction.objectStore('pedidos_pendentes');
+
+        const pedidos = await new Promise((resolve, reject) => {
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+
+        console.log(`Sincronizando ${pedidos.length} pedidos pendentes...`);
+
+        for (const pedido of pedidos) {
+            try {
+                const response = await fetch('/api/pedidos/sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': pedido.csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(pedido.data)
+                });
+
+                if (response.ok) {
+                    // Remover pedido sincronizado
+                    await new Promise((resolve, reject) => {
+                        const deleteRequest = store.delete(pedido.id);
+                        deleteRequest.onsuccess = () => resolve();
+                        deleteRequest.onerror = () => reject(deleteRequest.error);
+                    });
+
+                    console.log('Pedido sincronizado:', pedido.id);
+                } else {
+                    console.error('Erro ao sincronizar pedido:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Erro ao enviar pedido:', error);
+            }
+        }
+    }
+
+    /**
+     * Sincronizar pagamentos pendentes
+     */
+    async syncPagamentos() {
+        const transaction = this.db.transaction(['pagamentos_pendentes'], 'readwrite');
+        const store = transaction.objectStore('pagamentos_pendentes');
+
+        const pagamentos = await new Promise((resolve, reject) => {
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+
+        console.log(`Sincronizando ${pagamentos.length} pagamentos pendentes...`);
+
+        for (const pagamento of pagamentos) {
+            try {
+                const response = await fetch('/api/pagamentos/sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': pagamento.csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(pagamento.data)
+                });
+
+                if (response.ok) {
+                    // Remover pagamento sincronizado
+                    await new Promise((resolve, reject) => {
+                        const deleteRequest = store.delete(pagamento.id);
+                        deleteRequest.onsuccess = () => resolve();
+                        deleteRequest.onerror = () => reject(deleteRequest.error);
+                    });
+
+                    console.log('Pagamento sincronizado:', pagamento.id);
+                } else {
+                    console.error('Erro ao sincronizar pagamento:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Erro ao enviar pagamento:', error);
+            }
+        }
+    }
+
+    /**
+     * Exibir notificação
+     */
+    showNotification(message, type = 'info') {
+        // Criar elemento de notificação
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Remover após 5 segundos
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+
+    /**
+     * Exibir notificação de atualização disponível
+     */
+    showUpdateNotification() {
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-info alert-dismissible fade show position-fixed';
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            Nova versão disponível!
+            <button type="button" class="btn btn-sm btn-primary ms-2" onclick="location.reload()">
+                Atualizar
+            </button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(notification);
+    }
+
+    /**
+     * Obter contagem de itens pendentes
+     */
+    async getPendingCount() {
+        try {
+            const pedidosTransaction = this.db.transaction(['pedidos_pendentes'], 'readonly');
+            const pedidosStore = pedidosTransaction.objectStore('pedidos_pendentes');
+            const pedidosCount = await new Promise((resolve, reject) => {
+                const request = pedidosStore.count();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+
+            const pagamentosTransaction = this.db.transaction(['pagamentos_pendentes'], 'readonly');
+            const pagamentosStore = pagamentosTransaction.objectStore('pagamentos_pendentes');
+            const pagamentosCount = await new Promise((resolve, reject) => {
+                const request = pagamentosStore.count();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+
+            return {
+                pedidos: pedidosCount,
+                pagamentos: pagamentosCount,
+                total: pedidosCount + pagamentosCount
+            };
+        } catch (error) {
+            console.error('Erro ao obter contagem de pendentes:', error);
+            return { pedidos: 0, pagamentos: 0, total: 0 };
+        }
+    }
+}
+
+// Exportar instância global
+window.offlineManager = new OfflineManager();

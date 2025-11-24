@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Monitor API Unificada - MyD Bar & Restaurantes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; }
+        .status-card { transition: all 0.3s; }
+        .status-card:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .metric-value { font-size: 2rem; font-weight: bold; }
+        .trend-up { color: #28a745; }
+        .trend-down { color: #dc3545; }
+        .api-status-online { color: #28a745; }
+        .api-status-offline { color: #dc3545; }
+        .log-entry { font-family: 'Courier New', monospace; font-size: 0.9rem; }
+        .refresh-indicator { position: fixed; top: 20px; right: 20px; z-index: 1000; }
+        .chart-container { height: 300px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand">
+                <i class="fas fa-chart-line me-2"></i>Monitor API Unificada de Pagamentos
+            </span>
+            <div class="d-flex">
+                <span class="text-light me-3" id="last-update">Carregando...</span>
+                <button class="btn btn-outline-light btn-sm" onclick="atualizarDados()">
+                    <i class="fas fa-sync-alt" id="refresh-icon"></i> Atualizar
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <!-- Status da API -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card status-card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-server fa-2x mb-2" id="api-status-icon"></i>
+                        <h5>Status da API</h5>
+                        <span class="badge fs-6" id="api-status-badge">Verificando...</span>
+                        <div class="mt-2">
+                            <small class="text-muted" id="api-uptime">-</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card status-card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-database fa-2x mb-2 text-info"></i>
+                        <h5>Banco de Dados</h5>
+                        <span class="badge bg-info fs-6" id="db-status">Verificando...</span>
+                        <div class="mt-2">
+                            <small class="text-muted" id="db-details">-</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card status-card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-cash-register fa-2x mb-2 text-warning"></i>
+                        <h5>Caixa</h5>
+                        <span class="badge bg-warning text-dark fs-6" id="caixa-status">Verificando...</span>
+                        <div class="mt-2">
+                            <small class="text-muted" id="caixa-details">-</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card status-card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-clock fa-2x mb-2 text-success"></i>
+                        <h5>Performance</h5>
+                        <div class="metric-value text-success" id="response-time">-</div>
+                        <small class="text-muted">tempo médio (ms)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas Principais -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card status-card h-100">
+                    <div class="card-body">
+                        <h5><i class="fas fa-chart-bar me-2"></i>Pagamentos Hoje</h5>
+                        <div class="metric-value text-primary" id="pagamentos-hoje">0</div>
+                        <small class="text-muted">
+                            <span id="crescimento-pagamentos" class="trend-up">+0%</span> vs ontem
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card status-card h-100">
+                    <div class="card-body">
+                        <h5><i class="fas fa-money-bill-wave me-2"></i>Valor Total</h5>
+                        <div class="metric-value text-success" id="valor-total">R$ 0,00</div>
+                        <small class="text-muted">
+                            <span id="crescimento-valor" class="trend-up">+0%</span> vs ontem
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card status-card h-100">
+                    <div class="card-body">
+                        <h5><i class="fas fa-receipt me-2"></i>Ticket Médio</h5>
+                        <div class="metric-value text-info" id="ticket-medio">R$ 0,00</div>
+                        <small class="text-muted" id="ticket-comparacao">-</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribuição por Forma de Pagamento -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-credit-card me-2"></i>Distribuição por Forma de Pagamento</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chart-formas-pagamento" class="chart-container"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line me-2"></i>Pagamentos por Hora</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chart-horario" class="chart-container"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Últimos Pagamentos -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-list me-2"></i>Últimos Pagamentos</h5>
+                        <span class="badge bg-primary" id="total-pagamentos-badge">0</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Mesa</th>
+                                        <th>Forma</th>
+                                        <th>Valor</th>
+                                        <th>Usuário</th>
+                                        <th>Horário</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ultimos-pagamentos">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">Carregando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-terminal me-2"></i>Logs da API</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="log-container" style="max-height: 300px; overflow-y: auto;">
+                            <div id="api-logs">
+                                <div class="text-muted">Carregando logs...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Links Rápidos -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-link me-2"></i>Links Rápidos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <a href="/myd_bar_restaurantes/public/api/pagamentos-status" class="btn btn-outline-primary w-100 mb-2" target="_blank">
+                                    <i class="fas fa-info-circle me-1"></i>Status API
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="/myd_bar_restaurantes/teste_api_simples.php" class="btn btn-outline-success w-100 mb-2" target="_blank">
+                                    <i class="fas fa-vial me-1"></i>Teste Simples
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="/myd_bar_restaurantes/public/caixa" class="btn btn-outline-warning w-100 mb-2">
+                                    <i class="fas fa-cash-register me-1"></i>Modo Caixa
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="/myd_bar_restaurantes/public/garcom/mesas" class="btn btn-outline-info w-100 mb-2">
+                                    <i class="fas fa-utensils me-1"></i>Modo Garçom
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicador de atualização -->
+    <div class="refresh-indicator">
+        <div class="alert alert-info d-none" id="refresh-alert">
+            <i class="fas fa-sync-alt fa-spin"></i> Atualizando dados...
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        let chartFormasPagamento = null;
+        let chartHorario = null;
+
+        // Função principal para atualizar todos os dados
+        async function atualizarDados() {
+            const refreshIcon = document.getElementById('refresh-icon');
+            const refreshAlert = document.getElementById('refresh-alert');
+            
+            refreshIcon.classList.add('fa-spin');
+            refreshAlert.classList.remove('d-none');
+            
+            try {
+                await Promise.all([
+                    atualizarHealth(),
+                    atualizarDashboard(),
+                    atualizarMetricas(),
+                    atualizarLogs()
+                ]);
+                
+                document.getElementById('last-update').textContent = 
+                    `Última atualização: ${new Date().toLocaleTimeString('pt-BR')}`;
+                
+            } catch (error) {
+                console.error('Erro ao atualizar dados:', error);
+            } finally {
+                refreshIcon.classList.remove('fa-spin');
+                refreshAlert.classList.add('d-none');
+            }
+        }
+
+        // Atualizar status de saúde
+        async function atualizarHealth() {
+            try {
+                const response = await fetch('/myd_bar_restaurantes/public/api/monitoramento/health');
+                const data = await response.json();
+                
+                const statusIcon = document.getElementById('api-status-icon');
+                const statusBadge = document.getElementById('api-status-badge');
+                const uptime = document.getElementById('api-uptime');
+                
+                if (data.success && data.status === 'healthy') {
+                    statusIcon.className = 'fas fa-server fa-2x mb-2 api-status-online';
+                    statusBadge.className = 'badge bg-success fs-6';
+                    statusBadge.textContent = 'Online';
+                    uptime.textContent = data.info?.laravel_version || 'Laravel';
+                } else {
+                    statusIcon.className = 'fas fa-server fa-2x mb-2 api-status-offline';
+                    statusBadge.className = 'badge bg-danger fs-6';
+                    statusBadge.textContent = 'Offline';
+                }
+                
+                // Status do banco
+                document.getElementById('db-status').textContent = 
+                    data.checks?.database ? 'Conectado' : 'Desconectado';
+                document.getElementById('db-status').className = 
+                    data.checks?.database ? 'badge bg-success fs-6' : 'badge bg-danger fs-6';
+                
+                // Status do caixa
+                document.getElementById('caixa-status').textContent = 
+                    data.checks?.caixa_aberto ? 'Aberto' : 'Fechado';
+                document.getElementById('caixa-details').textContent = 
+                    data.checks?.ultimo_pagamento_min !== null 
+                        ? `Último pagamento: ${data.checks.ultimo_pagamento_min} min` 
+                        : 'Nenhum pagamento';
+                
+            } catch (error) {
+                console.error('Erro ao verificar health:', error);
+                document.getElementById('api-status-badge').textContent = 'Erro';
+                document.getElementById('api-status-badge').className = 'badge bg-danger fs-6';
+            }
+        }
+
+        // Atualizar dashboard
+        async function atualizarDashboard() {
+            try {
+                const response = await fetch('/myd_bar_restaurantes/public/api/monitoramento/dashboard');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.data.estatisticas;
+                    
+                    // Pagamentos hoje
+                    document.getElementById('pagamentos-hoje').textContent = stats.hoje.pagamentos;
+                    document.getElementById('crescimento-pagamentos').textContent = 
+                        `${stats.crescimento.pagamentos > 0 ? '+' : ''}${stats.crescimento.pagamentos.toFixed(1)}%`;
+                    document.getElementById('crescimento-pagamentos').className = 
+                        stats.crescimento.pagamentos >= 0 ? 'trend-up' : 'trend-down';
+                    
+                    // Valor total
+                    document.getElementById('valor-total').textContent = 
+                        `R$ ${stats.hoje.valor_total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                    document.getElementById('crescimento-valor').textContent = 
+                        `${stats.crescimento.valor > 0 ? '+' : ''}${stats.crescimento.valor.toFixed(1)}%`;
+                    document.getElementById('crescimento-valor').className = 
+                        stats.crescimento.valor >= 0 ? 'trend-up' : 'trend-down';
+                    
+                    // Ticket médio
+                    document.getElementById('ticket-medio').textContent = 
+                        `R$ ${stats.hoje.ticket_medio.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                    
+                    // Últimos pagamentos
+                    atualizarUltimosPagamentos(data.data.ultimos_pagamentos);
+                    
+                    // Gráfico de formas de pagamento
+                    atualizarGraficoFormas(data.data.pagamentos_por_forma);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+            }
+        }
+
+        // Atualizar métricas
+        async function atualizarMetricas() {
+            try {
+                const response = await fetch('/myd_bar_restaurantes/public/api/monitoramento/metricas');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('response-time').textContent = 
+                        data.data.performance.tempo_medio_ms;
+                    
+                    // Gráfico de distribuição horária
+                    atualizarGraficoHorario(data.data.distribuicao_horaria);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar métricas:', error);
+            }
+        }
+
+        // Atualizar logs
+        async function atualizarLogs() {
+            try {
+                const response = await fetch('/myd_bar_restaurantes/public/api/monitoramento/logs?limite=10');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const logsContainer = document.getElementById('api-logs');
+                    logsContainer.innerHTML = '';
+                    
+                    data.data.logs.forEach(log => {
+                        const logEntry = document.createElement('div');
+                        logEntry.className = 'log-entry mb-1';
+                        
+                        const levelClass = log.nivel === 'error' ? 'text-danger' : 
+                                         log.nivel === 'warning' ? 'text-warning' : 'text-success';
+                        
+                        logEntry.innerHTML = `
+                            <small class="text-muted">${log.timestamp.substring(11, 19)}</small>
+                            <span class="${levelClass}">[${log.nivel.toUpperCase()}]</span>
+                            ${log.mensagem}
+                        `;
+                        
+                        logsContainer.appendChild(logEntry);
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar logs:', error);
+            }
+        }
+
+        // Atualizar tabela de últimos pagamentos
+        function atualizarUltimosPagamentos(pagamentos) {
+            const tbody = document.getElementById('ultimos-pagamentos');
+            tbody.innerHTML = '';
+            
+            if (pagamentos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhum pagamento encontrado</td></tr>';
+                return;
+            }
+            
+            pagamentos.forEach(pagamento => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>#${pagamento.id}</td>
+                    <td>${pagamento.mesa}</td>
+                    <td>
+                        <span class="badge bg-secondary">${pagamento.forma_pagamento}</span>
+                    </td>
+                    <td>R$ ${pagamento.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td>${pagamento.usuario}</td>
+                    <td>${pagamento.created_at}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            document.getElementById('total-pagamentos-badge').textContent = pagamentos.length;
+        }
+
+        // Criar/atualizar gráfico de formas de pagamento
+        function atualizarGraficoFormas(dados) {
+            const ctx = document.getElementById('chart-formas-pagamento').getContext('2d');
+            
+            if (chartFormasPagamento) {
+                chartFormasPagamento.destroy();
+            }
+            
+            const labels = dados.map(item => item.forma_pagamento);
+            const values = dados.map(item => item.valor_total);
+            
+            chartFormasPagamento = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: [
+                            '#28a745', '#007bff', '#ffc107', 
+                            '#17a2b8', '#6f42c1', '#fd7e14'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Criar/atualizar gráfico de distribuição horária
+        function atualizarGraficoHorario(dados) {
+            const ctx = document.getElementById('chart-horario').getContext('2d');
+            
+            if (chartHorario) {
+                chartHorario.destroy();
+            }
+            
+            // Preparar dados para 24 horas
+            const horas = Array.from({length: 24}, (_, i) => i);
+            const valores = horas.map(hora => dados[hora] || 0);
+            
+            chartHorario = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: horas.map(h => `${h.toString().padStart(2, '0')}:00`),
+                    datasets: [{
+                        label: 'Pagamentos',
+                        data: valores,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Atualizar dados a cada 30 segundos
+        setInterval(atualizarDados, 30000);
+
+        // Carregar dados iniciais
+        document.addEventListener('DOMContentLoaded', atualizarDados);
+    </script>
+</body>
+</html>

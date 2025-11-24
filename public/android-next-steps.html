@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android - Próximos Passos</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #EA1D2C 0%, #c41625 100%);
+            color: white;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-content {
+            padding: 25px;
+        }
+        
+        .step-group {
+            margin-bottom: 25px;
+        }
+        
+        .step-title {
+            color: #333;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .step-number {
+            background: #EA1D2C;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .substeps {
+            margin-left: 20px;
+            border-left: 3px solid #eee;
+            padding-left: 15px;
+        }
+        
+        .substep {
+            padding: 8px 0;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .substep::before {
+            content: "→ ";
+            color: #EA1D2C;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #856404;
+        }
+        
+        .code-block {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            margin: 10px 0;
+            color: #333;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 16px;
+            background: #EA1D2C;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #c41625;
+        }
+        
+        .btn-secondary {
+            background: #667eea;
+        }
+        
+        .btn-secondary:hover {
+            background: #5568d3;
+        }
+        
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .timeline-item {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            border-radius: 6px;
+            background: #f5f5f5;
+            border-top: 3px solid #ddd;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .timeline-item.active {
+            background: #e3f2fd;
+            border-top-color: #2196F3;
+        }
+        
+        .timeline-item.done {
+            background: #e8f5e9;
+            border-top-color: #4CAF50;
+        }
+        
+        .success-box {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="card">
+            <div class="card-header">
+                🚀 Próximos Passos no Android Studio
+            </div>
+            <div class="card-content">
+                <p style="color: #666; font-size: 14px; line-height: 1.8;">
+                    Você já tem o projeto criado e configurado. Agora vamos ativá-lo!<br>
+                    Siga os passos abaixo para testar, customizar e publicar seu app Android.
+                </p>
+                
+                <div class="timeline">
+                    <div class="timeline-item done">✅ Projeto criado</div>
+                    <div class="timeline-item active">🔄 Emulador</div>
+                    <div class="timeline-item">Testar</div>
+                    <div class="timeline-item">Customizar</div>
+                    <div class="timeline-item">APK</div>
+                    <div class="timeline-item">Play Store</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Passo 1 -->
+        <div class="card">
+            <div class="card-header">
+                ✅ Passo 1: Criar Emulador
+            </div>
+            <div class="card-content">
+                <div class="step-group">
+                    <div class="step-title">
+                        <span class="step-number">1</span>
+                        Android Studio já aberto?
+                    </div>
+                    <div class="substeps">
+                        <div class="substep">Se não, abra: <strong>C:\xampp\htdocs\myd_bar_restaurantes\android-studio-project\MyDApp</strong></div>
+                    </div>
+                </div>
+                
+                <div class="step-group">
+                    <div class="step-title">
+                        <span class="step-number">2</span>
+                        Abra Device Manager
+                    </div>
+                    <div class="substeps">
+                        <div class="substep">Menu superior: <strong>Tools → Device Manager</strong></div>
+                    </div>
+                </div>
+                
+                <div class="step-group">
+                    <div class="step-title">
+                        <span class="step-number">3</span>
+                        Crie novo dispositivo
+                    </div>
+                    <div class="substeps">
+                        <div class="substep">Clique em: <strong>"Create Device"</strong></div>
+                        <div class="substep">Selecione: <strong>"Pixel 4"</strong></div>
+                        <div class="substep">Clique: <strong>"Next"</strong></div>
+                    </div>
+                </div>
+                
+                <div class="step-group">
+                    <div class="step-title">
+                        <span class="step-number">4</span>
+                        Selecione Android Version
+                    </div>
+                    <div class="substeps">
+                        <div class="substep">Escolha: <strong>API 34 (Android 14)</strong></div>
+                        <div class="substep">Clique: <strong>"Next"</strong> → <strong>"Finish"</strong></div>
+                    </div>
+                </div>
+                
+                <div class="highlight">
+                    ⏳ Aguarde download (5-10 minutos na primeira vez)
+                </div>
+                
+                <div class="step-group">
+                    <div class="step-title">
+                        <span class="step-number">5</span>
+                        Inicie o emulador
+                    </div>
+                    <div class="substeps">
+                        <div class="substep">Ao lado de "Pixel 4 - API 34", clique no botão <strong>▶️ (Play)</strong></div>
+                        <div class="substep">Aguarde o Android iniciar (1-2 min)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Passo 2 -->
+        <div class="card">
+            <div class="card-header">
+                ✅ Passo 2: Executar App
+            </div>
+            <div class="card-content">
+                <div class="warning-box">
+                    ⏳ O emulador deve estar iniciado antes de prosseguir!
+                </div>
+                
+                <div class="step-group">
+                    <div class="step-title">
+                        <span class="step-number">1</span>
+                        Via Menu (Recomendado)
+                    </div>
+                    <div class="substeps">
+                        <div class="substep">Menu: <strong>Run</strong> (ou Shift+F10)</div>
+                        <div class="substep">Selecione: <strong>"Pixel 4 - API 34"</strong></div>
+                        <div class="substep">Clique: <strong>"OK"</strong></div>
+                    </div>
+                </div>
+                
+                <p style="color: #999; font-size: 13px; margin: 15px 0;">OU</p>
+                
+                <div class="step-group">
+                    <div class="step-title">
+                        <span class="step-number">2</span>
+                        Via Terminal/PowerShell
+                    </div>
+                    <div class="code-block">
+cd c:\xampp\htdocs\myd_bar_restaurantes\android-studio-project\MyDApp
+./gradlew installDebug
+                    </div>
+                </div>
+                
+                <div class="success-box">
+                    ✅ Se tudo funcionou, o app abre mostrando a tela de login do MyD!
+                </div>
+            </div>
+        </div>
+        
+        <!-- Passo 3 -->
+        <div class="card">
+            <div class="card-header">
+                ✅ Passo 3: Testar Funcionalidades
+            </div>
+            <div class="card-content">
+                <div class="step-group">
+                    <div class="step-title">
+                        <span class="step-number">1</span>
+                        App carregou com sucesso?
+                    </div>
+                    <div class="substeps">
+                        <div class="substep">✓ Você vê a tela de login ou menu</div>
+                        <div class="substep">✓ Interface está responsiva</div>
+                        <div class="substep">✓ Ícones e cores corretos</div>
+                    </div>
+                </div>
+                
+                <div class="step-group">
+                    <div class="step-title">
+                        <span class="step-number">2</span>
+                        Teste o login
+                    </div>
+                    <div class="substeps">
+                        <div class="substep">Use um telefone que você criou no sistema</div>
+                        <div class="substep">Clique em "Continuar"</div>
+                    </div>
+                </div>
+                
+                <div class="step-group">
+                    <div class="step-title">
+                        <span class="step-number">3</span>
+                        Teste o rastreamento
+                    </div>
+                    <div class="substeps">
+                        <div class="substep">Faça um pedido no app</div>
+                        <div class="substep">Vá na aba "Pedidos"</div>
+                        <div class="substep">Observe atualizações a cada 5 segundos</div>
+                    </div>
+                </div>
+                
+                <div class="step-group">
+                    <div class="step-title">
+                        <span class="step-number">4</span>
+                        Teste offline
+                    </div>
+                    <div class="substeps">
+                        <div class="substep">Desative WiFi (Extended controls)</div>
+                        <div class="substep">App continua funcionando com cache</div>
+                        <div class="substep">Reative WiFi e pedidos sincronizam</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Passo 4 -->
+        <div class="card">
+            <div class="card-header">
+                ✅ Passo 4: Customizar (Opcional)
+            </div>
+            <div class="card-content">
+                <div class="step-group">
+                    <div class="step-title">Mudar URL do servidor</div>
+                    <div class="substeps">
+                        <div class="substep"><strong>Arquivo:</strong> <code>app/src/main/java/.../MainActivity.kt</code></div>
+                        <div class="substep"><strong>Linha:</strong> 74</div>
+                        <div class="substep"><strong>Mude de:</strong> <code>http://localhost/app-cliente/</code></div>
+                        <div class="substep"><strong>Para:</strong> <code>http://seu-servidor.com/app-cliente/</code></div>
+                    </div>
+                </div>
+                
+                <div class="step-group">
+                    <div class="step-title">Mudar nome do app</div>
+                    <div class="substeps">
+                        <div class="substep"><strong>Arquivo:</strong> <code>app/src/main/res/values/strings.xml</code></div>
+                        <div class="code-block">
+&lt;string name="app_name"&gt;Seu Nome Aqui&lt;/string&gt;
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step-group">
+                    <div class="step-title">Mudar cores</div>
+                    <div class="substeps">
+                        <div class="substep"><strong>Arquivo:</strong> <code>app/src/main/res/values/colors.xml</code></div>
+                        <div class="code-block">
+&lt;color name="primary_red"&gt;#EA1D2C&lt;/color&gt;
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="highlight">
+                    Após editar: <strong>Save (Ctrl+S)</strong> → <strong>Run (Shift+F10)</strong>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Passo 5 -->
+        <div class="card">
+            <div class="card-header">
+                ✅ Passo 5: Gerar APK
+            </div>
+            <div class="card-content">
+                <div class="step-group">
+                    <div class="step-title">Debug APK (Para teste)</div>
+                    <div class="substeps">
+                        <div class="substep"><strong>Use para:</strong> Enviar para amigos testarem</div>
+                        <div class="substep"><strong>Comando:</strong></div>
+                        <div class="code-block">
+./gradlew assembleDebug
+                        </div>
+                        <div class="substep"><strong>Localização:</strong> <code>app/build/outputs/apk/debug/app-debug.apk</code></div>
+                    </div>
+                </div>
+                
+                <div class="step-group">
+                    <div class="step-title">Release APK (Para Play Store)</div>
+                    <div class="substeps">
+                        <div class="substep"><strong>Antes:</strong> Precisar assinar com keystore</div>
+                        <div class="substep"><strong>Comando:</strong></div>
+                        <div class="code-block">
+./gradlew assembleRelease
+                        </div>
+                        <div class="substep"><strong>Localização:</strong> <code>app/build/outputs/apk/release/app-release.apk</code></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Passo 6 -->
+        <div class="card">
+            <div class="card-header">
+                ✅ Passo 6: Publicar (Play Store)
+            </div>
+            <div class="card-content">
+                <div class="step-group">
+                    <div class="step-title">Requisitos</div>
+                    <div class="substeps">
+                        <div class="substep">✓ Conta Google Play Developer ($25)</div>
+                        <div class="substep">✓ APK assinado (release)</div>
+                        <div class="substep">✓ Screenshots (4-6 imagens)</div>
+                        <div class="substep">✓ Descrição do app</div>
+                        <div class="substep">✓ Política de privacidade</div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <a href="https://play.google.com/console" class="btn btn-secondary" target="_blank">
+                        Abrir Google Play Console
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dicas -->
+        <div class="card">
+            <div class="card-header">
+                💡 Dicas Importantes
+            </div>
+            <div class="card-content">
+                <div class="substeps">
+                    <div class="substep"><strong>Emulador lento?</strong> Aumente RAM: Device Manager → Edit → Advanced Settings</div>
+                    <div class="substep"><strong>App não conecta?</strong> Se em emulador, use <strong>10.0.2.2</strong> em vez de localhost</div>
+                    <div class="substep"><strong>Gradle erro?</strong> Execute <code>./gradlew clean</code> depois tente novamente</div>
+                    <div class="substep"><strong>Ver logs?</strong> View → Tool Windows → Logcat</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>📁 Projeto: c:\xampp\htdocs\myd_bar_restaurantes\android-studio-project\MyDApp</p>
+        <p>📚 Documentação: ANDROID_NEXT_STEPS.md | ANDROID_STUDIO_GUIDE.md</p>
+        <p style="margin-top: 10px;">© 2025 MyD Bar & Restaurantes | v1.0.0</p>
+    </div>
+</body>
+</html>

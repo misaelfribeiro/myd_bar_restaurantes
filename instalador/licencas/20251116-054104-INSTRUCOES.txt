@@ -1,0 +1,71 @@
+﻿=====================================================================
+  MYD RESTAURANTE - LICENCA DE SOFTWARE
+=====================================================================
+
+DADOS DO CLIENTE:
+  Nome: MYD Facilyta Tecnhnology
+  Email: mydengenhariadesoftware@gmail.com
+  CNPJ: 24223868000119
+
+CHAVE DE LICENCA:
+  F7UV-GN96-ED8P-KUVD
+
+CONFIGURACAO:
+  Tipo: standard
+  Max Usuarios: 2
+  Max Mesas: 20
+  Validade: 60 dias
+  Expira em: 2026-01-15 05:41:04
+
+HARDWARE:
+  Vinculado: NAO (pode usar em qualquer PC)
+
+=====================================================================
+  INSTRUCOES PARA O CLIENTE
+=====================================================================
+
+1. Instale o sistema MYD Restaurante
+
+2. Na primeira execucao, o sistema pedira a licenca
+
+3. Digite a chave de licenca exatamente como aparece acima:
+   F7UV-GN96-ED8P-KUVD
+
+4. O sistema sera ativado automaticamente
+
+
+IMPORTANTE: Esta licenca NAO esta vinculada a um hardware especifico.
+Para maior seguranca, recomendamos vincular a licenca apos a instalacao.
+
+Para vincular ao hardware:
+1. Apos instalar, o cliente deve acessar o sistema
+2. Ir em Configuracoes > Licenca
+3. Clicar em "Vincular ao Hardware Atual"
+
+=====================================================================
+  COMO OBTER O HARDWARE ID (se necessario)
+=====================================================================
+
+Windows:
+1. Abrir Prompt de Comando (cmd)
+2. Digitar: wmic csproduct get uuid
+3. Copiar o codigo que aparece
+
+Linux:
+1. Abrir Terminal
+2. Digitar: sudo cat /sys/class/dmi/id/product_uuid
+3. Copiar o codigo que aparece
+
+=====================================================================
+  SUPORTE
+=====================================================================
+
+Em caso de problemas:
+- Email: suporte@mydrestaurante.com
+- Telefone: (XX) XXXX-XXXX
+
+Guarde esta licenca em local seguro!
+
+=====================================================================
+
+Gerado em: 2025-11-16 05:41:04

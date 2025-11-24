@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Bridge Completo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            background: #f5f5f5;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .success {
+            background: #4CAF50;
+            color: white;
+        }
+        .error {
+            background: #f44336;
+            color: white;
+        }
+        .info {
+            background: #2196F3;
+            color: white;
+        }
+        button {
+            padding: 15px 25px;
+            margin: 10px 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #2196F3;
+            color: white;
+            width: 100%;
+        }
+        button:active {
+            background: #0d47a1;
+        }
+        .log {
+            background: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-size: 12px;
+            font-family: monospace;
+            border-left: 3px solid #2196F3;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .section {
+            background: white;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnóstico Bridge Android</h1>
+    
+    <div class="section">
+        <h3>Status do Bridge:</h3>
+        <div id="status"></div>
+    </div>
+    
+    <div class="section">
+        <h3>Testes Disponíveis:</h3>
+        <button onclick="verificarBridge()">1️⃣ Verificar Bridge</button>
+        <button onclick="testarVibrar()">2️⃣ Testar Vibração</button>
+        <button onclick="testarMensagem()">3️⃣ Testar Mensagem</button>
+        <button onclick="testarLoginManual()">4️⃣ Simular Login Manual</button>
+        <button onclick="testarLoginReal()">5️⃣ Fazer Login Real (API)</button>
+    </div>
+    
+    <div class="section">
+        <h3>Logs:</h3>
+        <div id="logs"></div>
+    </div>
+    
+    <script>
+        function log(msg, type = 'info') {
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = 'log';
+            div.textContent = new Date().toLocaleTimeString() + ' - ' + msg;
+            logs.insertBefore(div, logs.firstChild);
+            console.log(msg);
+        }
+        
+        function updateStatus(msg, type) {
+            const status = document.getElementById('status');
+            status.innerHTML = `<div class="status ${type}">${msg}</div>`;
+        }
+        
+        function verificarBridge() {
+            log('🔍 Verificando AndroidBridge...');
+            
+            if (typeof window.AndroidBridge === 'undefined') {
+                log('❌ AndroidBridge NÃO EXISTE!');
+                updateStatus('❌ AndroidBridge não encontrado - App não foi recompilado!', 'error');
+                return false;
+            }
+            
+            log('✅ AndroidBridge encontrado!');
+            
+            // Verificar métodos
+            const metodos = ['vibrate', 'showMessage', 'onLoginSuccess'];
+            let todosEncontrados = true;
+            
+            metodos.forEach(metodo => {
+                if (typeof window.AndroidBridge[metodo] === 'function') {
+                    log(`✅ Método ${metodo} existe!`);
+                } else {
+                    log(`❌ Método ${metodo} NÃO existe!`);
+                    todosEncontrados = false;
+                }
+            });
+            
+            if (todosEncontrados) {
+                updateStatus('✅ Bridge OK - Todos os métodos disponíveis!', 'success');
+            } else {
+                updateStatus('⚠️ Bridge incompleto - Faltam métodos!', 'error');
+            }
+            
+            return todosEncontrados;
+        }
+        
+        function testarVibrar() {
+            log('📳 Testando vibração...');
+            if (!verificarBridge()) return;
+            
+            try {
+                window.AndroidBridge.vibrate('0,500,250,500');
+                log('✅ Vibração chamada!');
+                updateStatus('✅ Vibração testada com sucesso!', 'success');
+            } catch (e) {
+                log('❌ Erro ao vibrar: ' + e.message);
+                updateStatus('❌ Erro na vibração!', 'error');
+            }
+        }
+        
+        function testarMensagem() {
+            log('💬 Testando mensagem...');
+            if (!verificarBridge()) return;
+            
+            try {
+                window.AndroidBridge.showMessage('🎉 Bridge funcionando!');
+                log('✅ Mensagem enviada!');
+                updateStatus('✅ Mensagem testada com sucesso!', 'success');
+            } catch (e) {
+                log('❌ Erro ao mostrar mensagem: ' + e.message);
+                updateStatus('❌ Erro na mensagem!', 'error');
+            }
+        }
+        
+        function testarLoginManual() {
+            log('👤 Testando login manual...');
+            if (!verificarBridge()) return;
+            
+            try {
+                const clienteIdTeste = 26;
+                log('📤 Chamando onLoginSuccess(' + clienteIdTeste + ')...');
+                window.AndroidBridge.onLoginSuccess(clienteIdTeste.toString());
+                log('✅ onLoginSuccess chamado!');
+                updateStatus('✅ Login manual testado - Verifique os logs do Android!', 'success');
+            } catch (e) {
+                log('❌ Erro ao chamar onLoginSuccess: ' + e.message);
+                updateStatus('❌ Erro no login manual!', 'error');
+            }
+        }
+        
+        async function testarLoginReal() {
+            log('🌐 Fazendo login real na API...');
+            updateStatus('⏳ Fazendo login...', 'info');
+            
+            try {
+                const response = await fetch('http://192.168.15.9/api/app/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        telefone: '48988223344' // Use seu telefone de teste
+                    })
+                });
+                
+                const data = await response.json();
+                log('📦 Resposta: ' + JSON.stringify(data));
+                
+                if (data.success && data.cliente && data.cliente.id) {
+                    log('✅ Login bem sucedido! Cliente ID: ' + data.cliente.id);
+                    
+                    if (window.AndroidBridge && window.AndroidBridge.onLoginSuccess) {
+                        log('📤 Chamando AndroidBridge.onLoginSuccess...');
+                        window.AndroidBridge.onLoginSuccess(data.cliente.id.toString());
+                        updateStatus('✅ Login real testado com sucesso!', 'success');
+                    } else {
+                        log('❌ AndroidBridge não disponível!');
+                        updateStatus('❌ Bridge não disponível!', 'error');
+                    }
+                } else {
+                    log('⚠️ Login não retornou cliente.id');
+                    updateStatus('⚠️ Login sem cliente.id', 'error');
+                }
+            } catch (e) {
+                log('❌ Erro no login: ' + e.message);
+                updateStatus('❌ Erro ao fazer login!', 'error');
+            }
+        }
+        
+        // Verificar automaticamente ao carregar
+        setTimeout(() => {
+            log('🚀 Página carregada, verificando bridge...');
+            verificarBridge();
+        }, 500);
+    </script>
+</body>
+</html>

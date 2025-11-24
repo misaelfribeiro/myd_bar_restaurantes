@@ -1,0 +1,40 @@
+📱 QUICK START - Push Notifications
+
+🚀 COMPILAR (2-3 min):
+   1. Abrir Android Studio
+   2. File → Open → MyDApp folder
+   3. Build → Build APK(s)
+   4. Sucesso em: app/build/outputs/apk/debug/
+
+📦 INSTALAR (1 min):
+   adb install -r "app\build\outputs\apk\debug\app-debug.apk"
+
+✅ TESTAR (Imediato):
+   1. Abrir app no tablet
+   2. Ver logs: adb logcat -s FCM
+   3. Copiar token (ex: fTe5...qW2)
+   4. Executar: .\testar-fcm-token.ps1 -Token "fTe5...qW2"
+   5. 📬 Notificação aparece!
+
+🔔 API ENDPOINTS:
+   POST http://192.168.15.9/api/notificacao/testar
+   POST http://192.168.15.9/api/notificacao/enviar
+   POST http://192.168.15.9/api/notificacao/pedido-pronto
+   POST http://192.168.15.9/api/notificacao/delivery-aceito
+   POST http://192.168.15.9/api/notificacao/delivery-entregue
+
+🐛 TROUBLESHOOT:
+   Logs Android: adb logcat -s "FCM|MyDApp"
+   Logs Laravel: tail -f storage/logs/laravel.log
+   Test local:   php testar_notificacoes_teste.php
+
+📋 GUIAS:
+   - FIREBASE_PRONTO_DEPLOY.md ← Leia primeiro!
+   - FIREBASE_DEPLOY_GUIDE.md ← Detalhado
+   - compilar-android.ps1 ← Compilar
+   - testar-fcm-token.ps1 ← Testar
+
+💡 FLUXO:
+   App abre → Registra token → API salva → Admin envia → Notificação chega → Vibra!
+
+✨ Status: PRONTO! ✅

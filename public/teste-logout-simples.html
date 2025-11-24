@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Logout Simples</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; text-align: center; }
+        button { padding: 20px 40px; font-size: 18px; margin: 10px; border: none; border-radius: 8px; cursor: pointer; }
+        .logout { background: #f44336; color: white; }
+        .info { background: #2196F3; color: white; }
+        .result { margin-top: 20px; padding: 15px; background: white; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>🔓 Teste de Logout</h1>
+    <p>Este teste simula o logout sem confirmação</p>
+    
+    <button class="logout" onclick="testarLogout()">
+        🚪 Fazer Logout
+    </button>
+    
+    <button class="info" onclick="verificarEstado()">
+        🔍 Verificar Estado
+    </button>
+    
+    <div class="result" id="result"></div>
+    
+    <script>
+        function testarLogout() {
+            console.log('Iniciando logout...');
+            
+            // Limpar localStorage
+            localStorage.removeItem('app_token');
+            localStorage.removeItem('app_user');
+            localStorage.removeItem('app_cart');
+            
+            document.getElementById('result').innerHTML = `
+                <h3>✅ Logout executado!</h3>
+                <p>LocalStorage limpo</p>
+                <p>Agora volte para o app e veja se está na tela de login</p>
+            `;
+        }
+        
+        function verificarEstado() {
+            const token = localStorage.getItem('app_token');
+            const user = localStorage.getItem('app_user');
+            
+            if (token) {
+                document.getElementById('result').innerHTML = `
+                    <h3>🟢 Usuário Logado</h3>
+                    <p>Token existe: ${token.substring(0, 20)}...</p>
+                    <p>User: ${user ? JSON.parse(user).nome : 'N/A'}</p>
+                `;
+            } else {
+                document.getElementById('result').innerHTML = `
+                    <h3>🔴 Usuário Deslogado</h3>
+                    <p>Sem token no localStorage</p>
+                `;
+            }
+        }
+        
+        // Verificar automaticamente
+        verificarEstado();
+    </script>
+</body>
+</html>

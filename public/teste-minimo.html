@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Mínimo SQL.js</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #000;
+            color: #0f0;
+        }
+        .log { margin: 5px 0; }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .info { color: #0ff; }
+        .warning { color: #ff0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Teste Mínimo SQL.js</h1>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            output.appendChild(div);
+            console.log(message);
+        }
+
+        log('1️⃣ Página carregada', 'info');
+        log(`2️⃣ document.readyState: ${document.readyState}`, 'info');
+        log(`3️⃣ typeof initSqlJs: ${typeof initSqlJs}`, typeof initSqlJs !== 'undefined' ? 'success' : 'error');
+
+        if (typeof initSqlJs === 'undefined') {
+            log('❌ PROBLEMA: initSqlJs não está definido!', 'error');
+            log('Possíveis causas:', 'warning');
+            log('  - Script SQL.js não carregou do CDN', 'warning');
+            log('  - Sem conexão com internet', 'warning');
+            log('  - CDN bloqueado (firewall/antivírus)', 'warning');
+            log('', 'info');
+            log('Aguardando 10 segundos...', 'info');
+            
+            let tentativas = 0;
+            const intervalo = setInterval(() => {
+                tentativas++;
+                log(`Tentativa ${tentativas}/100...`, 'info');
+                
+                if (typeof initSqlJs !== 'undefined') {
+                    clearInterval(intervalo);
+                    log('✅ SQL.js CARREGOU!', 'success');
+                    testarSQLjs();
+                } else if (tentativas >= 100) {
+                    clearInterval(intervalo);
+                    log('❌ SQL.js NÃO CARREGOU após 10 segundos', 'error');
+                    log('', 'info');
+                    log('SOLUÇÃO: Baixe SQL.js localmente', 'warning');
+                    log('Execute no terminal:', 'info');
+                    log('  cd public/js', 'info');
+                    log('  curl -o sql-wasm.js https://sql.js.org/dist/sql-wasm.js', 'info');
+                    log('  curl -o sql-wasm.wasm https://sql.js.org/dist/sql-wasm.wasm', 'info');
+                }
+            }, 100);
+        } else {
+            log('✅ SQL.js está disponível!', 'success');
+            testarSQLjs();
+        }
+
+        async function testarSQLjs() {
+            try {
+                log('', 'info');
+                log('4️⃣ Inicializando SQL.js...', 'info');
+                
+                const SQL = await initSqlJs({
+                    locateFile: file => `/libs/${file}`
+                });
+                
+                log('✅ SQL.js inicializado!', 'success');
+                log('', 'info');
+                log('5️⃣ Criando banco de dados...', 'info');
+                
+                const db = new SQL.Database();
+                log('✅ Banco criado!', 'success');
+                
+                log('', 'info');
+                log('6️⃣ Criando tabela teste...', 'info');
+                db.run('CREATE TABLE teste (id INTEGER PRIMARY KEY, nome TEXT)');
+                log('✅ Tabela criada!', 'success');
+                
+                log('', 'info');
+                log('7️⃣ Inserindo dados...', 'info');
+                db.run('INSERT INTO teste (nome) VALUES (?)', ['Teste 1']);
+                db.run('INSERT INTO teste (nome) VALUES (?)', ['Teste 2']);
+                log('✅ Dados inseridos!', 'success');
+                
+                log('', 'info');
+                log('8️⃣ Consultando dados...', 'info');
+                const result = db.exec('SELECT * FROM teste');
+                log(`✅ ${result[0].values.length} registros encontrados!`, 'success');
+                
+                result[0].values.forEach(row => {
+                    log(`   - ID: ${row[0]}, Nome: ${row[1]}`, 'success');
+                });
+                
+                log('', 'info');
+                log('9️⃣ Testando localStorage...', 'info');
+                const data = db.export();
+                localStorage.setItem('teste_db', JSON.stringify(Array.from(data)));
+                log(`✅ Banco salvo (${data.length} bytes)`, 'success');
+                
+                log('', 'info');
+                log('🔟 Carregando do localStorage...', 'info');
+                const saved = JSON.parse(localStorage.getItem('teste_db'));
+                const db2 = new SQL.Database(new Uint8Array(saved));
+                const result2 = db2.exec('SELECT COUNT(*) FROM teste');
+                log(`✅ ${result2[0].values[0][0]} registros carregados!`, 'success');
+                
+                log('', 'info');
+                log('🎉 TODOS OS TESTES PASSARAM!', 'success');
+                log('SQL.js está funcionando perfeitamente!', 'success');
+                
+                db.close();
+                db2.close();
+                localStorage.removeItem('teste_db');
+                
+            } catch (error) {
+                log('', 'info');
+                log(`❌ ERRO: ${error.message}`, 'error');
+                log(`Stack: ${error.stack}`, 'error');
+            }
+        }
+    </script>
+
+    <!-- SQL.js LOCAL - Última coisa a carregar -->
+    <script src="/libs/sql-wasm.js"></script>
+</body>
+</html>

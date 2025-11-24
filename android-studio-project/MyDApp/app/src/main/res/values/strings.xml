@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MyD Bar &amp; Restaurantes</string>
+    <string name="app_description">App de delivery com rastreamento em tempo real</string>
+    <string name="company_name">Bed &amp; Breakfast</string>
+
+    <!-- <string name="app_name">Meu App</string> -->
+</resources>

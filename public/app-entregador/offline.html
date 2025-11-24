@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Servidor Offline - MyD Entregador</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .error-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .robot {
+            font-size: 100px;
+            animation: working 2s ease-in-out infinite;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        @keyframes working {
+            0%, 100% {
+                transform: rotate(-5deg);
+            }
+            50% {
+                transform: rotate(5deg);
+            }
+        }
+
+        .cat-crying {
+            font-size: 80px;
+            animation: cry 1.5s ease-in-out infinite;
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        @keyframes cry {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .status {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .status-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .status-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .status-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .status-offline {
+            color: #dc3545;
+        }
+
+        .btn-retry {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 15px 40px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-retry:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-retry:active {
+            transform: translateY(0);
+        }
+
+        .btn-retry:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .retry-counter {
+            color: #999;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tips {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 25px;
+            text-align: left;
+        }
+
+        .tips h3 {
+            color: #856404;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .tips ul {
+            color: #856404;
+            font-size: 14px;
+            padding-left: 20px;
+        }
+
+        .tips li {
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .error-container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .robot, .cat-crying {
+                font-size: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="robot" id="emoji">🤖</div>
+        <div class="cat-crying" id="catEmoji">😿</div>
+        
+        <h1 id="title">Servidor Temporariamente Indisponível</h1>
+        <p id="message">Estamos trabalhando duro para restabelecer a conexão...</p>
+
+        <div class="status">
+            <div class="status-item">
+                <span class="status-label">Status do Servidor:</span>
+                <span class="status-value status-offline" id="serverStatus">⚠️ Offline</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Última tentativa:</span>
+                <span class="status-value" id="lastAttempt">Agora</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Próxima tentativa:</span>
+                <span class="status-value" id="nextAttempt">Em 10s</span>
+            </div>
+        </div>
+
+        <button class="btn-retry" id="retryBtn" onclick="tryReconnect()">
+            Tentar Reconectar
+        </button>
+
+        <div class="retry-counter" id="retryCounter">
+            Tentativas: <span id="attempts">0</span>
+        </div>
+
+        <div class="tips">
+            <h3>💡 Possíveis Causas:</h3>
+            <ul>
+                <li>Servidor em manutenção</li>
+                <li>Problemas de conexão com a internet</li>
+                <li>WiFi desconectado</li>
+                <li>Servidor reiniciando</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let attempts = 0;
+        let autoRetryInterval;
+        let countdownInterval;
+        let nextRetryTime = 10;
+        const serverUrl = window.location.origin;
+        const emojis = ['🤖', '🔧', '⚙️', '🛠️'];
+        let currentEmojiIndex = 0;
+
+        // Alternar emoji
+        function rotateEmoji() {
+            currentEmojiIndex = (currentEmojiIndex + 1) % emojis.length;
+            document.getElementById('emoji').textContent = emojis[currentEmojiIndex];
+        }
+
+        setInterval(rotateEmoji, 2000);
+
+        // Atualizar contagem regressiva
+        function updateCountdown() {
+            if (nextRetryTime > 0) {
+                document.getElementById('nextAttempt').textContent = `Em ${nextRetryTime}s`;
+                nextRetryTime--;
+            } else {
+                tryReconnect();
+            }
+        }
+
+        // Tentar reconectar
+        async function tryReconnect() {
+            attempts++;
+            document.getElementById('attempts').textContent = attempts;
+            document.getElementById('lastAttempt').textContent = new Date().toLocaleTimeString('pt-BR');
+            
+            const btn = document.getElementById('retryBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Conectando...';
+
+            // Limpar intervalos
+            clearInterval(autoRetryInterval);
+            clearInterval(countdownInterval);
+
+            try {
+                const response = await fetch(serverUrl + '/api/health-check', {
+                    method: 'GET',
+                    cache: 'no-cache',
+                    timeout: 5000
+                });
+
+                if (response.ok) {
+                    // Servidor online! Recarregar página
+                    document.getElementById('serverStatus').innerHTML = '✅ Online';
+                    document.getElementById('serverStatus').classList.remove('status-offline');
+                    document.getElementById('title').textContent = 'Conexão Restabelecida!';
+                    document.getElementById('message').textContent = 'Redirecionando...';
+                    btn.innerHTML = '✅ Conectado!';
+                    
+                    // Mostrar gatinho feliz
+                    document.getElementById('emoji').style.display = 'none';
+                    document.getElementById('catEmoji').style.display = 'inline-block';
+                    document.getElementById('catEmoji').textContent = '😺';
+                    
+                    setTimeout(() => {
+                        window.location.href = serverUrl + '/app-entregador/';
+                    }, 1500);
+                } else {
+                    throw new Error('Server not ready');
+                }
+            } catch (error) {
+                // Servidor ainda offline
+                btn.disabled = false;
+                btn.textContent = 'Tentar Novamente';
+                
+                // Mostrar gatinho chorando após 3 tentativas
+                if (attempts >= 3) {
+                    document.getElementById('emoji').style.display = 'none';
+                    document.getElementById('catEmoji').style.display = 'inline-block';
+                    document.getElementById('title').textContent = 'Ainda sem Conexão 😿';
+                }
+                
+                // Reiniciar auto-retry após 10 segundos
+                nextRetryTime = 10;
+                autoRetryInterval = setInterval(tryReconnect, 10000);
+                countdownInterval = setInterval(updateCountdown, 1000);
+            }
+        }
+
+        // Iniciar auto-retry
+        autoRetryInterval = setInterval(tryReconnect, 10000);
+        countdownInterval = setInterval(updateCountdown, 1000);
+
+        // Verificar conexão periodicamente mesmo sem clicar
+        window.addEventListener('online', () => {
+            document.getElementById('title').textContent = 'Internet Reconectada!';
+            tryReconnect();
+        });
+
+        window.addEventListener('offline', () => {
+            document.getElementById('title').textContent = 'Você está Offline';
+            document.getElementById('message').textContent = 'Verifique sua conexão com a internet';
+        });
+    </script>
+</body>
+</html>

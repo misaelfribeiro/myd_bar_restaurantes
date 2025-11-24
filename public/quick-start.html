@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyD - Quick Start</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #EA1D2C;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .option {
+            background: #f5f5f5;
+            border-left: 4px solid #EA1D2C;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .option:hover {
+            background: #eee;
+            transform: translateX(5px);
+        }
+        
+        .option h3 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .option p {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .badge.hot {
+            background: #FF6B6B;
+        }
+        
+        .step {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .step-number {
+            background: #EA1D2C;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .step-text {
+            font-size: 13px;
+            color: #333;
+        }
+        
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .features {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        
+        .features h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .feature-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .feature-item {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .feature-item::before {
+            content: "✓ ";
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .feature-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 MyD Bar & Restaurantes</h1>
+        <p class="subtitle">Escolha como você quer usar o app</p>
+        
+        <!-- Opção 1 -->
+        <div class="option" onclick="window.location='http://localhost/app-cliente/'">
+            <h3>
+                📱 Instalar como App
+                <span class="badge hot">RECOMENDADO</span>
+            </h3>
+            <p>Instale na sua home screen em segundos, sem Play Store</p>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-text">Clique para abrir o app</div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-text">Aguarde 10 segundos navegando</div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-text">Clique no ícone ⬇️ na barra de endereço</div>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-text">Confirme a instalação</div>
+            </div>
+        </div>
+        
+        <!-- Opção 2 -->
+        <div class="option" onclick="window.location='http://localhost/app-cliente/teste-pwa.html'">
+            <h3>
+                🧪 Testar PWA
+                <span class="badge">DIAGNÓSTICO</span>
+            </h3>
+            <p>Verifique se tudo está configurado corretamente</p>
+            <div class="step">
+                <div class="step-number">→</div>
+                <div class="step-text">Ver relatório de 5 verificações</div>
+            </div>
+        </div>
+        
+        <!-- Opção 3 -->
+        <div class="option" onclick="window.location='#'">
+            <h3>📋 APK Nativa (Avançado)</h3>
+            <p>Para compilação Android com Cordova</p>
+            <div class="step">
+                <div class="step-number">→</div>
+                <div class="step-text">Veja: <a href="APP_READY_TO_DEPLOY.md">APP_READY_TO_DEPLOY.md</a></div>
+            </div>
+        </div>
+        
+        <!-- Features -->
+        <div class="features">
+            <h4>✨ O que você ganha:</h4>
+            <div class="feature-list">
+                <div class="feature-item">Rastreamento em tempo real</div>
+                <div class="feature-item">Funciona offline</div>
+                <div class="feature-item">Vibração do celular</div>
+                <div class="feature-item">Notificações push</div>
+                <div class="feature-item">Design moderno</div>
+                <div class="feature-item">Acesso rápido na home</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>MyD Bar & Restaurantes © 2025</p>
+            <p>Versão 1.0.0 | PWA Ready</p>
+        </div>
+    </div>
+</body>
+</html>

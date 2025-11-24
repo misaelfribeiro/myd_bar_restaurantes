@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Testar Notificação FCM</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        input, button, select { width: 100%; padding: 10px; margin: 10px 0; font-size: 16px; }
+        button { background: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background: #45a049; }
+        .resultado { background: #f0f0f0; padding: 15px; margin-top: 20px; border-radius: 4px; white-space: pre-wrap; }
+        h2 { color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔔 Testar Notificação Push</h2>
+        
+        <label>Token FCM do Cliente:</label>
+        <input type="text" id="token" placeholder="Cole o token FCM aqui">
+        
+        <label>Tipo de Notificação:</label>
+        <select id="tipo">
+            <option value="teste">Teste Simples</option>
+            <option value="pedido-pronto">Pedido Pronto</option>
+            <option value="delivery-aceito">Delivery Aceito</option>
+            <option value="delivery-entregue">Delivery Entregue</option>
+        </select>
+        
+        <button onclick="enviarNotificacao()">📤 Enviar Notificação</button>
+        
+        <div id="resultado" class="resultado" style="display:none;"></div>
+    </div>
+
+    <script>
+        async function enviarNotificacao() {
+            const token = document.getElementById('token').value;
+            const tipo = document.getElementById('tipo').value;
+            const resultado = document.getElementById('resultado');
+            
+            if (!token) {
+                alert('Digite o token FCM!');
+                return;
+            }
+            
+            resultado.style.display = 'block';
+            resultado.textContent = 'Enviando...';
+            
+            try {
+                let url = 'http://192.168.15.9/api/notificacao/';
+                let body = { token: token };
+                
+                switch(tipo) {
+                    case 'teste':
+                        url += 'testar';
+                        body.titulo = 'Teste de Notificação';
+                        body.mensagem = 'Se você viu isso, está funcionando! 🎉';
+                        break;
+                    case 'pedido-pronto':
+                        url += 'pedido-pronto';
+                        body.pedido_id = 1;
+                        body.numero_pedido = '#123';
+                        break;
+                    case 'delivery-aceito':
+                        url += 'delivery-aceito';
+                        body.pedido_id = 1;
+                        body.entregador = 'João';
+                        body.tempo_estimado = 30;
+                        break;
+                    case 'delivery-entregue':
+                        url += 'delivery-entregue';
+                        body.pedido_id = 1;
+                        body.cliente_nome = 'Cliente Teste';
+                        break;
+                }
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                const data = await response.json();
+                
+                resultado.textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success) {
+                    resultado.style.background = '#d4edda';
+                    resultado.style.color = '#155724';
+                } else {
+                    resultado.style.background = '#f8d7da';
+                    resultado.style.color = '#721c24';
+                }
+                
+            } catch (error) {
+                resultado.textContent = 'ERRO: ' + error.message;
+                resultado.style.background = '#f8d7da';
+                resultado.style.color = '#721c24';
+            }
+        }
+    </script>
+</body>
+</html>

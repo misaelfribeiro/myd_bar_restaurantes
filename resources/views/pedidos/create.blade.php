@@ -1,577 +1,1099 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Novo Pedido - Sistema Bar/Restaurante</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .navbar-glass {
-            background: rgba(255, 255, 255, 0.1) !important;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .navbar-glass .navbar-brand,
-        .navbar-glass .nav-link {
-            color: white !important;
-            font-weight: 600;
-        }
-        
-        .hero-section {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            margin: 20px 0;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            text-align: center;
-        }
-        
-        .form-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 35px;
-            margin-bottom: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        
-        .form-label {
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 8px;
-        }
-        
-        .form-control,
-        .form-select {
-            border: 2px solid rgba(99, 102, 241, 0.2);
-            border-radius: 12px;
-            padding: 12px 16px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-            outline: none;
-        }
-        
-        .btn-gradient {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border: none;
-            color: white;
-            font-weight: 600;
-            padding: 14px 28px;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            font-size: 1.1rem;
-        }
-        
-        .btn-gradient:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
-            color: white;
-        }
-        
-        .btn-outline-gradient {
-            background: transparent;
-            border: 2px solid #6366f1;
-            color: #6366f1;
-            font-weight: 600;
-            padding: 12px 26px;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline-gradient:hover {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-            transform: translateY(-2px);
-        }
-        
-        .mesa-card {
-            border: 2px solid #e5e7eb;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            background: #f9fafb;
-        }
-        
-        .mesa-card:hover {
-            border-color: #6366f1;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.15);
-        }
-        
-        .mesa-card.selected {
-            border-color: #6366f1;
-            background: rgba(99, 102, 241, 0.05);
-        }
-        
-        .mesa-status {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .status-livre { background: #dcfce7; color: #166534; }
-        .status-ocupada { background: #fee2e2; color: #991b1b; }
-        
-        .preview-card {
-            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 25px;
-        }
-        
-        .preview-item {
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-        
-        .preview-item:last-child {
-            border-bottom: none;
-        }
-        
-        .garcom-card {
-            border: 2px solid #e5e7eb;
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            background: #f9fafb;
-        }
-        
-        .garcom-card:hover {
-            border-color: #8b5cf6;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.15);
-        }
-        
-        .garcom-card.selected {
-            border-color: #8b5cf6;
-            background: rgba(139, 92, 246, 0.05);
-        }
-        
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-        
-        .step {
-            display: flex;
-            align-items: center;
-            margin: 0 15px;
-        }
-        
-        .step-number {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 10px;
-            font-weight: 600;
-        }
-        
-        .step-active {
-            background: #6366f1;
-            color: white;
-        }
-        
-        .step-inactive {
-            background: #e5e7eb;
-            color: #9ca3af;
-        }
-        
-        .alert-info {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            color: #1e40af;
-        }
-        
-        @media (max-width: 768px) {
-            .form-card { padding: 25px; }
-            .mesa-grid { grid-template-columns: 1fr; }
-            .step-indicator { flex-direction: column; gap: 10px; }
-        }
-    </style>
-</head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-glass">
-        <div class="container">
-            <a class="navbar-brand" href="{{ route('dashboard') }}">
-                <i class="fas fa-utensils me-2"></i>
-                Sistema Bar/Restaurante
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ route('dashboard') }}">
-                    <i class="fas fa-home me-1"></i>Dashboard
-                </a>
-                <a class="nav-link" href="{{ route('pedidos.index') }}">
-                    <i class="fas fa-receipt me-1"></i>Pedidos
-                </a>
-            </div>
-        </div>
-    </nav>
+@extends('layouts.app')
+@section('title', 'Novo Pedido')
+@section('content')
+<div class="container-fluid">
+ <div class="page-header">
+ <div class="d-flex justify-content-between align-items-center">
+ <div>
+ <h1 class="page-title">
+ <i class="fas fa-plus-circle me-2"></i>
+ Novo Pedido
+ </h1>
+ <p class="page-subtitle">Crie um novo pedido para o restaurante</p>
+ </div>
+ <a href="{{ route('pedidos.index') }}" class="btn btn-secondary">
+ <i class="fas fa-arrow-left me-2"></i>
+ Voltar
+ </a>
+ </div>
+ </div>
+ <!-- Progress Steps -->
+ <div class="card mb-4">
+ <div class="card-body">
+ <div class="row text-center">
+ <div class="col-md-3">
+ <div class="border-end">
+ <div class="step-number bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">1</div>
+ <div class="mt-2">
+ <strong>Tipo de Pedido</strong>
+ <br><small class="text-muted">Mesa ou Delivery</small>
+ </div>
+ </div>
+ </div>
+ <div class="col-md-3">
+ <div class="border-end">
+ <div class="step-number bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">2</div>
+ <div class="mt-2">
+ <strong>Mesa/Cliente</strong>
+ <br><small class="text-muted">Escolha a mesa ou dados do cliente</small>
+ </div>
+ </div>
+ </div>
+ <div class="col-md-3">
+ <div class="border-end">
+ <div class="step-number bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">3</div>
+ <div class="mt-2">
+ <strong>Adicionar Itens</strong>
+ <br><small class="text-muted">Selecione produtos do cardápio</small>
+ </div>
+ </div>
+ </div>
+ <div class="col-md-3">
+ <div class="step-number bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">4</div>
+ <div class="mt-2">
+ <strong>Finalizar</strong>
+ <br><small class="text-muted">Confirmar e criar o pedido</small>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <form id="pedidoForm">
+ @csrf
+ <!-- Passo 1: Tipo de Pedido -->
+ <div class="card mb-4" id="step1">
+ <div class="card-header">
+ <h5 class="card-title mb-0">
+ <i class="fas fa-clipboard-list me-2"></i>
+ Passo 1: Tipo de Pedido
+ </h5>
+ </div>
+ <div class="card-body">
+ <div class="row justify-content-center">
+ <div class="col-md-6">
+ <div class="row">
+ <div class="col-6">
+ <label class="form-check-label w-100" for="tipoMesa">
+ <div class="card h-100 tipo-pedido-option border-primary" style="cursor: pointer;">
+ <div class="card-body text-center">
+ <i class="fas fa-chair fa-3x mb-3 text-primary"></i>
+ <h5 class="card-title">Mesa</h5>
+ <p class="card-text text-muted">Pedido para consumo no local</p>
+ <input type="radio" 
+ class="form-check-input position-absolute top-0 end-0 m-2" 
+ name="tipo_pedido" 
+ id="tipoMesa" 
+ value="mesa"
+ onchange="selecionarTipoPedido('mesa')">
+ </div>
+ </div>
+ </label>
+ </div>
+ <div class="col-6">
+ <label class="form-check-label w-100" for="tipoDelivery">
+ <div class="card h-100 tipo-pedido-option border-info" style="cursor: pointer;">
+ <div class="card-body text-center">
+ <i class="fas fa-truck fa-3x mb-3 text-info"></i>
+ <h5 class="card-title">Delivery</h5>
+ <p class="card-text text-muted">Pedido para entrega</p>
+ <input type="radio" 
+ class="form-check-input position-absolute top-0 end-0 m-2" 
+ name="tipo_pedido" 
+ id="tipoDelivery" 
+ value="delivery"
+ onchange="selecionarTipoPedido('delivery')">
+ </div>
+ </div>
+ </label>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="text-end mt-4">
+ <button type="button" class="btn btn-primary" id="nextStep1" onclick="nextStep(2)" disabled>
+ Próximo Passo
+ <i class="fas fa-arrow-right ms-2"></i>
+ </button>
+ </div>
+ </div>
+ </div>
+ <!-- Passo 2: Seleção de Mesa ou Dados do Cliente -->
+ <div class="card mb-4 d-none" id="step2">
+ <div class="card-header">
+ <h5 class="card-title mb-0">
+ <i class="fas fa-chair me-2"></i>
+ Passo 2: <span id="step2Title">Selecionar Mesa</span>
+ </h5>
+ </div>
+ <div class="card-body">
+ <!-- Seção de Mesas (visível quando tipo_pedido = mesa) -->
+ <div id="secaoMesas">
+ @if($errors->has('mesa_id'))
+ <div class="alert alert-danger">
+ <i class="fas fa-exclamation-triangle me-2"></i>
+ {{ $errors->first('mesa_id') }}
+ </div>
+ @endif
+ <div class="row" id="mesasGrid">
+ @forelse($mesas as $mesa)
+ <div class="col-md-3 col-sm-6 mb-3">
+ <label class="form-check-label w-100" for="mesa{{ $mesa->id }}">
+ <div class="card h-100 mesa-option {{ $mesa->pedidos->count() > 0 ? 'border-warning' : 'border-success' }}" style="cursor: pointer;">
+ <div class="card-body text-center">
+ <i class="fas fa-chair fa-2x mb-3 {{ $mesa->pedidos->count() > 0 ? 'text-warning' : 'text-success' }}"></i>
+ <h6 class="card-title">{{ $mesa->identificador }}</h6>
+ <div class="mb-2">
+ <span class="badge bg-{{ $mesa->pedidos->count() > 0 ? 'warning' : 'success' }}">
+ {{ $mesa->pedidos->count() > 0 ? 'Ocupada' : 'Livre' }}
+ </span>
+ </div>
+ <div class="text-muted">
+ <i class="fas fa-users me-1"></i>
+ {{ $mesa->lugares }} lugares
+ </div>
+ <input type="radio" 
+ class="form-check-input position-absolute top-0 end-0 m-2" 
+ name="mesa_id" 
+ id="mesa{{ $mesa->id }}" 
+ value="{{ $mesa->id }}" 
+ {{ old('mesa_id') == $mesa->id ? 'checked' : '' }}
+ onchange="updateStepIndicator(2)">
+ </div>
+ </div>
+ </label>
+ </div>
+ @empty
+ <div class="col-12">
+ <div class="text-center py-4 text-muted">
+ <i class="fas fa-table fa-2x mb-3"></i>
+ <p>Nenhuma mesa cadastrada ainda</p>
+ <a href="{{ route('mesas.create') }}" class="btn btn-primary">
+ <i class="fas fa-plus me-2"></i>
+ Cadastrar Mesa
+ </a>
+ </div>
+ </div>
+ @endforelse
+ </div>
+ </div>
+ <!-- Seção de Dados do Cliente (visível quando tipo_pedido = delivery) -->
+ <div id="secaoCliente" style="display: none;">
+ <!-- Busca de Cliente -->
+ <div class="mb-4">
+ <label for="busca_cliente_pedido" class="form-label">
+ <i class="fas fa-search me-2"></i>Buscar Cliente *
+ </label>
+ <input type="text" class="form-control" id="busca_cliente_pedido" 
+ placeholder="Digite nome ou telefone (mínimo 3 caracteres)..." autocomplete="off">
+ <!-- Resultados da busca -->
+ <div id="resultados_cliente" class="list-group position-absolute w-100" 
+ style="z-index: 1000; display: none; max-height: 300px; overflow-y: auto; margin-top: 2px;"></div>
+ </div>
+ <!-- Cliente selecionado -->
+ <div id="cliente_selecionado_info" class="alert alert-success d-none">
+ <div class="d-flex justify-content-between align-items-start">
+ <div>
+ <h6 class="mb-1"><i class="fas fa-user me-2"></i><strong id="cliente_sel_nome"></strong></h6>
+ <small class="text-muted d-block">
+ <i class="fas fa-phone me-1"></i><span id="cliente_sel_telefone"></span>
+ </small>
+ <small class="text-muted d-block">
+ <i class="fas fa-map-marker-alt me-1"></i><span id="cliente_sel_endereco"></span>
+ </small>
+ </div>
+ <button type="button" class="btn btn-sm btn-outline-danger" onclick="limparClientePedido()">
+ <i class="fas fa-times"></i> Limpar
+ </button>
+ </div>
+ </div>
+ <!-- Alerta: Cliente sem endereço -->
+ <div id="alerta_sem_endereco" class="alert alert-warning d-none">
+ <i class="fas fa-exclamation-triangle me-2"></i>
+ <strong>Atenção!</strong> Este cliente não possui endereço cadastrado. 
+ É necessário cadastrar o endereço antes de continuar o pedido de delivery.
+ <a href="{{ route('clientes.index') }}" target="_blank" class="alert-link ms-2">
+ <i class="fas fa-external-link-alt me-1"></i>Cadastrar endereço agora
+ </a>
+ </div>
+ <!-- Campos hidden para envio -->
+ <input type="hidden" id="cliente_id" name="cliente_id">
+ <input type="hidden" id="cliente_nome" name="cliente_nome">
+ <input type="hidden" id="cliente_telefone" name="cliente_telefone">
+ <input type="hidden" id="cliente_endereco" name="cliente_endereco">
+ <input type="hidden" id="cliente_bairro" name="cliente_bairro">
+ <!-- Link para cadastrar novo cliente -->
+ <div class="alert alert-info">
+ <i class="fas fa-info-circle me-2"></i>
+ Cliente não encontrado? 
+ <a href="{{ route('clientes.create') }}" target="_blank" class="alert-link">
+ Cadastrar novo cliente
+ </a>
+ </div>
+ <div class="row mt-3">
+ <div class="col-md-12">
+ <label for="observacoes_delivery" class="form-label">Observações para Entrega</label>
+ <textarea class="form-control" id="observacoes_delivery" name="observacoes_delivery" 
+ rows="2" placeholder="Pontos de referência, instruções especiais..."></textarea>
+ </div>
+ </div>
+ </div>
+ <div class="text-end mt-4">
+ <button type="button" class="btn btn-secondary me-2" onclick="prevStep(1)">
+ <i class="fas fa-arrow-left me-2"></i>
+ Voltar
+ </button>
+ <button type="button" class="btn btn-primary" id="nextStep2" onclick="nextStep(3)" disabled>
+ Próximo Passo
+ <i class="fas fa-arrow-right ms-2"></i>
+ </button>
+ </div>
+ </div>
+ </div>
+ <!-- Passo 3: Seleção de Itens -->
+ <div class="card mb-4 d-none" id="step3">
+ <div class="card-header">
+ <h5 class="card-title mb-0">
+ <i class="fas fa-shopping-cart me-2"></i>
+ Passo 3: Adicionar Itens
+ </h5>
+ </div>
+ <div class="card-body">
+ <!-- Tabs: Produtos e Combos -->
+ <ul class="nav nav-tabs mb-4" id="itemsTabs" role="tablist">
+ <li class="nav-item" role="presentation">
+ <button class="nav-link active" id="produtos-tab" data-bs-toggle="tab" data-bs-target="#produtos-panel" type="button" role="tab">
+ <i class="fas fa-box me-2"></i>Produtos
+ </button>
+ </li>
+ <li class="nav-item" role="presentation">
+ <button class="nav-link" id="combos-tab" data-bs-toggle="tab" data-bs-target="#combos-panel" type="button" role="tab">
+ <i class="fas fa-fire me-2"></i>Combos <span class="badge bg-danger ms-1">Promoção</span>
+ </button>
+ </li>
+ </ul>
 
-    <div class="container">
-        <!-- Hero Section -->
-        <div class="hero-section">
-            <h1>
-                <i class="fas fa-plus-circle me-3"></i>
-                Criar Novo Pedido
-            </h1>
-            <p class="lead mb-0">
-                Preencha as informações para iniciar um novo pedido
-            </p>
-        </div>
+ <div class="tab-content" id="itemsTabContent">
+ <!-- Tab Produtos -->
+ <div class="tab-pane fade show active" id="produtos-panel" role="tabpanel">
+ <div class="row">
+ <div class="col-lg-8">
+ <!-- Filtro por Categoria -->
+ <div class="mb-4">
+ <label class="form-label">Filtrar por Categoria:</label>
+ <select class="form-select" id="categoriaFilter" onchange="filtrarProdutos()">
+ <option value="">Todas as Categorias</option>
+ @foreach($categorias as $categoria)
+ <option value="{{ $categoria->id }}">{{ $categoria->nome }}</option>
+ @endforeach
+ </select>
+ </div>
+ <!-- Lista de Produtos -->
+ <div id="produtosContainer">
+ @foreach($categorias as $categoria)
+ @if($categoria->produtos->count() > 0)
+ <div class="categoria-section mb-4" data-categoria="{{ $categoria->id }}">
+ <h6 class="text-primary border-bottom pb-2">
+ <i class="fas fa-tag me-2"></i>
+ {{ $categoria->nome }}
+ </h6>
+ <div class="row">
+ @foreach($categoria->produtos as $produto)
+ @if($produto->ativo)
+ <div class="col-md-6 mb-3">
+ <div class="card produto-card h-100">
+ <div class="card-body">
+ <div class="d-flex justify-content-between align-items-start">
+ <div class="flex-grow-1">
+ <h6 class="card-title">{{ $produto->nome }}</h6>
+ @if($produto->descricao)
+ <p class="card-text text-muted small">{{ Str::limit($produto->descricao, 60) }}</p>
+ @endif
+ <div class="fw-bold text-success">
+ R$ {{ number_format($produto->preco, 2, ',', '.') }}
+ </div>
+ </div>
+ <div class="text-end">
+ <button type="button" 
+ class="btn btn-outline-primary btn-sm" 
+ onclick="adicionarItem('{{ $produto->id }}', '{{ $produto->nome }}', '{{ $produto->preco }}')">
+ <i class="fas fa-plus"></i>
+ </button>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ @endif
+ @endforeach
+ </div>
+ </div>
+ @endif
+ @endforeach
+ </div>
+ </div>
+ </div>
+ </div>
+ <!-- Tab Combos -->
+ <div class="tab-pane fade" id="combos-panel" role="tabpanel">
+ @if($combos->count() > 0)
+ <div class="row">
+ @foreach($combos as $combo)
+ <div class="col-md-6 mb-3">
+ <div class="card combo-card h-100 border-warning">
+ <div class="card-body">
+ @if($combo->imagem)
+ <img src="{{ asset('storage/' . $combo->imagem) }}" class="card-img-top mb-2" alt="{{ $combo->nome }}" style="height: 120px; object-fit: cover; border-radius: 8px;">
+ @endif
+ <div class="d-flex justify-content-between align-items-start mb-2">
+ <div class="flex-grow-1">
+ <h6 class="card-title">
+ <i class="fas fa-fire text-warning me-1"></i>
+ {{ $combo->nome }}
+ @if($combo->destaque)
+ <span class="badge bg-danger ms-1">Destaque</span>
+ @endif
+ </h6>
+ @if($combo->descricao)
+ <p class="card-text text-muted small">{{ Str::limit($combo->descricao, 80) }}</p>
+ @endif
+ </div>
+ </div>
+ 
+ <!-- Produtos inclusos -->
+ <div class="bg-light p-2 rounded mb-2">
+ <small class="text-muted fw-bold d-block mb-1">Produtos inclusos:</small>
+ <ul class="list-unstyled mb-0 small">
+ @foreach($combo->produtos as $produto)
+ <li><i class="fas fa-check text-success me-1"></i> {{ $produto->pivot->quantidade }}x {{ $produto->nome }}</li>
+ @endforeach
+ </ul>
+ </div>
 
-        <form action="{{ route('pedidos.store') }}" method="POST" id="pedidoForm">
-            @csrf
-            
-            <!-- Indicador de Passos -->
-            <div class="step-indicator">
-                <div class="step">
-                    <div class="step-number step-active">1</div>
-                    <span class="text-white">Selecionar Mesa</span>
-                </div>
-                <div class="step">
-                    <div class="step-number step-inactive">2</div>
-                    <span class="text-white-50">Escolher Garçom</span>
-                </div>
-                <div class="step">
-                    <div class="step-number step-inactive">3</div>
-                    <span class="text-white-50">Finalizar</span>
-                </div>
-            </div>
+ <!-- Preços -->
+ <div class="d-flex justify-content-between align-items-center">
+ <div>
+ <small class="text-muted text-decoration-line-through">
+ De R$ {{ number_format($combo->preco_original, 2, ',', '.') }}
+ </small>
+ <div class="fw-bold text-success fs-5">
+ R$ {{ number_format($combo->preco_combo, 2, ',', '.') }}
+ </div>
+ <span class="badge bg-danger">{{ $combo->desconto }}% OFF</span>
+ <span class="badge bg-success">Economia R$ {{ number_format($combo->economia, 2, ',', '.') }}</span>
+ </div>
+ <button type="button" 
+ class="btn btn-warning btn-sm" 
+ onclick="adicionarCombo({{ $combo->id }}, '{{ addslashes($combo->nome) }}', {{ $combo->preco_combo }})">
+ <i class="fas fa-plus-circle"></i>
+ Adicionar
+ </button>
+ </div>
+ </div>
+ </div>
+ </div>
+ @endforeach
+ </div>
+ @else
+ <div class="alert alert-info">
+ <i class="fas fa-info-circle me-2"></i>
+ Nenhum combo disponível no momento.
+ </div>
+ @endif
+ </div>
+ </div>
+ <!-- Fecha tab-content -->
+ 
+ <!-- Carrinho (aparece abaixo das tabs) -->
+ <div class="card mt-4">
+ <div class="card-header bg-primary text-white">
+ <h6 class="card-title mb-0">
+ <i class="fas fa-shopping-bag me-2"></i>
+ Itens do Pedido
+ </h6>
+ </div>
+ <div class="card-body">
+ <div id="itensPedido">
+ <div class="text-center text-muted py-3">
+ <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+ <p>Nenhum item adicionado</p>
+ </div>
+ </div>
+ <div id="totalPedido" class="border-top pt-3 mt-3 d-none">
+ <div class="d-flex justify-content-between align-items-center">
+ <strong>Total:</strong>
+ <h5 class="text-success mb-0" id="valorTotal">R$ 0,00</h5>
+ </div>
+ </div>
+ </div>
+ </div>
+ 
+ <div class="text-end mt-4">
+ <button type="button" class="btn btn-secondary me-2" onclick="prevStep(2)">
+ <i class="fas fa-arrow-left me-2"></i>
+ Passo Anterior
+ </button>
+ <button type="button" class="btn btn-primary" id="nextStep3" onclick="nextStep(4)" disabled>
+ Próximo Passo
+ <i class="fas fa-arrow-right ms-2"></i>
+ </button>
+ </div>
+ </div>
+ </div>
+ <!-- Passo 4: Finalização -->
+ <div class="card mb-4 d-none" id="step4">
+ <div class="card-header">
+ <h5 class="card-title mb-0">
+ <i class="fas fa-check me-2"></i>
+ Passo 4: Finalizar Pedido
+ </h5>
+ </div>
+ <div class="card-body">
+ <!-- Forma de Pagamento -->
+ <div class="mb-4">
+ <label class="form-label">
+ <i class="fas fa-credit-card me-2"></i>
+ Forma de Pagamento *
+ </label>
+ <div class="row g-3">
+ <div class="col-md-3 col-6">
+ <input type="radio" class="btn-check" name="forma_pagamento" id="pgto_dinheiro" value="dinheiro" autocomplete="off">
+ <label class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3" for="pgto_dinheiro">
+ <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
+ <span>Dinheiro</span>
+ </label>
+ </div>
+ <div class="col-md-3 col-6">
+ <input type="radio" class="btn-check" name="forma_pagamento" id="pgto_credito" value="credito" autocomplete="off">
+ <label class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3" for="pgto_credito">
+ <i class="fas fa-credit-card fa-2x mb-2"></i>
+ <span>Cartão Crédito</span>
+ </label>
+ </div>
+ <div class="col-md-3 col-6">
+ <input type="radio" class="btn-check" name="forma_pagamento" id="pgto_debito" value="debito" autocomplete="off">
+ <label class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3" for="pgto_debito">
+ <i class="fas fa-credit-card fa-2x mb-2"></i>
+ <span>Cartão Débito</span>
+ </label>
+ </div>
+ <div class="col-md-3 col-6">
+ <input type="radio" class="btn-check" name="forma_pagamento" id="pgto_pix" value="pix" autocomplete="off">
+ <label class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3" for="pgto_pix">
+ <i class="fas fa-qrcode fa-2x mb-2"></i>
+ <span>PIX</span>
+ </label>
+ </div>
+ </div>
+ </div>
 
-            <!-- Seleção de Mesa -->
-            <div class="form-card" id="step1">
-                <h5 class="mb-4">
-                    <i class="fas fa-table me-2"></i>
-                    Selecionar Mesa
-                </h5>
-                
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Escolha uma mesa disponível para o pedido. Mesas ocupadas são indicadas em vermelho.
-                </div>
-                
-                <input type="hidden" name="mesa_id" id="mesa_id" required>
-                
-                <div class="row">
-                    @forelse($mesas as $mesa)
-                        <div class="col-md-6 col-lg-4">
-                            <div class="mesa-card" onclick="selecionarMesa({{ $mesa->id }}, '{{ $mesa->identificador }}', {{ $mesa->lugares }}, '{{ $mesa->pedidos->where("status", "!=", "entregue")->count() > 0 ? "ocupada" : "livre" }}')">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-table me-2"></i>
-                                        Mesa {{ $mesa->identificador }}
-                                    </h6>
-                                    <span class="mesa-status status-{{ $mesa->pedidos->where('status', '!=', 'entregue')->count() > 0 ? 'ocupada' : 'livre' }}">
-                                        {{ $mesa->pedidos->where('status', '!=', 'entregue')->count() > 0 ? 'Ocupada' : 'Livre' }}
-                                    </span>
-                                </div>
-                                <div class="text-muted">
-                                    <i class="fas fa-users me-1"></i>
-                                    {{ $mesa->lugares }} lugares
-                                </div>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="col-12">
-                            <div class="text-center py-4 text-muted">
-                                <i class="fas fa-table fa-2x mb-3"></i>
-                                <p>Nenhuma mesa cadastrada ainda</p>
-                                <a href="{{ route('mesas.create') }}" class="btn btn-gradient">
-                                    <i class="fas fa-plus me-2"></i>
-                                    Cadastrar Mesa
-                                </a>
-                            </div>
-                        </div>
-                    @endforelse
-                </div>
-                
-                <div class="text-end mt-4">
-                    <button type="button" class="btn btn-gradient" id="nextStep1" onclick="proximoPasso(2)" disabled>
-                        Próximo Passo
-                        <i class="fas fa-arrow-right ms-2"></i>
-                    </button>
-                </div>
-            </div>
+ <!-- Observações -->
+ <div class="mb-4">
+ <label for="observacoes" class="form-label">
+ <i class="fas fa-comment me-1"></i>
+ Observações do Pedido (opcional)
+ </label>
+ <textarea class="form-control" 
+ id="observacoes" 
+ name="observacoes" 
+ rows="3"
+ placeholder="Digite observações especiais para este pedido...">{{ old('observacoes') }}</textarea>
+ </div>
 
-            <!-- Seleção de Garçom -->
-            <div class="form-card" id="step2" style="display: none;">
-                <h5 class="mb-4">
-                    <i class="fas fa-user me-2"></i>
-                    Escolher Garçom
-                </h5>
-                
-                <input type="hidden" name="usuario_id" id="usuario_id" required>
-                
-                <div class="row">
-                    @forelse($usuarios as $usuario)
-                        <div class="col-md-6">
-                            <div class="garcom-card" onclick="selecionarGarcom({{ $usuario->id }}, '{{ $usuario->nome }}', '{{ $usuario->role }}')">
-                                <div class="d-flex align-items-center">
-                                    <div class="me-3">
-                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                            <i class="fas fa-user"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-1">{{ $usuario->nome }}</h6>
-                                        <small class="text-muted text-capitalize">{{ $usuario->role }}</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="col-12">
-                            <div class="text-center py-4 text-muted">
-                                <i class="fas fa-user fa-2x mb-3"></i>
-                                <p>Nenhum usuário cadastrado ainda</p>
-                                <a href="{{ route('usuarios.create') }}" class="btn btn-gradient">
-                                    <i class="fas fa-plus me-2"></i>
-                                    Cadastrar Usuário
-                                </a>
-                            </div>
-                        </div>
-                    @endforelse
-                </div>
-                
-                <div class="d-flex justify-content-between mt-4">
-                    <button type="button" class="btn btn-outline-gradient" onclick="voltarPasso(1)">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        Voltar
-                    </button>
-                    <button type="button" class="btn btn-gradient" id="nextStep2" onclick="proximoPasso(3)" disabled>
-                        Próximo Passo
-                        <i class="fas fa-arrow-right ms-2"></i>
-                    </button>
-                </div>
-            </div>
+ <!-- Resumo do Pedido -->
+ <div class="card bg-light border-0">
+ <div class="card-body">
+ <h6 class="card-title mb-3">
+ <i class="fas fa-clipboard-list me-2"></i>
+ Resumo do Pedido
+ </h6>
+ <div id="resumoPedido">
+ <div class="row mb-2">
+ <div class="col-6"><strong>Mesa/Cliente:</strong></div>
+ <div class="col-6 text-end"><span id="resumoMesa">-</span></div>
+ </div>
+ <div class="row mb-2">
+ <div class="col-6"><strong>Quantidade de Itens:</strong></div>
+ <div class="col-6 text-end"><span id="resumoItens">0</span></div>
+ </div>
+ <div class="row mb-2">
+ <div class="col-6"><strong>Forma de Pagamento:</strong></div>
+ <div class="col-6 text-end"><span id="resumoPagamento" class="text-muted">Não selecionada</span></div>
+ </div>
+ <hr>
+ <div class="row">
+ <div class="col-6"><strong class="fs-5">TOTAL:</strong></div>
+ <div class="col-6 text-end"><span id="resumoTotal" class="text-success fw-bold fs-4">R$ 0,00</span></div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-            <!-- Confirmação -->
-            <div class="form-card" id="step3" style="display: none;">
-                <h5 class="mb-4">
-                    <i class="fas fa-check-circle me-2"></i>
-                    Confirmar Pedido
-                </h5>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="status" class="form-label">Status Inicial</label>
-                            <select class="form-select" name="status" id="status" required>
-                                <option value="pendente" selected>Pendente</option>
-                                <option value="em_preparo">Em Preparo</option>
-                                <option value="pronto">Pronto</option>
-                                <option value="entregue">Entregue</option>
-                                <option value="cancelado">Cancelado</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Preview do Pedido -->
-                <div class="preview-card">
-                    <h6 class="mb-3">
-                        <i class="fas fa-eye me-2"></i>
-                        Resumo do Pedido
-                    </h6>
-                    
-                    <div class="preview-item">
-                        <span class="fw-bold">Mesa:</span>
-                        <span id="previewMesa">-</span>
-                    </div>
-                    
-                    <div class="preview-item">
-                        <span class="fw-bold">Garçom:</span>
-                        <span id="previewGarcom">-</span>
-                    </div>
-                    
-                    <div class="preview-item">
-                        <span class="fw-bold">Status:</span>
-                        <span id="previewStatus">Pendente</span>
-                    </div>
-                    
-                    <div class="preview-item">
-                        <span class="fw-bold">Total Inicial:</span>
-                        <span class="text-success">R$ 0,00</span>
-                    </div>
-                </div>
-                
-                <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Após criar o pedido, você poderá adicionar itens na página de detalhes.
-                </div>
-                
-                <div class="d-flex justify-content-between mt-4">
-                    <button type="button" class="btn btn-outline-gradient" onclick="voltarPasso(2)">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        Voltar
-                    </button>
-                    <button type="submit" class="btn btn-gradient">
-                        <i class="fas fa-save me-2"></i>
-                        Criar Pedido
-                    </button>
-                </div>
-            </div>
-        </form>
+ <!-- Opções de Impressão -->
+ <div class="mt-4">
+ <div class="form-check form-switch">
+ <input class="form-check-input" type="checkbox" id="imprimir_comanda" name="imprimir_comanda" checked>
+ <label class="form-check-label" for="imprimir_comanda">
+ <i class="fas fa-print me-2"></i>
+ Imprimir comanda para cozinha após criar pedido
+ </label>
+ </div>
+ </div>
 
-        <!-- Botão Cancelar -->
-        <div class="text-center mb-4">
-            <a href="{{ route('pedidos.index') }}" class="btn btn-outline-light">
-                <i class="fas fa-times me-2"></i>
-                Cancelar e Voltar
-            </a>
-        </div>
-    </div>
+ <div class="text-end mt-4">
+ <button type="button" class="btn btn-secondary me-2" onclick="prevStep(3)">
+ <i class="fas fa-arrow-left me-2"></i>
+ Passo Anterior
+ </button>
+ <button type="submit" class="btn btn-success btn-lg" id="finalizarPedido">
+ <i class="fas fa-check me-2"></i>
+ Criar Pedido
+ </button>
+ </div>
+ </div>
+ </div>
+ <!-- Inputs Hidden para Itens -->
+ <div id="hiddenInputs"></div>
+ </form>
+</div>
+@endsection
+@push('scripts')
+<script>
+let currentStep = 1;
+let itensPedido = [];
+let totalPedido = 0;
+let tipoPedido = '';
+function selecionarTipoPedido(tipo) {
+ tipoPedido = tipo;
+ document.getElementById('nextStep1').disabled = false;
+ if (tipo === 'mesa') {
+ document.getElementById('step2Title').textContent = 'Selecionar Mesa';
+ document.getElementById('secaoMesas').style.display = 'block';
+ document.getElementById('secaoCliente').style.display = 'none';
+ } else {
+ document.getElementById('step2Title').textContent = 'Dados do Cliente';
+ document.getElementById('secaoMesas').style.display = 'none';
+ document.getElementById('secaoCliente').style.display = 'block';
+ }
+}
+function validarDadosCliente() {
+ if (tipoPedido !== 'delivery') return true;
+ const clienteId = document.getElementById('cliente_id').value;
+ const nome = document.getElementById('cliente_nome').value;
+ const telefone = document.getElementById('cliente_telefone').value;
+ const endereco = document.getElementById('cliente_endereco').value;
+ const bairro = document.getElementById('cliente_bairro').value;
+ return clienteId && nome && telefone && endereco && bairro;
+}
+function atualizarBotaoPasso2() {
+ const botao = document.getElementById('nextStep2');
+ if (tipoPedido === 'mesa') {
+ const mesaSelecionada = document.querySelector('input[name="mesa_id"]:checked');
+ botao.disabled = !mesaSelecionada;
+ } else {
+ botao.disabled = !validarDadosCliente();
+ }
+}
+let debounceTimerCliente = null;
+document.addEventListener('DOMContentLoaded', function() {
+ console.log('🚀 DOM loaded - Inicializando busca de clientes');
+ const buscaInput = document.getElementById('busca_cliente_pedido');
+ console.log('📝 Input de busca encontrado:', buscaInput);
+ if (buscaInput) {
+ buscaInput.addEventListener('input', function() {
+ const termo = this.value.trim();
+ console.log('⌨️ Digitado:', termo, '- Length:', termo.length);
+ if (termo.length < 3) {
+ document.getElementById('resultados_cliente').style.display = 'none';
+ return;
+ }
+ clearTimeout(debounceTimerCliente);
+ debounceTimerCliente = setTimeout(() => {
+ console.log('⏰ Debounce completado, iniciando busca...');
+ buscarClientesPedido(termo);
+ }, 300);
+ });
+ }
+});
+async function buscarClientesPedido(termo) {
+ try {
+ console.log('🔍 Buscando clientes com termo:', termo);
+ const response = await fetch(`/api/clientes/search?search=${encodeURIComponent(termo)}`, {
+ method: 'GET',
+ headers: {
+ 'Accept': 'application/json',
+ 'Content-Type': 'application/json'
+ },
+ credentials: 'same-origin'
+ });
+ 
+ if (!response.ok) {
+ console.error('❌ Erro na resposta:', response.status, response.statusText);
+ throw new Error(`HTTP error! status: ${response.status}`);
+ }
+ 
+ const data = await response.json();
+ console.log('📡 Busca de clientes:', data);
+ const resultados = document.getElementById('resultados_cliente');
+ resultados.innerHTML = '';
+ if (data.success && data.data.length > 0) {
+ data.data.forEach(cliente => {
+ const item = document.createElement('button');
+ item.type = 'button';
+ item.className = 'list-group-item list-group-item-action';
+ item.innerHTML = `
+ <div class="d-flex justify-content-between">
+ <div>
+ <strong>${cliente.nome}</strong><br>
+ <small class="text-muted">${cliente.telefone}</small>
+ </div>
+ <div class="text-end">
+ <small class="text-muted">${cliente.endereco_completo || 'Sem endereço'}</small>
+ </div>
+ </div>
+ `;
+ item.onclick = () => selecionarClientePedido(cliente);
+ resultados.appendChild(item);
+ });
+ resultados.style.display = 'block';
+ } else {
+ resultados.innerHTML = '<div class="list-group-item text-muted">Nenhum cliente encontrado</div>';
+ resultados.style.display = 'block';
+ }
+ } catch (error) {
+ console.error('❌ Erro na busca de clientes:', error);
+ }
+}
+function selecionarClientePedido(cliente) {
+ console.log('✅ Cliente selecionado:', cliente);
+ document.getElementById('cliente_id').value = cliente.id;
+ document.getElementById('cliente_nome').value = cliente.nome;
+ document.getElementById('cliente_telefone').value = cliente.telefone;
+ if (cliente.endereco_completo) {
+ document.getElementById('cliente_endereco').value = cliente.endereco_completo;
+ } else {
+ const enderecoCompleto = [
+ cliente.endereco_rua,
+ cliente.endereco_numero,
+ cliente.endereco_bairro
+ ].filter(Boolean).join(', ');
+ document.getElementById('cliente_endereco').value = enderecoCompleto;
+ }
+ document.getElementById('cliente_bairro').value = cliente.endereco_bairro || '';
+ document.getElementById('cliente_sel_nome').textContent = cliente.nome;
+ document.getElementById('cliente_sel_telefone').textContent = cliente.telefone;
+ document.getElementById('cliente_sel_endereco').textContent = cliente.endereco_completo || 'Sem endereço cadastrado';
+ document.getElementById('cliente_selecionado_info').classList.remove('d-none');
+ const alertaSemEndereco = document.getElementById('alerta_sem_endereco');
+ if (!cliente.endereco_completo || !cliente.endereco_bairro) {
+ alertaSemEndereco.classList.remove('d-none');
+ } else {
+ alertaSemEndereco.classList.add('d-none');
+ }
+ document.getElementById('resultados_cliente').style.display = 'none';
+ document.getElementById('busca_cliente_pedido').value = '';
+ atualizarBotaoPasso2();
+}
+function limparClientePedido() {
+ document.getElementById('cliente_id').value = '';
+ document.getElementById('cliente_nome').value = '';
+ document.getElementById('cliente_telefone').value = '';
+ document.getElementById('cliente_endereco').value = '';
+ document.getElementById('cliente_bairro').value = '';
+ document.getElementById('cliente_selecionado_info').classList.add('d-none');
+ document.getElementById('busca_cliente_pedido').value = '';
+ atualizarBotaoPasso2();
+ console.log('🗑️ Cliente limpo');
+}
+document.addEventListener('click', function(e) {
+ if (!e.target.closest('#busca_cliente_pedido') && !e.target.closest('#resultados_cliente')) {
+ const resultados = document.getElementById('resultados_cliente');
+ if (resultados) {
+ resultados.style.display = 'none';
+ }
+ }
+});
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script>
-        let mesaSelecionada = null;
-        let garcomSelecionado = null;
+function prevStep(step) {
+ document.getElementById(`step${currentStep}`).classList.add('d-none');
+ document.getElementById(`step${step}`).classList.remove('d-none');
+ updateStepIndicator(step);
+ currentStep = step;
+}
 
-        function selecionarMesa(id, identificador, lugares, status) {
-            if (status === 'ocupada') {
-                alert('Esta mesa já possui um pedido ativo. Por favor, escolha outra mesa.');
-                return;
-            }
+function updateStepIndicator(step) {
+ for (let i = 1; i <= 4; i++) {
+ const indicators = document.querySelectorAll('.step-number');
+ const indicator = indicators[i - 1];
+ if (indicator) {
+ if (i <= step) {
+ indicator.classList.remove('bg-secondary');
+ indicator.classList.add('bg-primary');
+ } else {
+ indicator.classList.remove('bg-primary');
+ indicator.classList.add('bg-secondary');
+ }
+ }
+ }
+}
 
-            // Remover seleção anterior
-            document.querySelectorAll('.mesa-card').forEach(card => {
-                card.classList.remove('selected');
-            });
+// Event listeners para formas de pagamento
+document.querySelectorAll('input[name="forma_pagamento"]').forEach(radio => {
+ radio.addEventListener('change', function() {
+ const botaoFinalizar = document.getElementById('finalizarPedido');
+ const resumoPagamento = document.getElementById('resumoPagamento');
+ 
+ if (this.checked) {
+ botaoFinalizar.disabled = false;
+ const formasPagamento = {
+ 'dinheiro': 'Dinheiro',
+ 'credito': 'Cartão de Crédito',
+ 'debito': 'Cartão de Débito',
+ 'pix': 'PIX'
+ };
+ resumoPagamento.textContent = formasPagamento[this.value];
+ resumoPagamento.classList.remove('text-muted');
+ resumoPagamento.classList.add('text-success', 'fw-bold');
+ }
+ });
+});
 
-            // Adicionar seleção atual
-            event.target.closest('.mesa-card').classList.add('selected');
+// Atualizar resumo ao chegar no step 4
+function nextStep(step) {
+ document.getElementById(`step${currentStep}`).classList.add('d-none');
+ document.getElementById(`step${step}`).classList.remove('d-none');
+ updateStepIndicator(step);
+ currentStep = step;
+ 
+ // Se chegou no step 4, atualizar resumo completo
+ if (step === 4) {
+ atualizarResumoFinal();
+ }
+}
 
-            // Salvar dados
-            mesaSelecionada = { id, identificador, lugares };
-            document.getElementById('mesa_id').value = id;
-            document.getElementById('nextStep1').disabled = false;
+function atualizarResumoFinal() {
+ // Atualizar mesa/cliente
+ if (tipoPedido === 'mesa') {
+ const mesaSelecionada = document.querySelector('input[name="mesa_id"]:checked');
+ if (mesaSelecionada) {
+ const mesaLabel = mesaSelecionada.closest('.card').querySelector('.card-title').textContent;
+ document.getElementById('resumoMesa').textContent = mesaLabel;
+ }
+ } else {
+ const clienteNome = document.getElementById('cliente_nome')?.value || 
+ document.getElementById('cliente_sel_nome')?.textContent;
+ document.getElementById('resumoMesa').textContent = clienteNome || 'Cliente não selecionado';
+ }
+ 
+ // Atualizar itens e total
+ document.getElementById('resumoItens').textContent = itensPedido.length;
+ document.getElementById('resumoTotal').textContent = `R$ ${totalPedido.toFixed(2).replace('.', ',')}`;
+}
 
-            // Atualizar preview
-            atualizarPreview();
-        }
+document.querySelectorAll('input[name="mesa_id"]').forEach(input => {
+ input.addEventListener('change', function() {
+ atualizarBotaoPasso2();
+ const mesaLabel = this.closest('.card').querySelector('.card-title').textContent;
+ document.getElementById('resumoMesa').textContent = mesaLabel;
+ });
+});
+document.addEventListener('DOMContentLoaded', function() {
+ const camposCliente = ['cliente_nome', 'cliente_telefone', 'cliente_endereco', 'cliente_bairro'];
+ camposCliente.forEach(campo => {
+ const element = document.getElementById(campo);
+ if (element) {
+ element.addEventListener('input', atualizarBotaoPasso2);
+ }
+ });
+});
+function filtrarProdutos() {
+ const categoriaId = document.getElementById('categoriaFilter').value;
+ const sections = document.querySelectorAll('.categoria-section');
+ sections.forEach(section => {
+ if (!categoriaId || section.dataset.categoria === categoriaId) {
+ section.style.display = 'block';
+ } else {
+ section.style.display = 'none';
+ }
+ });
+}
+function adicionarItem(produtoId, nome, preco) {
+ const existingItem = itensPedido.find(item => item.tipo_item === 'produto' && item.produto_id === produtoId);
+ if (existingItem) {
+ existingItem.quantidade++;
+ existingItem.subtotal = existingItem.quantidade * existingItem.preco_unitario;
+ } else {
+ itensPedido.push({
+ tipo_item: 'produto',
+ produto_id: produtoId,
+ combo_id: null,
+ nome: nome,
+ preco_unitario: parseFloat(preco),
+ quantidade: 1,
+ subtotal: parseFloat(preco)
+ });
+ }
+ atualizarCarrinho();
+}
 
-        function selecionarGarcom(id, nome, role) {
-            // Remover seleção anterior
-            document.querySelectorAll('.garcom-card').forEach(card => {
-                card.classList.remove('selected');
-            });
+function adicionarCombo(comboId, nome, preco) {
+ const existingItem = itensPedido.find(item => item.tipo_item === 'combo' && item.combo_id === comboId);
+ if (existingItem) {
+ existingItem.quantidade++;
+ existingItem.subtotal = existingItem.quantidade * existingItem.preco_unitario;
+ } else {
+ itensPedido.push({
+ tipo_item: 'combo',
+ produto_id: null,
+ combo_id: comboId,
+ nome: nome,
+ preco_unitario: parseFloat(preco),
+ quantidade: 1,
+ subtotal: parseFloat(preco)
+ });
+ }
+ atualizarCarrinho();
+}
 
-            // Adicionar seleção atual
-            event.target.closest('.garcom-card').classList.add('selected');
-
-            // Salvar dados
-            garcomSelecionado = { id, nome, role };
-            document.getElementById('usuario_id').value = id;
-            document.getElementById('nextStep2').disabled = false;
-
-            // Atualizar preview
-            atualizarPreview();
-        }
-
-        function proximoPasso(step) {
-            // Esconder todos os steps
-            document.querySelectorAll('[id^="step"]').forEach(el => {
-                el.style.display = 'none';
-            });
-
-            // Mostrar step atual
-            document.getElementById('step' + step).style.display = 'block';
-
-            // Atualizar indicadores
-            document.querySelectorAll('.step-number').forEach((el, index) => {
-                if (index + 1 <= step) {
-                    el.classList.remove('step-inactive');
-                    el.classList.add('step-active');
-                    el.nextElementSibling.classList.remove('text-white-50');
-                    el.nextElementSibling.classList.add('text-white');
-                } else {
-                    el.classList.remove('step-active');
-                    el.classList.add('step-inactive');
-                    el.nextElementSibling.classList.remove('text-white');
-                    el.nextElementSibling.classList.add('text-white-50');
-                }
-            });
-
-            atualizarPreview();
-        }
-
-        function voltarPasso(step) {
-            proximoPasso(step);
-        }
-
-        function atualizarPreview() {
-            if (mesaSelecionada) {
-                document.getElementById('previewMesa').textContent = 
-                    `Mesa ${mesaSelecionada.identificador} (${mesaSelecionada.lugares} lugares)`;
-            }
-
-            if (garcomSelecionado) {
-                document.getElementById('previewGarcom').textContent = 
-                    `${garcomSelecionado.nome} (${garcomSelecionado.role})`;
-            }
-
-            const status = document.getElementById('status')?.value || 'pendente';
-            document.getElementById('previewStatus').textContent = 
-                status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
-        }
-
-        // Listener para mudança de status
-        document.getElementById('status')?.addEventListener('change', atualizarPreview);
-
-        // Animação inicial
-        document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.mesa-card, .garcom-card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    card.style.transition = 'all 0.5s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 50);
-            });
-        });
-
-        // Validação do formulário
-        document.getElementById('pedidoForm').addEventListener('submit', function(e) {
-            if (!mesaSelecionada || !garcomSelecionado) {
-                e.preventDefault();
-                alert('Por favor, selecione uma mesa e um garçom antes de continuar.');
-            }
-        });
-    </script>
-</body>
-</html>
+function removerItem(index) {
+ itensPedido.splice(index, 1);
+ atualizarCarrinho();
+}
+function alterarQuantidade(index, quantidade) {
+ const item = itensPedido[index];
+ if (item) {
+ item.quantidade = parseInt(quantidade);
+ item.subtotal = item.quantidade * item.preco_unitario;
+ if (item.quantidade <= 0) {
+ removerItem(index);
+ return;
+ }
+ atualizarCarrinho();
+ }
+}
+function atualizarCarrinho() {
+ const container = document.getElementById('itensPedido');
+ const totalContainer = document.getElementById('totalPedido');
+ if (itensPedido.length === 0) {
+ container.innerHTML = `
+ <div class="text-center text-muted py-3">
+ <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+ <p>Nenhum item adicionado</p>
+ </div>
+ `;
+ totalContainer.classList.add('d-none');
+ document.getElementById('nextStep3').disabled = true;
+ return;
+ }
+ container.innerHTML = itensPedido.map((item, index) => `
+ <div class="border rounded p-2 mb-2 ${item.tipo_item === 'combo' ? 'border-warning' : ''}">
+ <div class="d-flex justify-content-between align-items-start">
+ <div class="flex-grow-1">
+ <h6 class="mb-1">
+ ${item.tipo_item === 'combo' ? '<i class="fas fa-fire text-warning me-1"></i>' : ''}
+ ${item.nome}
+ ${item.tipo_item === 'combo' ? '<span class="badge bg-warning text-dark ms-1">Combo</span>' : ''}
+ </h6>
+ <div class="input-group input-group-sm" style="width: 120px;">
+ <button class="btn btn-outline-secondary" type="button" onclick="alterarQuantidade(${index}, ${item.quantidade - 1})">-</button>
+ <input type="number" class="form-control text-center" value="${item.quantidade}" onchange="alterarQuantidade(${index}, this.value)" min="1">
+ <button class="btn btn-outline-secondary" type="button" onclick="alterarQuantidade(${index}, ${item.quantidade + 1})">+</button>
+ </div>
+ </div>
+ <div class="text-end">
+ <div class="fw-bold">R$ ${item.subtotal.toFixed(2).replace('.', ',')}</div>
+ <button class="btn btn-danger btn-sm" onclick="removerItem(${index})">
+ <i class="fas fa-trash"></i>
+ </button>
+ </div>
+ </div>
+ </div>
+ `).join('');
+ totalPedido = itensPedido.reduce((sum, item) => sum + item.subtotal, 0);
+ document.getElementById('valorTotal').textContent = `R$ ${totalPedido.toFixed(2).replace('.', ',')}`;
+ document.getElementById('resumoTotal').textContent = `R$ ${totalPedido.toFixed(2).replace('.', ',')}`;
+ document.getElementById('resumoItens').textContent = itensPedido.length;
+ totalContainer.classList.remove('d-none');
+ document.getElementById('nextStep3').disabled = false;
+ criarHiddenInputs();
+}
+function criarHiddenInputs() {
+ const container = document.getElementById('hiddenInputs');
+ container.innerHTML = itensPedido.map((item, index) => `
+ <input type="hidden" name="itens[${index}][produto_id]" value="${item.produto_id}">
+ <input type="hidden" name="itens[${index}][quantidade]" value="${item.quantidade}">
+ <input type="hidden" name="itens[${index}][preco_unitario]" value="${item.preco_unitario}">
+ `).join('');
+}
+document.getElementById('pedidoForm').addEventListener('submit', function(e) {
+ e.preventDefault();
+ 
+ console.log('=== INICIANDO FINALIZAÇÃO DO PEDIDO ===');
+ console.log('Tipo de pedido:', tipoPedido);
+ console.log('Itens no pedido:', itensPedido);
+ 
+ if (itensPedido.length === 0) {
+ mostrarAlerta('Adicione pelo menos um item ao pedido!', 'warning');
+ return;
+ }
+ 
+ const formaPagamento = document.querySelector('input[name="forma_pagamento"]:checked');
+ console.log('Forma de pagamento selecionada:', formaPagamento);
+ 
+ if (!formaPagamento) {
+ mostrarAlerta('Selecione uma forma de pagamento!', 'warning');
+ return;
+ }
+ 
+ if (tipoPedido === 'mesa') {
+ const mesaSelecionada = document.querySelector('input[name="mesa_id"]:checked');
+ console.log('Mesa selecionada:', mesaSelecionada);
+ 
+ if (!mesaSelecionada) {
+ mostrarAlerta('Selecione uma mesa para o pedido!', 'warning');
+ return;
+ }
+ } else if (tipoPedido === 'delivery') {
+ console.log('Validando dados do cliente...');
+ if (!validarDadosCliente()) {
+ mostrarAlerta('Preencha todos os dados obrigatórios do cliente!', 'warning');
+ return;
+ }
+ }
+ 
+ console.log('Todas as validações passaram, enviando pedido...');
+ enviarPedidoViaAPI();
+});
+async function enviarPedidoViaAPI() {
+ console.log('=== FUNÇÃO enviarPedidoViaAPI INICIADA ===');
+ 
+ const formaPagamento = document.querySelector('input[name="forma_pagamento"]:checked').value;
+ const imprimirComanda = document.getElementById('imprimir_comanda').checked;
+ const observacoes = document.querySelector('textarea[name="observacoes"]')?.value || '';
+ 
+ console.log('Forma pagamento:', formaPagamento);
+ console.log('Imprimir comanda:', imprimirComanda);
+ console.log('Observações:', observacoes);
+ 
+ let dadosPedido;
+ 
+ if (tipoPedido === 'mesa') {
+ const mesaId = document.querySelector('input[name="mesa_id"]:checked').value;
+ dadosPedido = {
+ mesa_id: parseInt(mesaId),
+ forma_pagamento: formaPagamento,
+ imprimir_comanda: imprimirComanda,
+ observacoes: observacoes,
+ itens: itensPedido.map(item => ({
+ tipo_item: item.tipo_item,
+ produto_id: item.produto_id ? parseInt(item.produto_id) : null,
+ combo_id: item.combo_id ? parseInt(item.combo_id) : null,
+ quantidade: parseInt(item.quantidade),
+ preco_unitario: parseFloat(item.preco_unitario),
+ observacoes: null
+ }))
+ };
+ } else {
+ dadosPedido = {
+ tipo_pedido: 'delivery',
+ cliente_id: parseInt(document.getElementById('cliente_id').value),
+ cliente_nome: document.getElementById('cliente_nome').value,
+ cliente_telefone: document.getElementById('cliente_telefone').value,
+ cliente_endereco: document.getElementById('cliente_endereco').value,
+ cliente_bairro: document.getElementById('cliente_bairro').value,
+ forma_pagamento: formaPagamento,
+ imprimir_comanda: imprimirComanda,
+ observacoes: observacoes,
+ itens: itensPedido.map(item => ({
+ tipo_item: item.tipo_item,
+ produto_id: item.produto_id ? parseInt(item.produto_id) : null,
+ combo_id: item.combo_id ? parseInt(item.combo_id) : null,
+ quantidade: parseInt(item.quantidade),
+ preco_unitario: parseFloat(item.preco_unitario),
+ observacoes: null
+ }))
+ };
+ }
+ 
+ console.log('Dados do pedido montados:', JSON.stringify(dadosPedido, null, 2));
+ 
+ const btnSubmit = document.querySelector('button[type="submit"]');
+ const originalText = btnSubmit.innerHTML;
+ btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Criando Pedido...';
+ btnSubmit.disabled = true;
+ 
+ try {
+ console.log('Enviando requisição para /api/pedidos-public...');
+ 
+ const response = await fetch('/api/pedidos-public', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ 'Accept': 'application/json',
+ 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+ },
+ body: JSON.stringify(dadosPedido)
+ });
+ 
+ console.log('Response status:', response.status);
+ console.log('Response ok:', response.ok);
+ 
+ const result = await response.json();
+ console.log('Response data:', result);
+ 
+ if (response.ok) {
+ mostrarAlerta(`Pedido #${result.pedido.id} criado com sucesso!`, 'success');
+ 
+ // Se houver URL da comanda, abre em nova janela
+ if (result.comanda_url) {
+ console.log('Abrindo comanda:', result.comanda_url);
+ window.open(result.comanda_url, '_blank', 'width=400,height=600');
+ }
+ 
+ setTimeout(() => {
+ window.location.href = `/pedidos/${result.pedido.id}`;
+ }, 2000);
+ } else {
+ console.error('Erro da API:', result);
+ if (result.errors) {
+ const errosFormatados = Object.values(result.errors).flat().join('\n');
+ mostrarAlerta(`Erro de validação:\n${errosFormatados}`, 'danger');
+ } else {
+ mostrarAlerta(result.message || 'Erro ao criar pedido. Tente novamente.', 'danger');
+ }
+ }
+ } catch (error) {
+ console.error('Erro de rede ou parsing:', error);
+ mostrarAlerta('Erro de conexão. Verifique sua internet e tente novamente.', 'danger');
+ } finally {
+ btnSubmit.innerHTML = originalText;
+ btnSubmit.disabled = false;
+ }
+}
+function mostrarAlerta(mensagem, tipo = 'info') {
+ const alertasExistentes = document.querySelectorAll('.alert-dinamico');
+ alertasExistentes.forEach(alerta => alerta.remove());
+ const alerta = document.createElement('div');
+ alerta.className = `alert alert-${tipo} alert-dismissible fade show alert-dinamico`;
+ alerta.style.position = 'fixed';
+ alerta.style.top = '80px';
+ alerta.style.right = '20px';
+ alerta.style.zIndex = '9999';
+ alerta.style.minWidth = '300px';
+ alerta.innerHTML = `
+ <div class="d-flex align-items-center">
+ <i class="fas fa-${tipo === 'success' ? 'check-circle' : tipo === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+ <div style="white-space: pre-line;">${mensagem}</div>
+ </div>
+ <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+ `;
+ document.body.appendChild(alerta);
+ if (tipo !== 'success') {
+ setTimeout(() => {
+ if (alerta.parentNode) {
+ alerta.remove();
+ }
+ }, 5000);
+ }
+}
+</script>
+@endpush

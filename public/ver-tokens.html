@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verificar Tokens FCM</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #4CAF50; color: white; }
+        .token { font-family: monospace; font-size: 12px; word-break: break-all; }
+        button { padding: 8px 15px; background: #2196F3; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #0b7dda; }
+        .info { background: #e3f2fd; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔑 Tokens FCM Registrados</h2>
+        
+        <div class="info">
+            <strong>Como usar:</strong><br>
+            1. Copie o token da tabela abaixo<br>
+            2. Vá para <a href="/testar-notificacao.html" target="_blank">Testar Notificação</a><br>
+            3. Cole o token e teste!
+        </div>
+        
+        <button onclick="carregarTokens()">🔄 Atualizar</button>
+        
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        async function carregarTokens() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<p>Carregando...</p>';
+            
+            try {
+                const response = await fetch('http://192.168.15.9/api/notificacao/tokens');
+                const data = await response.json();
+                
+                if (data.success && data.tokens.length > 0) {
+                    let html = '<table>';
+                    html += '<tr><th>ID</th><th>Token (clique para copiar)</th><th>Dispositivo</th><th>Data</th></tr>';
+                    
+                    data.tokens.forEach(token => {
+                        html += `<tr>
+                            <td>${token.id}</td>
+                            <td class="token" onclick="copiarToken('${token.token}')" style="cursor:pointer;" title="Clique para copiar">
+                                ${token.token.substring(0, 50)}...
+                            </td>
+                            <td>${token.dispositivo_id || 'N/A'}</td>
+                            <td>${new Date(token.created_at).toLocaleString('pt-BR')}</td>
+                        </tr>`;
+                    });
+                    html += '</table>';
+                    resultado.innerHTML = html;
+                } else {
+                    resultado.innerHTML = '<p style="color: orange;">⚠️ Nenhum token encontrado. Abra o app no celular primeiro!</p>';
+                }
+                
+            } catch (error) {
+                resultado.innerHTML = '<p style="color: red;">❌ Erro: ' + error.message + '</p>';
+            }
+        }
+        
+        function copiarToken(token) {
+            navigator.clipboard.writeText(token);
+            alert('✅ Token copiado para a área de transferência!');
+        }
+        
+        // Carregar automaticamente ao abrir a página
+        carregarTokens();
+    </script>
+</body>
+</html>

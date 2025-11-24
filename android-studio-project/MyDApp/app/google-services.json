@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1030985661644",
+    "project_id": "speedfood-b4495",
+    "storage_bucket": "speedfood-b4495.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1030985661644:android:21270e407199369f085669",
+        "android_client_info": {
+          "package_name": "com.myd.restaurante"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCrVdWT_inNqc-MYtw3l1krKdwnKoS71A4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

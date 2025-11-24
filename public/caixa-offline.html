@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caixa - Modo Offline | MyD Bar</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .online { background: #28a745; color: white; }
+        .offline { background: #dc3545; color: white; }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: #fff;
+            border-bottom: 2px solid #f0f0f0;
+            font-weight: bold;
+            padding: 15px;
+        }
+        .mesa-card {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .mesa-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        .mesa-livre { border-left: 5px solid #28a745; }
+        .mesa-ocupada { border-left: 5px solid #ffc107; }
+        .mesa-fechamento { border-left: 5px solid #dc3545; }
+        .item-pedido {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+        .total-destaque {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+    </style>
+</head>
+<body>
+    <!-- Badge de Status -->
+    <div id="statusBadge" class="status-badge offline">
+        <i class="fas fa-wifi-slash me-2"></i>Offline
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h2><i class="fas fa-cash-register me-2"></i>Caixa - Modo Offline</h2>
+                    <small>Sistema funciona 100% sem internet</small>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-light" onclick="sincronizar()">
+                        <i class="fas fa-sync-alt me-2"></i>Sincronizar
+                    </button>
+                    <button class="btn btn-light" onclick="location.href='/'">
+                        <i class="fas fa-home me-2"></i>Voltar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Lista de Mesas -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-table me-2"></i>Mesas
+                        <button class="btn btn-sm btn-primary float-end" onclick="carregarMesas()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                        <div id="listaMesas">
+                            <div class="text-center p-4">
+                                <div class="spinner-border text-primary"></div>
+                                <p class="mt-2">Carregando mesas...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pedidos da Mesa Selecionada -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-receipt me-2"></i>Pedidos
+                        <span id="mesaSelecionadaNome" class="text-muted"></span>
+                    </div>
+                    <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                        <div id="listaPedidos">
+                            <div class="text-center text-muted p-4">
+                                <i class="fas fa-hand-pointer fa-3x mb-3"></i>
+                                <p>Selecione uma mesa para ver os pedidos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fechamento / Pagamento -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-credit-card me-2"></i>Fechamento
+                    </div>
+                    <div class="card-body">
+                        <div id="areaFechamento">
+                            <div class="text-center text-muted p-4">
+                                <i class="fas fa-calculator fa-3x mb-3"></i>
+                                <p>Selecione um pedido para fechar</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Pagamento -->
+    <div class="modal fade" id="modalPagamento" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-money-bill-wave me-2"></i>Registrar Pagamento
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="pedidoIdPagamento">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Forma de Pagamento</label>
+                        <select class="form-select" id="formaPagamento">
+                            <option value="dinheiro">💵 Dinheiro</option>
+                            <option value="debito">💳 Cartão de Débito</option>
+                            <option value="credito">💳 Cartão de Crédito</option>
+                            <option value="pix">📱 PIX</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Valor Total</label>
+                        <input type="number" class="form-control" id="valorTotal" step="0.01" readonly>
+                    </div>
+
+                    <div class="mb-3" id="campoValorRecebido">
+                        <label class="form-label">Valor Recebido</label>
+                        <input type="number" class="form-control" id="valorRecebido" step="0.01">
+                    </div>
+
+                    <div class="mb-3" id="campoTroco" style="display: none;">
+                        <label class="form-label">Troco</label>
+                        <input type="number" class="form-control" id="valorTroco" readonly>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="confirmarPagamento()">
+                        <i class="fas fa-check me-2"></i>Confirmar Pagamento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/libs/sql-wasm.js"></script>
+    <script src="/js/local-database.js"></script>
+
+    <script>
+        let mesaAtual = null;
+        let pedidoAtual = null;
+        let modalPagamento = null;
+
+        // Aguardar banco estar pronto
+        async function iniciar() {
+            console.log('🚀 Iniciando sistema de caixa offline...');
+            
+            // Aguardar banco local
+            let tentativas = 0;
+            while (!window.localDB?.isInitialized && tentativas < 50) {
+                await new Promise(r => setTimeout(r, 100));
+                tentativas++;
+            }
+
+            if (!window.localDB?.isInitialized) {
+                alert('❌ Erro: Banco de dados local não inicializou.\n\nRecarregue a página.');
+                return;
+            }
+
+            console.log('✅ Banco local pronto!');
+            
+            // Inicializar modal
+            modalPagamento = new bootstrap.Modal(document.getElementById('modalPagamento'));
+            
+            // Carregar mesas
+            await carregarMesas();
+            
+            // Atualizar status de conexão
+            atualizarStatus();
+            window.addEventListener('online', atualizarStatus);
+            window.addEventListener('offline', atualizarStatus);
+
+            // Listener de forma de pagamento
+            document.getElementById('formaPagamento').addEventListener('change', function() {
+                const isDinheiro = this.value === 'dinheiro';
+                document.getElementById('campoValorRecebido').style.display = isDinheiro ? 'block' : 'none';
+                if (!isDinheiro) {
+                    document.getElementById('valorRecebido').value = document.getElementById('valorTotal').value;
+                    document.getElementById('campoTroco').style.display = 'none';
+                }
+            });
+
+            // Listener de valor recebido
+            document.getElementById('valorRecebido').addEventListener('input', function() {
+                const total = parseFloat(document.getElementById('valorTotal').value);
+                const recebido = parseFloat(this.value) || 0;
+                const troco = recebido - total;
+                
+                if (troco >= 0) {
+                    document.getElementById('valorTroco').value = troco.toFixed(2);
+                    document.getElementById('campoTroco').style.display = 'block';
+                } else {
+                    document.getElementById('campoTroco').style.display = 'none';
+                }
+            });
+        }
+
+        function atualizarStatus() {
+            const badge = document.getElementById('statusBadge');
+            if (navigator.onLine) {
+                badge.className = 'status-badge online';
+                badge.innerHTML = '<i class="fas fa-wifi me-2"></i>Online';
+            } else {
+                badge.className = 'status-badge offline';
+                badge.innerHTML = '<i class="fas fa-wifi-slash me-2"></i>Offline';
+            }
+        }
+
+        async function carregarMesas() {
+            try {
+                const mesas = window.localDB.getMesas();
+                console.log(`📊 ${mesas.length} mesas carregadas`);
+
+                const container = document.getElementById('listaMesas');
+                
+                if (mesas.length === 0) {
+                    container.innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Nenhuma mesa encontrada.
+                            <hr>
+                            <button class="btn btn-sm btn-primary" onclick="sincronizar()">
+                                <i class="fas fa-sync-alt me-2"></i>Sincronizar Dados
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                mesas.forEach(mesa => {
+                    const statusClass = mesa.status === 'livre' ? 'mesa-livre' : 
+                                      mesa.status === 'ocupada' ? 'mesa-ocupada' : 'mesa-fechamento';
+                    const statusIcon = mesa.status === 'livre' ? 'fa-check-circle text-success' : 
+                                     mesa.status === 'ocupada' ? 'fa-utensils text-warning' : 
+                                     'fa-cash-register text-danger';
+                    const statusText = mesa.status === 'livre' ? 'Livre' : 
+                                     mesa.status === 'ocupada' ? 'Ocupada' : 'Fechamento';
+
+                    html += `
+                        <div class="card mesa-card ${statusClass} mb-2" onclick="selecionarMesa(${mesa.id}, '${mesa.identificador}')">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="mb-0">${mesa.identificador}</h5>
+                                        <small class="text-muted">Cap: ${mesa.capacidade}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <i class="fas ${statusIcon} fa-2x"></i>
+                                        <br><small>${statusText}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('❌ Erro ao carregar mesas:', error);
+                document.getElementById('listaMesas').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Erro ao carregar mesas: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function selecionarMesa(mesaId, identificador) {
+            mesaAtual = mesaId;
+            document.getElementById('mesaSelecionadaNome').textContent = `- ${identificador}`;
+
+            try {
+                const pedidos = window.localDB.getPedidosMesa(mesaId);
+                console.log(`📋 ${pedidos.length} pedidos encontrados para mesa ${mesaId}`);
+
+                const container = document.getElementById('listaPedidos');
+
+                if (pedidos.length === 0) {
+                    container.innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Nenhum pedido para esta mesa
+                        </div>
+                    `;
+                    document.getElementById('areaFechamento').innerHTML = `
+                        <div class="text-center text-muted p-4">
+                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                            <p>Nenhum pedido para fechar</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                pedidos.forEach(pedido => {
+                    const statusBadge = pedido.status === 'aberto' ? 'bg-warning' :
+                                      pedido.status === 'finalizado' ? 'bg-success' : 'bg-secondary';
+                    
+                    html += `
+                        <div class="card mb-2" onclick="selecionarPedido(${pedido.id})">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Pedido #${pedido.id}</strong>
+                                        <br><small>${new Date(pedido.data_hora).toLocaleString('pt-BR')}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge ${statusBadge}">${pedido.status}</span>
+                                        <br><strong class="text-success">R$ ${parseFloat(pedido.total).toFixed(2)}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+
+                // Auto-selecionar primeiro pedido aberto
+                const pedidoAberto = pedidos.find(p => p.status === 'aberto');
+                if (pedidoAberto) {
+                    selecionarPedido(pedidoAberto.id);
+                }
+
+            } catch (error) {
+                console.error('❌ Erro ao carregar pedidos:', error);
+                document.getElementById('listaPedidos').innerHTML = `
+                    <div class="alert alert-danger">
+                        Erro: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function selecionarPedido(pedidoId) {
+            pedidoAtual = pedidoId;
+
+            try {
+                const itens = window.localDB.getItensPedido(pedidoId);
+                const pedidos = window.localDB.query('SELECT * FROM pedidos WHERE id = ?', [pedidoId]);
+                
+                if (pedidos.length === 0) return;
+                
+                const pedido = pedidos[0];
+                const total = parseFloat(pedido.total);
+
+                let html = `
+                    <div class="text-center mb-3">
+                        <h3 class="text-muted">Total do Pedido</h3>
+                        <div class="total-destaque">R$ ${total.toFixed(2)}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6><i class="fas fa-list me-2"></i>Itens do Pedido</h6>
+                `;
+
+                itens.forEach(item => {
+                    const subtotal = parseFloat(item.subtotal);
+                    html += `
+                        <div class="item-pedido">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>${item.quantidade}x</strong> ${item.produto_nome || 'Produto'}
+                                    ${item.observacoes ? `<br><small class="text-muted">${item.observacoes}</small>` : ''}
+                                </div>
+                                <div><strong>R$ ${subtotal.toFixed(2)}</strong></div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                    </div>
+                    <hr>
+                `;
+
+                if (pedido.status === 'aberto') {
+                    html += `
+                        <button class="btn btn-success btn-lg w-100" onclick="abrirModalPagamento(${pedidoId}, ${total})">
+                            <i class="fas fa-cash-register me-2"></i>Fechar Conta
+                        </button>
+                    `;
+                } else {
+                    html += `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Pedido já finalizado
+                        </div>
+                    `;
+                }
+
+                document.getElementById('areaFechamento').innerHTML = html;
+
+            } catch (error) {
+                console.error('❌ Erro ao selecionar pedido:', error);
+            }
+        }
+
+        function abrirModalPagamento(pedidoId, total) {
+            document.getElementById('pedidoIdPagamento').value = pedidoId;
+            document.getElementById('valorTotal').value = total.toFixed(2);
+            document.getElementById('valorRecebido').value = total.toFixed(2);
+            document.getElementById('formaPagamento').value = 'dinheiro';
+            document.getElementById('campoValorRecebido').style.display = 'block';
+            document.getElementById('campoTroco').style.display = 'none';
+            
+            modalPagamento.show();
+        }
+
+        async function confirmarPagamento() {
+            try {
+                const pedidoId = parseInt(document.getElementById('pedidoIdPagamento').value);
+                const forma = document.getElementById('formaPagamento').value;
+                const valor = parseFloat(document.getElementById('valorTotal').value);
+                const recebido = parseFloat(document.getElementById('valorRecebido').value);
+                const troco = forma === 'dinheiro' ? (recebido - valor) : 0;
+
+                if (forma === 'dinheiro' && recebido < valor) {
+                    alert('❌ Valor recebido é menor que o total!');
+                    return;
+                }
+
+                console.log('💳 Registrando pagamento:', {pedidoId, forma, valor, recebido, troco});
+
+                const resultado = window.localDB.registrarPagamento(
+                    pedidoId,
+                    forma,
+                    valor,
+                    recebido,
+                    troco
+                );
+
+                if (resultado.success) {
+                    modalPagamento.hide();
+                    
+                    alert(`✅ Pagamento registrado com sucesso!\n\nPedido #${pedidoId}\nForma: ${forma}\nValor: R$ ${valor.toFixed(2)}${troco > 0 ? `\nTroco: R$ ${troco.toFixed(2)}` : ''}\n\n${!navigator.onLine ? '⚠️ Será sincronizado quando houver internet' : '✅ Sincronizando com servidor...'}`);
+                    
+                    // Recarregar
+                    await carregarMesas();
+                    if (mesaAtual) {
+                        const mesas = window.localDB.getMesas();
+                        const mesa = mesas.find(m => m.id === mesaAtual);
+                        if (mesa) {
+                            selecionarMesa(mesa.id, mesa.identificador);
+                        }
+                    }
+
+                    // Sincronizar se online
+                    if (navigator.onLine) {
+                        setTimeout(sincronizar, 1000);
+                    }
+                } else {
+                    alert('❌ Erro ao registrar pagamento: ' + resultado.message);
+                }
+
+            } catch (error) {
+                console.error('❌ Erro:', error);
+                alert('❌ Erro ao confirmar pagamento: ' + error.message);
+            }
+        }
+
+        async function sincronizar() {
+            if (!navigator.onLine) {
+                alert('⚠️ Você está offline!\n\nA sincronização será feita automaticamente quando a internet voltar.');
+                return;
+            }
+
+            const btn = event?.target;
+            const originalHTML = btn?.innerHTML;
+            
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sincronizando...';
+            }
+
+            try {
+                const resultado = await window.localDB.sincronizarComServidor();
+                
+                if (resultado.success) {
+                    alert(`✅ Sincronização concluída!\n\n${resultado.message}`);
+                    await carregarMesas();
+                } else {
+                    alert(`⚠️ Sincronização parcial\n\n${resultado.message}`);
+                }
+            } catch (error) {
+                alert(`❌ Erro na sincronização\n\n${error.message}`);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                }
+            }
+        }
+
+        // Iniciar quando página carregar
+        window.addEventListener('load', iniciar);
+    </script>
+</body>
+</html>

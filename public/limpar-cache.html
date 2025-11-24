@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpar Cache do Sistema</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            max-width: 700px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 20px;
+        }
+        .btn-danger { background: #dc3545; border: none; }
+        .btn-warning { background: #ffc107; border: none; color: #000; }
+        .btn-info { background: #0dcaf0; border: none; color: #000; }
+        .btn-success { background: #198754; border: none; }
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .badge-size {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+        }
+        #status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            border-left: 4px solid;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .stat-card.total { border-color: #0dcaf0; }
+        .stat-card.db { border-color: #198754; }
+        .stat-card.cache { border-color: #ffc107; }
+        .stat-card.service-worker { border-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div id="status"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">
+                    <i class="fas fa-broom me-2"></i>
+                    Limpeza do Sistema Offline
+                </h3>
+                <small>Limpe o cache e reinicie o banco de dados local</small>
+            </div>
+            <div class="card-body">
+                
+                <!-- Estatísticas -->
+                <h5 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Uso de Armazenamento</h5>
+                <div id="storage-stats" class="mb-4">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                        <p class="mt-2">Calculando...</p>
+                    </div>
+                </div>
+
+                <!-- Itens Armazenados -->
+                <h5 class="mb-3"><i class="fas fa-database me-2"></i>Itens no LocalStorage</h5>
+                <ul class="list-group mb-4" id="storage-items">
+                    <li class="list-group-item text-center">
+                        <span class="spinner-border spinner-border-sm"></span> Carregando...
+                    </li>
+                </ul>
+
+                <!-- Ações -->
+                <h5 class="mb-3"><i class="fas fa-tools me-2"></i>Ações de Limpeza</h5>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-danger btn-lg" onclick="limparTudo()">
+                        <i class="fas fa-trash-alt me-2"></i>
+                        Limpar TUDO (Banco + Cache)
+                    </button>
+                    <button class="btn btn-warning btn-lg" onclick="limparBanco()">
+                        <i class="fas fa-database me-2"></i>
+                        Limpar Apenas Banco de Dados
+                    </button>
+                    <button class="btn btn-info btn-lg" onclick="limparCache()">
+                        <i class="fas fa-file-archive me-2"></i>
+                        Limpar Apenas Cache do Service Worker
+                    </button>
+                    <button class="btn btn-success btn-lg" onclick="location.reload()">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Recarregar Página
+                    </button>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Informações -->
+                <div class="alert alert-info mb-0">
+                    <h6><i class="fas fa-info-circle me-2"></i>Quando usar cada opção:</h6>
+                    <ul class="mb-0">
+                        <li><strong>Limpar TUDO:</strong> Quando o sistema não está funcionando</li>
+                        <li><strong>Limpar Banco:</strong> Dados corrompidos ou testes</li>
+                        <li><strong>Limpar Cache:</strong> Forçar download de arquivos atualizados</li>
+                        <li><strong>Recarregar:</strong> Após qualquer limpeza</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Links Úteis -->
+        <div class="text-center mt-3">
+            <a href="/" class="btn btn-light me-2">
+                <i class="fas fa-home me-2"></i>Voltar ao Sistema
+            </a>
+            <a href="/test-sqljs.html" class="btn btn-light me-2">
+                <i class="fas fa-flask me-2"></i>Testar SQL.js
+            </a>
+            <a href="/offline-panel.html" class="btn btn-light">
+                <i class="fas fa-tachometer-alt me-2"></i>Painel Offline
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Calcular uso de armazenamento
+        function calcularEstatisticas() {
+            let totalBytes = 0;
+            let dbSize = 0;
+            let items = [];
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                const size = new Blob([value]).size;
+                
+                totalBytes += size;
+                
+                if (key === 'myd_bar_local.db') {
+                    dbSize = size;
+                }
+
+                items.push({
+                    key: key,
+                    size: size,
+                    sizeFormatted: formatBytes(size)
+                });
+            }
+
+            // Ordenar por tamanho
+            items.sort((a, b) => b.size - a.size);
+
+            return {
+                totalBytes,
+                totalFormatted: formatBytes(totalBytes),
+                dbSize,
+                dbFormatted: formatBytes(dbSize),
+                itemCount: localStorage.length,
+                items
+            };
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function mostrarEstatisticas() {
+            const stats = calcularEstatisticas();
+            
+            document.getElementById('storage-stats').innerHTML = `
+                <div class="stat-card total">
+                    <div class="d-flex justify-content-between">
+                        <span><i class="fas fa-hdd me-2"></i><strong>Total Armazenado:</strong></span>
+                        <span class="badge bg-info badge-size">${stats.totalFormatted}</span>
+                    </div>
+                </div>
+                <div class="stat-card db">
+                    <div class="d-flex justify-content-between">
+                        <span><i class="fas fa-database me-2"></i><strong>Banco de Dados:</strong></span>
+                        <span class="badge bg-success badge-size">${stats.dbFormatted}</span>
+                    </div>
+                </div>
+                <div class="stat-card cache">
+                    <div class="d-flex justify-content-between">
+                        <span><i class="fas fa-boxes me-2"></i><strong>Total de Itens:</strong></span>
+                        <span class="badge bg-warning badge-size">${stats.itemCount}</span>
+                    </div>
+                </div>
+            `;
+
+            // Listar itens
+            let itemsHTML = '';
+            if (stats.items.length === 0) {
+                itemsHTML = '<li class="list-group-item text-center text-muted">Nenhum item armazenado</li>';
+            } else {
+                stats.items.forEach(item => {
+                    const icon = item.key.includes('db') ? 'database' : 'file';
+                    const color = item.key.includes('db') ? 'success' : 'secondary';
+                    itemsHTML += `
+                        <li class="list-group-item">
+                            <span>
+                                <i class="fas fa-${icon} text-${color} me-2"></i>
+                                ${item.key}
+                            </span>
+                            <span class="badge bg-${color}">${item.sizeFormatted}</span>
+                        </li>
+                    `;
+                });
+            }
+            document.getElementById('storage-items').innerHTML = itemsHTML;
+        }
+
+        function showNotification(message, type = 'success') {
+            const icon = type === 'success' ? 'check-circle' : 
+                        type === 'danger' ? 'exclamation-circle' : 
+                        type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-${icon} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.getElementById('status').appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        async function limparTudo() {
+            if (!confirm('⚠️ ATENÇÃO: Isso vai apagar TODOS os dados locais!\n\nBanco de dados, cache, configurações...\n\nTem certeza?')) {
+                return;
+            }
+
+            try {
+                // 1. Limpar localStorage
+                const itemsCount = localStorage.length;
+                localStorage.clear();
+                showNotification(`✅ ${itemsCount} itens removidos do LocalStorage`, 'success');
+
+                // 2. Limpar Service Worker Cache
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    for (const name of cacheNames) {
+                        await caches.delete(name);
+                    }
+                    showNotification(`✅ ${cacheNames.length} caches removidos`, 'success');
+                }
+
+                // 3. Desregistrar Service Worker
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const registration of registrations) {
+                        await registration.unregister();
+                    }
+                    showNotification(`✅ Service Worker desregistrado`, 'success');
+                }
+
+                showNotification('🎉 Tudo limpo! Recarregando em 3 segundos...', 'info');
+                setTimeout(() => location.reload(), 3000);
+
+            } catch (error) {
+                showNotification(`❌ Erro: ${error.message}`, 'danger');
+                console.error('Erro ao limpar:', error);
+            }
+
+            mostrarEstatisticas();
+        }
+
+        async function limparBanco() {
+            if (!confirm('Limpar banco de dados local?\n\nTodos os dados não sincronizados serão perdidos!')) {
+                return;
+            }
+
+            const key = 'myd_bar_local.db';
+            if (localStorage.getItem(key)) {
+                const size = formatBytes(new Blob([localStorage.getItem(key)]).size);
+                localStorage.removeItem(key);
+                showNotification(`✅ Banco de dados removido (${size})`, 'success');
+            } else {
+                showNotification('ℹ️ Nenhum banco de dados encontrado', 'info');
+            }
+
+            mostrarEstatisticas();
+        }
+
+        async function limparCache() {
+            if (!confirm('Limpar cache do Service Worker?\n\nOs arquivos serão baixados novamente na próxima visita.')) {
+                return;
+            }
+
+            try {
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    let count = 0;
+                    for (const name of cacheNames) {
+                        await caches.delete(name);
+                        count++;
+                    }
+                    showNotification(`✅ ${count} cache(s) removido(s)`, 'success');
+                } else {
+                    showNotification('ℹ️ Cache API não disponível', 'info');
+                }
+            } catch (error) {
+                showNotification(`❌ Erro: ${error.message}`, 'danger');
+                console.error('Erro ao limpar cache:', error);
+            }
+
+            mostrarEstatisticas();
+        }
+
+        // Carregar estatísticas ao abrir
+        window.addEventListener('load', () => {
+            mostrarEstatisticas();
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

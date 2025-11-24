@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste da API Unificada de Pagamentos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 3px; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+        .result { margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 3px; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0; }
+        label { display: block; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Teste da API Unificada de Pagamentos</h1>
+        <p><strong>Essa página testa a nova API unificada que substitui os métodos separados do garçom e caixa.</strong></p>
+
+        <!-- Configuração -->
+        <div class="section">
+            <h2>⚙️ Configuração</h2>
+            <label>
+                URL Base da API:
+                <input type="url" id="baseUrl" value="http://localhost:8000/api" />
+            </label>
+            <label>
+                Token de Autenticação:
+                <input type="text" id="authToken" placeholder="Bearer token (opcional para teste)" />
+            </label>
+        </div>
+
+        <!-- Teste 1: Informações do Pedido -->
+        <div class="section">
+            <h2>📄 1. Informações para Pagamento de Pedido</h2>
+            <label>
+                ID do Pedido:
+                <input type="number" id="pedidoInfo" value="1" />
+            </label>
+            <button class="btn" onclick="buscarInfoPedido()">Buscar Informações</button>
+            <div id="resultInfoPedido" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Teste 2: Pagamento Único -->
+        <div class="section">
+            <h2>💰 2. Pagamento Único</h2>
+            <label>
+                ID do Pedido:
+                <input type="number" id="pedidoPagamento" value="1" />
+            </label>
+            <label>
+                Forma de Pagamento:
+                <select id="formaPagamento">
+                    <option value="dinheiro">Dinheiro</option>
+                    <option value="cartao_credito">Cartão de Crédito</option>
+                    <option value="cartao_debito">Cartão de Débito</option>
+                    <option value="pix">PIX</option>
+                    <option value="vale_refeicao">Vale Refeição</option>
+                </select>
+            </label>
+            <label>
+                Valor:
+                <input type="number" id="valor" step="0.01" value="50.00" />
+            </label>
+            <label>
+                Valor Recebido (apenas para dinheiro):
+                <input type="number" id="valorRecebido" step="0.01" value="60.00" />
+            </label>
+            <label>
+                Observações:
+                <textarea id="observacoes" rows="2" placeholder="Observações do pagamento"></textarea>
+            </label>
+            <button class="btn" onclick="processarPagamentoUnico()">Processar Pagamento Único</button>
+            <div id="resultPagamentoUnico" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Teste 3: Múltiplos Pagamentos -->
+        <div class="section">
+            <h2>💳 3. Múltiplos Pagamentos</h2>
+            <label>
+                ID do Pedido:
+                <input type="number" id="pedidoMultiplos" value="1" />
+            </label>
+            <h4>Pagamento 1:</h4>
+            <label>
+                Forma: 
+                <select id="forma1">
+                    <option value="dinheiro">Dinheiro</option>
+                    <option value="cartao_credito">Cartão de Crédito</option>
+                    <option value="cartao_debito">Cartão de Débito</option>
+                    <option value="pix">PIX</option>
+                </select>
+            </label>
+            <label>Valor: <input type="number" id="valor1" step="0.01" value="25.00" /></label>
+
+            <h4>Pagamento 2:</h4>
+            <label>
+                Forma: 
+                <select id="forma2">
+                    <option value="cartao_credito" selected>Cartão de Crédito</option>
+                    <option value="dinheiro">Dinheiro</option>
+                    <option value="cartao_debito">Cartão de Débito</option>
+                    <option value="pix">PIX</option>
+                </select>
+            </label>
+            <label>Valor: <input type="number" id="valor2" step="0.01" value="25.00" /></label>
+
+            <button class="btn" onclick="processarPagamentosMultiplos()">Processar Múltiplos Pagamentos</button>
+            <div id="resultPagamentosMultiplos" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Teste 4: Informações da Mesa -->
+        <div class="section">
+            <h2>🍽️ 4. Informações para Pagamento de Mesa</h2>
+            <label>
+                ID da Mesa:
+                <input type="number" id="mesaInfo" value="1" />
+            </label>
+            <button class="btn" onclick="buscarInfoMesa()">Buscar Informações da Mesa</button>
+            <div id="resultInfoMesa" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Teste 5: Pagamento de Mesa -->
+        <div class="section">
+            <h2>🏪 5. Pagamento de Mesa Completa</h2>
+            <label>
+                ID da Mesa:
+                <input type="number" id="mesaPagamento" value="1" />
+            </label>
+            <label>
+                Forma de Pagamento:
+                <select id="formaPagamentoMesa">
+                    <option value="cartao_debito">Cartão de Débito</option>
+                    <option value="dinheiro">Dinheiro</option>
+                    <option value="cartao_credito">Cartão de Crédito</option>
+                    <option value="pix">PIX</option>
+                </select>
+            </label>
+            <label>
+                Valor Total:
+                <input type="number" id="valorMesa" step="0.01" value="150.00" />
+            </label>
+            <button class="btn" onclick="processarPagamentoMesa()">Processar Pagamento da Mesa</button>
+            <div id="resultPagamentoMesa" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Função auxiliar para fazer requests
+        async function makeRequest(endpoint, method = 'GET', data = null) {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const token = document.getElementById('authToken').value;
+            
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            };
+
+            if (token) {
+                options.headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(`${baseUrl}${endpoint}`, options);
+                const result = await response.json();
+                return { success: response.ok, data: result, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Função para mostrar resultados
+        function showResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            
+            if (result.success) {
+                element.className = 'result success';
+                element.innerHTML = `
+                    <strong>✅ Sucesso!</strong><br>
+                    <pre>${JSON.stringify(result.data, null, 2)}</pre>
+                `;
+            } else {
+                element.className = 'result error';
+                element.innerHTML = `
+                    <strong>❌ Erro!</strong><br>
+                    Status: ${result.status || 'N/A'}<br>
+                    ${result.error ? `Erro: ${result.error}` : ''}
+                    ${result.data ? `<pre>${JSON.stringify(result.data, null, 2)}</pre>` : ''}
+                `;
+            }
+        }
+
+        // 1. Buscar informações do pedido
+        async function buscarInfoPedido() {
+            const pedidoId = document.getElementById('pedidoInfo').value;
+            const result = await makeRequest(`/pagamentos/info/pedido/${pedidoId}`);
+            showResult('resultInfoPedido', result);
+        }
+
+        // 2. Processar pagamento único
+        async function processarPagamentoUnico() {
+            const pedidoId = document.getElementById('pedidoPagamento').value;
+            const data = {
+                forma_pagamento: document.getElementById('formaPagamento').value,
+                valor: parseFloat(document.getElementById('valor').value),
+                observacoes: document.getElementById('observacoes').value
+            };
+
+            const forma = document.getElementById('formaPagamento').value;
+            if (forma === 'dinheiro') {
+                data.valor_recebido = parseFloat(document.getElementById('valorRecebido').value);
+            }
+
+            const result = await makeRequest(`/pagamentos/pedido/${pedidoId}`, 'POST', data);
+            showResult('resultPagamentoUnico', result);
+        }
+
+        // 3. Processar múltiplos pagamentos
+        async function processarPagamentosMultiplos() {
+            const pedidoId = document.getElementById('pedidoMultiplos').value;
+            
+            const multiplosPagamentos = [
+                {
+                    forma_pagamento: document.getElementById('forma1').value,
+                    valor: parseFloat(document.getElementById('valor1').value)
+                },
+                {
+                    forma_pagamento: document.getElementById('forma2').value,
+                    valor: parseFloat(document.getElementById('valor2').value)
+                }
+            ];
+
+            const data = {
+                multiplos_pagamentos: JSON.stringify(multiplosPagamentos)
+            };
+
+            const result = await makeRequest(`/pagamentos/pedido/${pedidoId}`, 'POST', data);
+            showResult('resultPagamentosMultiplos', result);
+        }
+
+        // 4. Buscar informações da mesa
+        async function buscarInfoMesa() {
+            const mesaId = document.getElementById('mesaInfo').value;
+            const result = await makeRequest(`/pagamentos/info/mesa/${mesaId}`);
+            showResult('resultInfoMesa', result);
+        }
+
+        // 5. Processar pagamento da mesa
+        async function processarPagamentoMesa() {
+            const mesaId = document.getElementById('mesaPagamento').value;
+            const data = {
+                forma_pagamento: document.getElementById('formaPagamentoMesa').value,
+                valor: parseFloat(document.getElementById('valorMesa').value)
+            };
+
+            const result = await makeRequest(`/pagamentos/mesa/${mesaId}`, 'POST', data);
+            showResult('resultPagamentoMesa', result);
+        }
+
+        // Auto-popular a URL baseada na URL atual
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            document.getElementById('baseUrl').value = `${window.location.protocol}//${window.location.host}/api`;
+        }
+    </script>
+</body>
+</html>

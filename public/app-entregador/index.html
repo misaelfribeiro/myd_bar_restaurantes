@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FF6B35">
+    <title>MyD Bar - Entregador</title>
+    
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="img/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet para mapas -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="login-header">
+                <i class="fas fa-motorcycle"></i>
+                <h1>Entregador MyD</h1>
+                <p>Faça login para começar</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="loginEmail">
+                        <i class="fas fa-envelope"></i> E-mail
+                    </label>
+                    <input type="email" id="loginEmail" placeholder="seu@email.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginSenha">
+                        <i class="fas fa-lock"></i> Senha
+                    </label>
+                    <input type="password" id="loginSenha" placeholder="Sua senha" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </button>
+            </form>
+            
+            <div class="login-footer">
+                <p>Esqueceu a senha? <a href="#" onclick="recuperarSenha()">Recuperar</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Principal -->
+    <div id="appScreen" class="screen">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="btn-menu" onclick="toggleMenu()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>Entregas</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn-icon" onclick="toggleDisponibilidade()">
+                        <i class="fas fa-toggle-on" id="statusIcon"></i>
+                    </button>
+                    <span class="status-badge" id="statusBadge">Online</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Menu Lateral -->
+        <nav id="sideMenu" class="side-menu">
+            <div class="menu-header">
+                <div class="menu-profile">
+                    <img src="img/avatar-default.png" alt="Foto" id="menuAvatar" onerror="this.src='https://via.placeholder.com/80'">
+                    <div class="menu-profile-info">
+                        <h3 id="menuNome">Entregador</h3>
+                        <p id="menuEmail">email@exemplo.com</p>
+                    </div>
+                </div>
+                <button class="btn-close" onclick="toggleMenu()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <ul class="menu-list">
+                <li><a href="#" onclick="showTab('entregas')"><i class="fas fa-motorcycle"></i> Minhas Entregas</a></li>
+                <li><a href="#" onclick="showTab('historico')"><i class="fas fa-history"></i> Histórico</a></li>
+                <li><a href="#" onclick="showTab('ganhos')"><i class="fas fa-dollar-sign"></i> Ganhos</a></li>
+                <li><a href="#" onclick="showTab('perfil')"><i class="fas fa-user"></i> Meu Perfil</a></li>
+                <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
+            </ul>
+        </nav>
+
+        <!-- Overlay do Menu -->
+        <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
+
+        <!-- Conteúdo Principal -->
+        <main class="app-content">
+            <!-- Tab: Entregas -->
+            <div id="tabEntregas" class="tab-content active">
+                <!-- Cards de Resumo -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-box"></i>
+                        <div class="stat-info">
+                            <span class="stat-value" id="totalEntregas">0</span>
+                            <span class="stat-label">Entregas Hoje</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-dollar-sign"></i>
+                        <div class="stat-info">
+                            <span class="stat-value" id="ganhosHoje">R$ 0,00</span>
+                            <span class="stat-label">Ganhos Hoje</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de Entregas Disponíveis -->
+                <section class="section">
+                    <h2><i class="fas fa-list"></i> Entregas Disponíveis</h2>
+                    <div id="entregasDisponiveis" class="entregas-list">
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p>Nenhuma entrega disponível no momento</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Entregas Aceitas -->
+                <section class="section">
+                    <h2><i class="fas fa-motorcycle"></i> Minhas Entregas Ativas</h2>
+                    <div id="entregasAceitas" class="entregas-list">
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p>Você não tem entregas ativas</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Tab: Histórico -->
+            <div id="tabHistorico" class="tab-content">
+                <section class="section">
+                    <h2><i class="fas fa-history"></i> Histórico de Entregas</h2>
+                    
+                    <div class="filter-bar">
+                        <select id="filtroHistorico" onchange="filtrarHistorico()">
+                            <option value="hoje">Hoje</option>
+                            <option value="semana">Esta Semana</option>
+                            <option value="mes">Este Mês</option>
+                            <option value="todos">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div id="historicoLista" class="entregas-list">
+                        <div class="empty-state">
+                            <i class="fas fa-history"></i>
+                            <p>Nenhuma entrega no histórico</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Tab: Ganhos -->
+            <div id="tabGanhos" class="tab-content">
+                <section class="section">
+                    <h2><i class="fas fa-dollar-sign"></i> Meus Ganhos</h2>
+                    
+                    <div class="ganhos-summary">
+                        <div class="ganho-card">
+                            <span class="ganho-label">Hoje</span>
+                            <span class="ganho-value" id="ganhoHoje">R$ 0,00</span>
+                        </div>
+                        <div class="ganho-card">
+                            <span class="ganho-label">Esta Semana</span>
+                            <span class="ganho-value" id="ganhoSemana">R$ 0,00</span>
+                        </div>
+                        <div class="ganho-card">
+                            <span class="ganho-label">Este Mês</span>
+                            <span class="ganho-value" id="ganhoMes">R$ 0,00</span>
+                        </div>
+                    </div>
+                    
+                    <div id="ganhosDetalhes" class="ganhos-detalhes"></div>
+                </section>
+            </div>
+
+            <!-- Tab: Perfil -->
+            <div id="tabPerfil" class="tab-content">
+                <section class="section">
+                    <h2><i class="fas fa-user"></i> Meu Perfil</h2>
+                    
+                    <div class="perfil-card">
+                        <div class="perfil-avatar">
+                            <img src="img/avatar-default.png" alt="Foto" id="perfilAvatar" onerror="this.src='https://via.placeholder.com/120'">
+                            <button class="btn-edit-avatar">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="perfil-info">
+                            <div class="info-group">
+                                <label><i class="fas fa-user"></i> Nome</label>
+                                <p id="perfilNome">-</p>
+                            </div>
+                            <div class="info-group">
+                                <label><i class="fas fa-envelope"></i> E-mail</label>
+                                <p id="perfilEmail">-</p>
+                            </div>
+                            <div class="info-group">
+                                <label><i class="fas fa-phone"></i> Telefone</label>
+                                <p id="perfilTelefone">-</p>
+                            </div>
+                            <div class="info-group">
+                                <label><i class="fas fa-id-card"></i> CPF</label>
+                                <p id="perfilCpf">-</p>
+                            </div>
+                            <div class="info-group">
+                                <label><i class="fas fa-motorcycle"></i> Veículo</label>
+                                <p id="perfilVeiculo">-</p>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-block" onclick="editarPerfil()">
+                            <i class="fas fa-edit"></i> Editar Perfil
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Detalhes da Entrega -->
+    <div id="modalEntrega" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-box"></i> Detalhes da Entrega</h3>
+                <button class="btn-close" onclick="fecharModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalEntregaBody">
+                <!-- Conteúdo dinâmico -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/entregas.js"></script>
+    <script src="js/location.js"></script>
+    <script src="js/app.js"></script>
+    
+    <!-- Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registrado', reg))
+                .catch(err => console.error('Erro ao registrar Service Worker', err));
+        }
+    </script>
+</body>
+</html>

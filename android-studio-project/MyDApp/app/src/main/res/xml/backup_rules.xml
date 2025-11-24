@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Backup all files except cache and no-backup files -->
+    <exclude domain="cache" />
+    <exclude domain="sharedpref" path="DeviceIdSharedPrefs.xml" />
+</full-backup-content>

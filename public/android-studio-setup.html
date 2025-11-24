@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Studio - MyD App Setup</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 40px;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #EA1D2C;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .section {
+            background: white;
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #EA1D2C;
+            display: inline-block;
+        }
+        
+        .steps {
+            margin-top: 20px;
+        }
+        
+        .step {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .step-number {
+            background: #EA1D2C;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        
+        .step-content h3 {
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        .step-content p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        
+        .code-block {
+            background: #f5f5f5;
+            border-left: 4px solid #EA1D2C;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #333;
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow-x: auto;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .checklist {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        
+        .checklist-item {
+            display: flex;
+            gap: 10px;
+            padding: 5px 0;
+            font-size: 14px;
+        }
+        
+        .checklist-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        
+        .footer {
+            background: white;
+            padding: 30px;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+        }
+        
+        .button {
+            display: inline-block;
+            background: #EA1D2C;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .button:hover {
+            background: #c41625;
+        }
+        
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        
+        @media (max-width: 600px) {
+            .header {
+                padding: 20px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🤖 MyD App - Android Studio Setup</h1>
+            <p>Guia passo a passo para abrir, compilar e testar seu app Android</p>
+        </div>
+        
+        <!-- Passo 1 -->
+        <div class="section">
+            <h2>📋 Passo 1: Verificar Requisitos</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Verificar Android Studio</h3>
+                        <p>Você precisa ter Android Studio instalado</p>
+                        <button class="button" onclick="alert('Baixe em: https://developer.android.com/studio')">
+                            Download Android Studio
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox"> Android Studio 2022.3+
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox"> Android SDK instalado
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox"> Java 11+ (incluído no AS)
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox"> 4GB RAM mínimo
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Passo 2 -->
+        <div class="section">
+            <h2>📂 Passo 2: Abrir Projeto</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Inicie Android Studio</h3>
+                        <p>Abra o aplicativo Android Studio</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Clique em "Open"</h3>
+                        <p>Selecione: File → Open (ou Ctrl+O)</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Navegue até a pasta do projeto</h3>
+                        <div class="code-block">
+c:\xampp\htdocs\myd_bar_restaurantes\android-studio-project\MyDApp
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Clique em "OK"</h3>
+                        <p>Android Studio vai abrir o projeto</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Passo 3 -->
+        <div class="section">
+            <h2>⚙️ Passo 3: Sincronizar Gradle</h2>
+            <div class="highlight">
+                <strong>⏳ Aguarde 2-3 minutos</strong> para Android Studio sincronizar o Gradle
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Android Studio sincroniza automaticamente</h3>
+                        <p>Você verá uma barra de progresso no topo</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Se pedir para atualizar, clique "Update"</h3>
+                        <p>Deixe Android Studio baixar as dependências</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Se der erro, sincronize manualmente</h3>
+                        <div class="code-block">
+File → Sync Now
+(ou Ctrl+Shift+O)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Passo 4 -->
+        <div class="section">
+            <h2>📱 Passo 4: Configurar Emulador</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">A</div>
+                    <div class="step-content">
+                        <h3>Criar novo emulador</h3>
+                        <p><strong>Tools → Device Manager → Create Device</strong></p>
+                        <ul style="margin-left: 20px; margin-top: 8px; color: #666; font-size: 14px;">
+                            <li>Device: Pixel 4</li>
+                            <li>API: 34 (Android 14)</li>
+                            <li>RAM: 1-2GB</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">B</div>
+                    <div class="step-content">
+                        <h3>Ou conecte dispositivo físico</h3>
+                        <p>Ative "Depuração USB" nas configurações do celular</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Passo 5 -->
+        <div class="section">
+            <h2>🚀 Passo 5: Executar App</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Clique em "Run" (Shift+F10)</h3>
+                        <p>Menu superior ou barra de ferramentas</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Selecione o emulador ou dispositivo</h3>
+                        <p>Android Studio listará as opções disponíveis</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Clique em "OK"</h3>
+                        <p>Android Studio compilará e instalará o app</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="success">
+                <strong>✅ Sucesso!</strong> O app abrirá mostrando http://localhost/app-cliente/
+            </div>
+        </div>
+        
+        <!-- Troubleshooting -->
+        <div class="section">
+            <h2>🐛 Solução de Problemas</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">❌</div>
+                    <div class="step-content">
+                        <h3>"Gradle sync failed"</h3>
+                        <p><strong>Solução:</strong></p>
+                        <div class="code-block">
+1. File → Invalidate Caches → Restart
+2. Aguarde Android Studio reiniciar
+3. Gradle sincronizará automaticamente
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">❌</div>
+                    <div class="step-content">
+                        <h3>App não consegue conectar em localhost</h3>
+                        <p><strong>Se estiver em emulador, mude a URL em MainActivity.kt:</strong></p>
+                        <div class="code-block">
+// De:
+webView.loadUrl("http://localhost/app-cliente/")
+
+// Para:
+webView.loadUrl("http://10.0.2.2/app-cliente/")
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">❌</div>
+                    <div class="step-content">
+                        <h3>"Cannot find SDK"</h3>
+                        <p><strong>Configure o SDK:</strong></p>
+                        <div class="code-block">
+File → Project Structure → SDK Location
+→ Aponte para seu Android SDK
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>Projeto:</strong> c:\xampp\htdocs\myd_bar_restaurantes\android-studio-project\MyDApp</p>
+            <p><strong>Documentação:</strong> ANDROID_STUDIO_GUIDE.md | README.md</p>
+            <p style="margin-top: 15px;">MyD Bar & Restaurantes © 2025 | Versão 1.0.0</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Busca de Cliente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h3>Teste da Busca de Clientes</h3>
+        <div id="teste-resultado" class="mt-3"></div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5>Teste 1: API de Busca</h5>
+                <button onclick="testarApiBusca()" class="btn btn-primary">Testar API de Busca</button>
+                <div id="resultado-busca" class="mt-2"></div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5>Teste 2: API Cliente Individual</h5>
+                <button onclick="testarApiCliente()" class="btn btn-success">Testar API Cliente</button>
+                <div id="resultado-cliente" class="mt-2"></div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5>Teste 3: Seleção de Cliente</h5>
+                <button onclick="testarSelecao()" class="btn btn-warning">Testar Seleção</button>
+                <div id="resultado-selecao" class="mt-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    async function testarApiBusca() {
+        const resultadoDiv = document.getElementById('resultado-busca');
+        resultadoDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testando...';
+        
+        try {
+            const response = await fetch('/api/clientes/buscar-delivery?busca=maria&limite=10');
+            const data = await response.json();
+            
+            resultadoDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>✅ Sucesso!</strong><br>
+                    Status: ${response.status}<br>
+                    Clientes encontrados: ${data.data ? data.data.length : 0}<br>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        } catch (error) {
+            resultadoDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>❌ Erro!</strong><br>
+                    ${error.message}<br>
+                    <pre>${JSON.stringify(error, null, 2)}</pre>
+                </div>
+            `;
+        }
+    }
+    
+    async function testarApiCliente() {
+        const resultadoDiv = document.getElementById('resultado-cliente');
+        resultadoDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testando...';
+        
+        try {
+            const response = await fetch('/api/clientes/4');
+            const data = await response.json();
+            
+            resultadoDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>✅ Sucesso!</strong><br>
+                    Status: ${response.status}<br>
+                    Cliente: ${data.data ? data.data.nome : 'N/A'}<br>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        } catch (error) {
+            resultadoDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>❌ Erro!</strong><br>
+                    ${error.message}<br>
+                    <pre>${JSON.stringify(error, null, 2)}</pre>
+                </div>
+            `;
+        }
+    }
+    
+    async function testarSelecao() {
+        const resultadoDiv = document.getElementById('resultado-selecao');
+        resultadoDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testando...';
+        
+        try {
+            // Simular seleção de cliente como no componente
+            const response = await fetch('/api/clientes/4');
+            const data = await response.json();
+            
+            if (data.success) {
+                // Simular a função de callback
+                const cliente = data.data;
+                
+                resultadoDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>✅ Cliente selecionado com sucesso!</strong><br>
+                        Nome: ${cliente.nome}<br>
+                        Telefone: ${cliente.telefone}<br>
+                        Tem endereço: ${cliente.tem_endereco ? 'Sim' : 'Não'}<br>
+                        Endereço: ${cliente.endereco_completo || 'Não cadastrado'}<br>
+                        
+                        <div class="mt-2">
+                            <strong>Teste de callback:</strong><br>
+                            <button onclick="clienteSelecionadoDelivery(${JSON.stringify(cliente).replace(/"/g, '&quot;')})" class="btn btn-sm btn-primary">
+                                Simular callback
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                throw new Error(data.message);
+            }
+        } catch (error) {
+            resultadoDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>❌ Erro!</strong><br>
+                    ${error.message}
+                </div>
+            `;
+        }
+    }
+    
+    // Função de callback simulada
+    function clienteSelecionadoDelivery(cliente) {
+        console.log('Cliente selecionado:', cliente);
+        alert(`Cliente selecionado: ${cliente.nome}\nTelefone: ${cliente.telefone}`);
+        
+        const resultadoDiv = document.getElementById('resultado-selecao');
+        resultadoDiv.innerHTML += `
+            <div class="alert alert-info mt-2">
+                <strong>🎯 Callback executado!</strong><br>
+                Cliente: ${cliente.nome}<br>
+                ID: ${cliente.id}
+            </div>
+        `;
+    }
+    </script>
+</body>
+</html>

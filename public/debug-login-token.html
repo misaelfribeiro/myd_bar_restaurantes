@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Login Token</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .box { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .log { background: #f9f9f9; padding: 10px; margin: 5px 0; border-left: 3px solid #2196F3; font-family: monospace; font-size: 12px; }
+        button { padding: 15px 25px; margin: 10px 5px; font-size: 16px; background: #2196F3; color: white; border: none; border-radius: 5px; width: 100%; cursor: pointer; }
+        button:active { background: #0d47a1; }
+        .success { color: #4CAF50; font-weight: bold; }
+        .error { color: #f44336; font-weight: bold; }
+        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Login + Token</h1>
+    
+    <div class="box">
+        <h3>1. Fazer Login</h3>
+        <input type="text" id="telefone" placeholder="Telefone (ex: 48988223344)" value="48988223344">
+        <button onclick="fazerLogin()">LOGIN</button>
+    </div>
+    
+    <div class="box">
+        <h3>2. Verificar Token FCM</h3>
+        <button onclick="verificarToken()">Verificar Token no Dispositivo</button>
+    </div>
+    
+    <div class="box">
+        <h3>3. Enviar Token Manualmente</h3>
+        <input type="number" id="clienteIdManual" placeholder="Cliente ID" value="26">
+        <button onclick="enviarTokenManual()">Enviar Token com Cliente ID</button>
+    </div>
+    
+    <div class="box">
+        <h3>Logs:</h3>
+        <div id="logs"></div>
+    </div>
+    
+    <script>
+        let clienteIdAtual = null;
+        let tokenFCM = null;
+        
+        function log(msg, tipo = 'info') {
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = 'log ' + tipo;
+            div.innerHTML = new Date().toLocaleTimeString() + ' - ' + msg;
+            logs.insertBefore(div, logs.firstChild);
+            console.log(msg);
+        }
+        
+        async function fazerLogin() {
+            const telefone = document.getElementById('telefone').value;
+            log('📞 Fazendo login com: ' + telefone);
+            
+            try {
+                const response = await fetch('http://192.168.15.9/api/app/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ telefone: telefone })
+                });
+                
+                const data = await response.json();
+                log('📦 Resposta completa: <pre>' + JSON.stringify(data, null, 2) + '</pre>');
+                
+                if (data.success && data.cliente) {
+                    clienteIdAtual = data.cliente.id;
+                    log('<span class="success">✅ Login bem sucedido! Cliente ID: ' + clienteIdAtual + '</span>');
+                    log('Nome: ' + data.cliente.nome);
+                    log('Telefone: ' + data.cliente.telefone);
+                    
+                    // Verificar se AndroidBridge existe
+                    if (window.AndroidBridge && window.AndroidBridge.onLoginSuccess) {
+                        log('📱 Chamando AndroidBridge.onLoginSuccess(' + clienteIdAtual + ')');
+                        window.AndroidBridge.onLoginSuccess(clienteIdAtual.toString());
+                    } else {
+                        log('<span class="error">❌ AndroidBridge NÃO disponível!</span>');
+                    }
+                } else if (data.requires_registration) {
+                    log('<span class="error">❌ Cliente não cadastrado. Precisa registrar!</span>');
+                } else {
+                    log('<span class="error">❌ Login falhou: ' + data.message + '</span>');
+                }
+            } catch (e) {
+                log('<span class="error">❌ Erro: ' + e.message + '</span>');
+            }
+        }
+        
+        async function verificarToken() {
+            log('🔍 Verificando token FCM...');
+            
+            // Tentar pegar token do Firebase
+            if (typeof firebase !== 'undefined') {
+                log('✅ Firebase disponível!');
+                // Implementar verificação do Firebase
+            } else {
+                log('⚠️ Firebase não disponível via JavaScript');
+            }
+            
+            // Verificar se AndroidBridge pode fornecer o token
+            if (window.AndroidBridge) {
+                log('✅ AndroidBridge disponível');
+                log('⚠️ Método para obter token não implementado no Bridge');
+            } else {
+                log('<span class="error">❌ AndroidBridge não disponível</span>');
+            }
+        }
+        
+        async function enviarTokenManual() {
+            const clienteId = document.getElementById('clienteIdManual').value;
+            const tokenTeste = 'teste_token_manual_' + Date.now();
+            
+            log('📤 Enviando token manualmente...');
+            log('Cliente ID: ' + clienteId);
+            log('Token: ' + tokenTeste);
+            
+            try {
+                const response = await fetch('http://192.168.15.9/api/notificacao/salvar-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: tokenTeste,
+                        user_id: parseInt(clienteId),
+                        device_type: 'android'
+                    })
+                });
+                
+                const data = await response.json();
+                log('📦 Resposta: ' + JSON.stringify(data));
+                
+                if (data.success) {
+                    log('<span class="success">✅ Token salvo com sucesso!</span>');
+                } else {
+                    log('<span class="error">❌ Falha ao salvar: ' + data.message + '</span>');
+                }
+            } catch (e) {
+                log('<span class="error">❌ Erro: ' + e.message + '</span>');
+            }
+        }
+        
+        // Auto-verificar ao carregar
+        setTimeout(() => {
+            log('🚀 Página carregada');
+            if (window.AndroidBridge) {
+                log('✅ AndroidBridge detectado!');
+            } else {
+                log('<span class="error">❌ AndroidBridge NÃO detectado - App não recompilado?</span>');
+            }
+        }, 500);
+    </script>
+</body>
+</html>
