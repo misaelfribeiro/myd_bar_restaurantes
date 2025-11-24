@@ -384,6 +384,11 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.access'])->group(func
  Route::resource('/funcionarios', \App\Http\Controllers\Admin\FuncionarioController::class)->names('funcionarios');
  Route::resource('/comissoes', \App\Http\Controllers\Admin\ComissaoController::class)->names('comissoes');
  Route::resource('/bonus', \App\Http\Controllers\Admin\BonusController::class)->names('bonus');
+ 
+ // Carla - IA Assistant
+ Route::get('/carla', function() {
+     return view('admin.carla');
+ })->name('carla');
 });
 Route::prefix('caixa')->name('caixa.')->group(function () {
  Route::get('/', [CaixaController::class, 'index'])->name('index');

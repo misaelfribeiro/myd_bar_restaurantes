@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Completo - Carla Voz</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .test-box { background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        h2 { color: #333; }
+        button { padding: 10px 20px; font-size: 16px; margin: 5px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; border: none; border-radius: 5px; }
+        .btn-success { background: #28a745; color: white; border: none; border-radius: 5px; }
+        .btn-warning { background: #ffc107; color: black; border: none; border-radius: 5px; }
+        pre { background: #000; color: #0f0; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🎤 Teste Completo - Carla Checkout com Voz</h1>
+    
+    <div class="test-box info">
+        <h3>📋 Checklist de Funcionalidades</h3>
+        <ul>
+            <li>✅ Confirmar endereço → Mostra endereço cadastrado</li>
+            <li>✅ Mudar endereço → Navega para perfil (address_form)</li>
+            <li>✅ Mostrar formas de pagamento → Lista 3 opções</li>
+            <li>✅ Selecionar PIX/Cartão/Dinheiro → Salva e aplica no checkout</li>
+            <li>✅ Finalizar pedido → Navega para confirmação</li>
+        </ul>
+    </div>
+    
+    <h2>🧪 Testes Backend</h2>
+    <button class="btn-primary" onclick="testarBackend()">Testar Backend</button>
+    <div id="resultado-backend"></div>
+    
+    <h2>🎨 Testes Frontend</h2>
+    <div class="test-box">
+        <p><strong>Instruções:</strong></p>
+        <ol>
+            <li>Abra o app cliente: <code>http://localhost/myd_bar_restaurantes/public/app-cliente/</code></li>
+            <li>Faça login</li>
+            <li>Adicione produtos ao carrinho</li>
+            <li>Teste os comandos de voz:</li>
+        </ol>
+        <ul>
+            <li>🗣️ "confirma meu endereço"</li>
+            <li>🗣️ "quais as formas de pagamento"</li>
+            <li>🗣️ "pagar via pix"</li>
+            <li>🗣️ "mudar endereço"</li>
+            <li>🗣️ "finalizar pedido"</li>
+        </ul>
+    </div>
+    
+    <h2>📝 Mapeamento de Valores</h2>
+    <div class="test-box">
+        <h4>Backend → Frontend</h4>
+        <table style="width:100%; border-collapse: collapse;">
+            <tr style="background:#333; color:white;">
+                <th style="padding:10px; text-align:left;">Backend</th>
+                <th style="padding:10px; text-align:left;">Frontend (select)</th>
+                <th style="padding:10px; text-align:left;">Ícone</th>
+            </tr>
+            <tr>
+                <td style="padding:10px; border-bottom:1px solid #ccc;">money</td>
+                <td style="padding:10px; border-bottom:1px solid #ccc;">dinheiro</td>
+                <td style="padding:10px; border-bottom:1px solid #ccc;">💵</td>
+            </tr>
+            <tr>
+                <td style="padding:10px; border-bottom:1px solid #ccc;">card</td>
+                <td style="padding:10px; border-bottom:1px solid #ccc;">cartao_credito</td>
+                <td style="padding:10px; border-bottom:1px solid #ccc;">💳</td>
+            </tr>
+            <tr>
+                <td style="padding:10px;">pix</td>
+                <td style="padding:10px;">pix</td>
+                <td style="padding:10px;">📱</td>
+            </tr>
+        </table>
+    </div>
+    
+    <h2>🔀 Fluxo de Navegação</h2>
+    <div class="test-box">
+        <pre>
+1. Backend retorna: navigate_to = "cart"
+   → Frontend chama: showCart()
+   
+2. Backend retorna: navigate_to = "checkout"
+   → Frontend chama: proceedToCheckout()
+   → Aplica pagamento selecionado
+   
+3. Backend retorna: navigate_to = "address_form"
+   → Frontend chama: showProfile()
+   
+4. Backend retorna: navigate_to = "confirm_order"
+   → Frontend chama: confirmOrder()
+        </pre>
+    </div>
+
+    <script>
+        async function testarBackend() {
+            const div = document.getElementById('resultado-backend');
+            div.innerHTML = '<p>⏳ Testando backend...</p>';
+            
+            try {
+                const response = await fetch('/testar_endereco_pagamento.php');
+                const text = await response.text();
+                
+                // Formatar resposta
+                const formatted = text
+                    .replace(/✅/g, '<span style="color:green">✅</span>')
+                    .replace(/❌/g, '<span style="color:red">❌</span>')
+                    .replace(/🤖/g, '<span style="color:blue">🤖</span>');
+                
+                div.innerHTML = `<div class="test-box success"><pre>${formatted}</pre></div>`;
+            } catch (error) {
+                div.innerHTML = `<div class="test-box error"><p>❌ Erro: ${error.message}</p></div>`;
+            }
+        }
+    </script>
+</body>
+</html>

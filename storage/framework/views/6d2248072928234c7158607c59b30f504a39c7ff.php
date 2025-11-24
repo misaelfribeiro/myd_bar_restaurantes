@@ -1,5 +1,5 @@
 
-<?php $__env->startSection('title', 'Detalhes do Pedido #' . ($pedido->numero_pedido ?? $pedido->id)); ?>
+<?php $__env->startSection('title', 'Detalhes do Pedido #' . $pedido->id); ?>
 <?php $__env->startSection('content'); ?>
 <div class="container-fluid">
  <div class="page-header">
@@ -7,7 +7,7 @@
  <div>
  <h1 class="page-title">
  <i class="fas fa-receipt me-2"></i>
- Detalhes do Pedido #<?php echo e($pedido->numero_pedido ?? $pedido->id); ?>
+ Detalhes do Pedido #<?php echo e($pedido->id); ?>
 
  </h1>
  <p class="page-subtitle">
@@ -40,7 +40,7 @@
  </div>
  
  <!-- Alerta para delivery sem entregador -->
- <?php if($pedido->delivery && $pedido->status == 'em_preparo' && !$pedido->entregador_id && !$pedido->delivery->disponivel_plataforma): ?>
+ <?php if($pedido->delivery && $pedido->status == 'em_preparo' && !$pedido->entregador_id): ?>
  <div class="alert alert-warning alert-dismissible fade show" role="alert">
  <div class="d-flex align-items-center">
  <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
@@ -48,67 +48,25 @@
  <h6 class="alert-heading mb-1">Atenção: Pedido sem entregador!</h6>
  <p class="mb-0">Este pedido de delivery está em preparo mas ainda não tem entregador atribuído.</p>
  </div>
- <div class="d-flex gap-2 ms-3">
- <form method="POST" action="<?php echo e(route('deliveries.disponibilizar-plataforma', $pedido->delivery->id)); ?>" class="d-inline">
- <?php echo csrf_field(); ?>
- <button type="submit" class="btn btn-primary btn-sm">
- <i class="fas fa-globe me-1"></i>
- Buscar na Plataforma
- </button>
- </form>
- <a href="<?php echo e(route('deliveries.index')); ?>" class="btn btn-warning btn-sm">
+ <a href="<?php echo e(route('deliveries.index')); ?>" class="btn btn-warning btn-sm ms-3">
  <i class="fas fa-user-plus me-1"></i>
- Atribuir Manualmente
+ Atribuir Entregador
  </a>
- </div>
- </div>
- <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
- </div>
- <?php endif; ?>
-
- <!-- Alerta para delivery buscando na plataforma -->
- <?php if($pedido->delivery && $pedido->status == 'em_preparo' && !$pedido->entregador_id && $pedido->delivery->disponivel_plataforma): ?>
- <div class="alert alert-info alert-dismissible fade show" role="alert">
- <div class="d-flex align-items-center">
- <i class="fas fa-search fa-2x me-3 fa-spin"></i>
- <div class="flex-grow-1">
- <h6 class="alert-heading mb-1">🔍 Buscando entregadores na plataforma...</h6>
- <p class="mb-2">O sistema está notificando entregadores disponíveis próximos ao restaurante.</p>
- <?php if($pedido->delivery->entregadores_notificados && count($pedido->delivery->entregadores_notificados) > 0): ?>
- <small class="text-muted">
- <i class="fas fa-bell me-1"></i>
- <?php echo e(count($pedido->delivery->entregadores_notificados)); ?> <?php echo e(count($pedido->delivery->entregadores_notificados) == 1 ? 'entregador notificado' : 'entregadores notificados'); ?>
-
- </small>
- <?php endif; ?>
- </div>
- <form method="POST" action="<?php echo e(route('deliveries.cancelar-plataforma', $pedido->delivery->id)); ?>" class="d-inline ms-3">
- <?php echo csrf_field(); ?>
- <button type="submit" class="btn btn-outline-danger btn-sm" title="Cancelar busca e atribuir manualmente">
- <i class="fas fa-times me-1"></i>
- Cancelar Busca
- </button>
- </form>
  </div>
  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
  </div>
  <?php endif; ?>
  
  <?php if($pedido->delivery && $pedido->status == 'pronto' && $pedido->entregador_id): ?>
- <div class="alert alert-warning alert-dismissible fade show" role="alert">
+ <div class="alert alert-info alert-dismissible fade show" role="alert">
  <div class="d-flex align-items-center">
- <i class="fas fa-motorcycle fa-2x me-3"></i>
+ <i class="fas fa-check-circle fa-2x me-3"></i>
  <div class="flex-grow-1">
- <h6 class="alert-heading mb-1">Aguardando Entregador Coletar</h6>
+ <h6 class="alert-heading mb-1">Pedido Pronto para Entrega!</h6>
  <p class="mb-0">
- <strong><?php echo e($pedido->entregador->nome); ?></strong> está a caminho para buscar o pedido.
+ Entregador <strong><?php echo e($pedido->entregador->nome); ?></strong> foi notificado.
  <br>
- <span class="badge bg-dark fs-5 mt-2 px-4 py-2" style="letter-spacing: 5px; font-family: 'Courier New', monospace;">
- <?php echo e(strtoupper(substr(md5($pedido->id), 0, 6))); ?>
-
- </span>
- <br>
- <small class="text-muted mt-1 d-block">Código de Retirada - Informe ao entregador</small>
+ <small class="text-muted"><?php echo e($pedido->entregador->tipo_veiculo); ?> - <?php echo e($pedido->entregador->placa); ?></small>
  </p>
  </div>
  </div>
@@ -132,7 +90,7 @@
  <div class="col-md-3">
  <div class="text-center mb-3">
  <h6 class="text-muted">Status</h6>
- <span class="badge bg-<?php echo e($pedido->status === 'pendente' ? 'warning' : ($pedido->status === 'em_preparo' ? 'info' : ($pedido->status === 'pronto' ? 'success' : ($pedido->status === 'em_rota' ? 'primary' : ($pedido->status === 'entregue' ? 'success' : 'danger'))))); ?> fs-6 px-3 py-2">
+ <span class="badge bg-<?php echo e($pedido->status === 'pendente' ? 'warning' : ($pedido->status === 'em_preparo' ? 'info' : ($pedido->status === 'pronto' ? 'success' : ($pedido->status === 'entregue' ? 'primary' : 'danger')))); ?> fs-6 px-3 py-2">
  <?php echo e(ucfirst(str_replace('_', ' ', $pedido->status))); ?>
 
  </span>
@@ -321,59 +279,7 @@
  </form>
  </div>
  <?php endif; ?>
- <?php if($pedido->status === 'pronto' && $pedido->delivery): ?>
- <div class="col-md-4 mb-3">
- <?php if($pedido->delivery->disponivel_plataforma): ?>
- 
- <div class="alert alert-info mb-0">
- <i class="fas fa-search me-2 fa-spin"></i>
- <strong>Aguardando entregador da plataforma</strong><br>
- <small>O sistema está buscando um entregador disponível</small>
- <?php if($pedido->delivery->entregadores_notificados && count($pedido->delivery->entregadores_notificados) > 0): ?>
- <br><small class="text-muted">
- <i class="fas fa-bell me-1"></i>
- <?php echo e(count($pedido->delivery->entregadores_notificados)); ?> notificado(s)
- </small>
- <?php endif; ?>
- <form method="POST" action="<?php echo e(route('deliveries.cancelar-plataforma', $pedido->delivery->id)); ?>" class="mt-2">
- <?php echo csrf_field(); ?>
- <button type="submit" class="btn btn-outline-danger btn-sm w-100">
- <i class="fas fa-times me-1"></i>Cancelar Busca
- </button>
- </form>
- </div>
- <?php elseif(!$pedido->delivery->entregador_id): ?>
- 
- <div class="alert alert-warning mb-0">
- <i class="fas fa-exclamation-triangle me-2"></i>
- <strong>Nenhum entregador atribuído</strong><br>
- <small>Busque na plataforma ou atribua manualmente</small>
- <form method="POST" action="<?php echo e(route('deliveries.disponibilizar-plataforma', $pedido->delivery->id)); ?>" class="mt-2">
- <?php echo csrf_field(); ?>
- <button type="submit" class="btn btn-primary btn-sm w-100">
- <i class="fas fa-globe me-1"></i>Buscar na Plataforma
- </button>
- </form>
- <a href="<?php echo e(route('deliveries.index')); ?>" class="btn btn-outline-secondary btn-sm w-100 mt-1">
- <i class="fas fa-user-plus me-1"></i>Atribuir Manualmente
- </a>
- </div>
- <?php else: ?>
- 
- <form method="POST" action="<?php echo e(route('pedidos.update', $pedido->id)); ?>" class="d-inline w-100">
- <?php echo csrf_field(); ?>
- <?php echo method_field('PUT'); ?>
- <input type="hidden" name="status" value="em_rota">
- <button type="submit" class="btn btn-primary w-100">
- <i class="fas fa-shipping-fast me-2"></i>
- Pedido Saiu para Entrega
- </button>
- </form>
- <?php endif; ?>
- </div>
- <?php endif; ?>
- <?php if($pedido->status === 'pronto' && !$pedido->delivery): ?>
- 
+ <?php if($pedido->status === 'pronto'): ?>
  <div class="col-md-4 mb-3">
  <form method="POST" action="<?php echo e(route('pedidos.update', $pedido->id)); ?>" class="d-inline">
  <?php echo csrf_field(); ?>
@@ -384,29 +290,6 @@
  Marcar como Entregue
  </button>
  </form>
- </div>
- <?php endif; ?>
- <?php if($pedido->status === 'em_rota'): ?>
- <div class="col-md-4 mb-3">
- <?php if($pedido->delivery && $pedido->delivery->entregador_id): ?>
- 
- <div class="alert alert-primary mb-0">
- <i class="fas fa-info-circle me-2"></i>
- <strong>Aguardando confirmação do entregador</strong><br>
- <small>Entregador: <?php echo e($pedido->delivery->entregador->nome ?? 'N/A'); ?></small>
- </div>
- <?php else: ?>
- 
- <form method="POST" action="<?php echo e(route('pedidos.update', $pedido->id)); ?>" class="d-inline">
- <?php echo csrf_field(); ?>
- <?php echo method_field('PUT'); ?>
- <input type="hidden" name="status" value="entregue">
- <button type="submit" class="btn btn-success w-100">
- <i class="fas fa-check-circle me-2"></i>
- Confirmar Entrega
- </button>
- </form>
- <?php endif; ?>
  </div>
  <?php endif; ?>
  <?php if($pedido->status === 'pendente'): ?>

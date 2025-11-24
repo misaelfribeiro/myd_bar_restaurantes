@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Hotword Carla</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.listening {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.hotword {
+            background: #cfe2ff;
+            color: #084298;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-robot"></i> Teste Hotword "Carla"</h1>
+        
+        <div class="info-box">
+            <h4>📋 Como testar:</h4>
+            <ol>
+                <li>Clique no botão flutuante roxo no canto inferior direito</li>
+                <li>Ative o switch "Modo Ei Carla"</li>
+                <li>Diga "Carla" em voz alta</li>
+                <li>Aguarde ela responder "Olá! O que posso fazer por você hoje?"</li>
+                <li>Diga seu comando (ex: "mostra os restaurantes")</li>
+            </ol>
+        </div>
+        
+        <div class="info-box">
+            <h4>✨ Recursos:</h4>
+            <ul>
+                <li><strong>Hotword Detection:</strong> Fica escutando "Carla" em background</li>
+                <li><strong>Ativação Automática:</strong> Responde e começa a gravar automaticamente</li>
+                <li><strong>Reinício Automático:</strong> Volta a escutar após processar o comando</li>
+                <li><strong>Visual Feedback:</strong> Botão muda de cor quando está em modo hotword</li>
+            </ul>
+        </div>
+        
+        <div id="statusDisplay"></div>
+        
+        <div class="mt-4">
+            <h4>🎯 Status dos testes:</h4>
+            <div id="testResults"></div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mock do appState para não dar erro
+        window.appState = {
+            user: { id: 1, nome: 'Teste' },
+            token: 'test-token',
+            cart: [],
+            selectedRestaurant: null
+        };
+        
+        // Funções mock que o voice assistant precisa
+        window.showRestaurants = () => console.log('📍 showRestaurants chamado');
+        window.showMenu = () => console.log('🍽️ showMenu chamado');
+        window.showCart = () => console.log('🛒 showCart chamado');
+        window.proceedToCheckout = () => console.log('💳 proceedToCheckout chamado');
+        window.confirmOrder = () => console.log('✅ confirmOrder chamado');
+        window.showProfile = () => console.log('👤 showProfile chamado');
+        
+        // Log de eventos
+        function addLog(message, type = 'info') {
+            const statusDisplay = document.getElementById('statusDisplay');
+            const log = document.createElement('div');
+            log.className = `status ${type}`;
+            log.innerHTML = `<i class="fas fa-circle-check"></i> ${message}`;
+            statusDisplay.appendChild(log);
+            
+            // Remover após 5 segundos
+            setTimeout(() => log.remove(), 5000);
+        }
+        
+        // Monitorar eventos do voice assistant
+        console.log = (function(oldLog) {
+            return function(...args) {
+                const msg = args.join(' ');
+                if (msg.includes('Hotword detectada')) {
+                    addLog('Hotword "Carla" detectada!', 'hotword');
+                } else if (msg.includes('Escutando por')) {
+                    addLog('Modo hotword ativado - diga "Carla"', 'hotword');
+                } else if (msg.includes('reconhecimento:')) {
+                    addLog('Escutando comando...', 'listening');
+                }
+                oldLog.apply(console, args);
+            };
+        })(console.log);
+    </script>
+    <script src="js/voice-assistant.js"></script>
+    <script>
+        // Inicializar
+        const assistant = new VoiceAssistant();
+        addLog('Carla inicializada! Clique no botão roxo para começar.', 'info');
+    </script>
+</body>
+</html>

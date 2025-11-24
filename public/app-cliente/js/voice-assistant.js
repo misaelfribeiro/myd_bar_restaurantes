@@ -281,21 +281,13 @@ class VoiceAssistant {
             console.log('🟡 Recognition ended');
             this.isListening = false;
             
-            // Só reiniciar se ainda estiver ativo e não foi parado manualmente
-            if (this.isActive && !this.manualStop) {
+            // Só reiniciar se NÃO foi abortado manualmente
+            if (!this.manualStop) {
                 console.log('🔄 Reiniciando recognition em 500ms...');
                 setTimeout(() => {
                     try {
                         this.recognition.start();
                         console.log('✅ Recognition reiniciado');
-                    } catch (e) {
-                        console.log('⚠️ Erro ao reiniciar:', e.message);
-                    }
-                }, 500);
-            } else {
-                console.log('⏸️ Recognition não será reiniciado (ativo:', this.isActive, 'manualStop:', this.manualStop, ')');
-            }
-        };
                     } catch (e) {
                         console.log('⚠️ Erro ao reiniciar:', e.message);
                     }
@@ -722,7 +714,6 @@ class VoiceAssistant {
         }
         
         console.log('🎬 Iniciando command recognition...');
-        this.manualStop = false;
         
         try {
             setTimeout(() => {

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎤 Carla - Debug Monitor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .debug-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-active {
+            background: #38ef7d;
+            box-shadow: 0 0 12px #38ef7d;
+            animation: pulse 2s infinite;
+        }
+        .status-inactive {
+            background: #ff6b6b;
+        }
+        .status-listening {
+            background: #f093fb;
+            box-shadow: 0 0 12px #f093fb;
+        }
+        .log-entry {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+            background: #f8f9fa;
+        }
+        .log-success { border-left-color: #38ef7d; }
+        .log-error { border-left-color: #ff6b6b; background: #fff5f5; }
+        .log-warning { border-left-color: #ffc107; background: #fffbf0; }
+        .log-info { border-left-color: #667eea; }
+        #logContainer {
+            max-height: 400px;
+            overflow-y: auto;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="debug-card text-center">
+            <h1 class="mb-3">🎤 Carla Debug Monitor</h1>
+            <p class="text-muted">Monitoramento em tempo real do sistema de hotword</p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="debug-card">
+                    <h5><i class="fas fa-heartbeat me-2"></i>Status</h5>
+                    <hr>
+                    <div class="mb-3">
+                        <span class="status-indicator" id="statusHotword"></span>
+                        <strong>Hotword:</strong>
+                        <span id="statusHotwordText">Carregando...</span>
+                    </div>
+                    <div class="mb-3">
+                        <span class="status-indicator" id="statusListening"></span>
+                        <strong>Comando:</strong>
+                        <span id="statusListeningText">Inativo</span>
+                    </div>
+                    <div class="mb-3">
+                        <span class="status-indicator" id="statusProcessing"></span>
+                        <strong>Processando:</strong>
+                        <span id="statusProcessingText">Não</span>
+                    </div>
+                </div>
+
+                <div class="debug-card">
+                    <h5><i class="fas fa-chart-line me-2"></i>Métricas</h5>
+                    <hr>
+                    <div class="text-center mb-2">
+                        <div class="metric-value" id="metricDetections">0</div>
+                        <small class="text-muted">Detecções</small>
+                    </div>
+                    <div class="text-center mb-2">
+                        <div class="metric-value" id="metricRestarts">0</div>
+                        <small class="text-muted">Reinícios</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="metric-value" id="metricErrors">0</div>
+                        <small class="text-muted">Erros</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="debug-card">
+                    <h5><i class="fas fa-terminal me-2"></i>Console Log</h5>
+                    <hr>
+                    <div id="logContainer"></div>
+                </div>
+
+                <div class="debug-card">
+                    <h5><i class="fas fa-microphone-alt me-2"></i>Teste Manual</h5>
+                    <hr>
+                    <div class="alert alert-info">
+                        <strong>Como testar:</strong>
+                        <ol class="mb-0 mt-2">
+                            <li>Aguarde o sistema carregar (botão verde deve aparecer)</li>
+                            <li>Diga <strong>"Carla"</strong> em voz alta</li>
+                            <li>Aguarde ela responder "Olá! O que posso fazer?"</li>
+                            <li>Diga um comando (ex: "mostra os restaurantes")</li>
+                            <li>Observe os logs abaixo</li>
+                            <li>Após processar, deve voltar a ouvir "Carla" automaticamente</li>
+                        </ol>
+                    </div>
+                    <button class="btn btn-primary" onclick="forceRestart()">
+                        <i class="fas fa-redo me-2"></i>Forçar Reinício
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearLogs()">
+                        <i class="fas fa-trash me-2"></i>Limpar Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Métricas
+        let metrics = {
+            detections: 0,
+            restarts: 0,
+            errors: 0
+        };
+
+        // Interceptar console.log para capturar logs da VoiceAssistant
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLog('info', args.join(' '));
+            checkLogForMetrics(args.join(' '));
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLog('error', args.join(' '));
+            metrics.errors++;
+            updateMetrics();
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addLog('warning', args.join(' '));
+        };
+
+        function addLog(type, message) {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.innerHTML = `<small class="text-muted">[${timestamp}]</small> ${message}`;
+            
+            logContainer.insertBefore(logEntry, logContainer.firstChild);
+            
+            // Limitar a 100 logs
+            while (logContainer.children.length > 100) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+
+        function checkLogForMetrics(message) {
+            if (message.includes('Hotword detectada')) {
+                metrics.detections++;
+            }
+            if (message.includes('Reiniciando modo hotword') || message.includes('Hotword parou')) {
+                metrics.restarts++;
+            }
+            updateMetrics();
+        }
+
+        function updateMetrics() {
+            document.getElementById('metricDetections').textContent = metrics.detections;
+            document.getElementById('metricRestarts').textContent = metrics.restarts;
+            document.getElementById('metricErrors').textContent = metrics.errors;
+        }
+
+        function clearLogs() {
+            document.getElementById('logContainer').innerHTML = '';
+            addLog('info', 'Logs limpos');
+        }
+
+        function forceRestart() {
+            if (window.voiceAssistant) {
+                window.voiceAssistant.isHotwordListening = false;
+                window.voiceAssistant.startHotwordListening();
+                addLog('success', 'Reinício manual forçado');
+            }
+        }
+
+        // Monitorar status a cada segundo
+        setInterval(() => {
+            if (window.voiceAssistant) {
+                const va = window.voiceAssistant;
+                
+                // Status Hotword
+                const hotwordEl = document.getElementById('statusHotword');
+                const hotwordTextEl = document.getElementById('statusHotwordText');
+                if (va.isHotwordListening) {
+                    hotwordEl.className = 'status-indicator status-active';
+                    hotwordTextEl.textContent = 'Ativo 👂';
+                } else {
+                    hotwordEl.className = 'status-indicator status-inactive';
+                    hotwordTextEl.textContent = 'Inativo';
+                }
+                
+                // Status Listening
+                const listeningEl = document.getElementById('statusListening');
+                const listeningTextEl = document.getElementById('statusListeningText');
+                if (va.isListening) {
+                    listeningEl.className = 'status-indicator status-listening';
+                    listeningTextEl.textContent = 'Ouvindo... 🎤';
+                } else {
+                    listeningEl.className = 'status-indicator status-inactive';
+                    listeningTextEl.textContent = 'Inativo';
+                }
+                
+                // Status Processing
+                const processingEl = document.getElementById('statusProcessing');
+                const processingTextEl = document.getElementById('statusProcessingText');
+                if (va.hotwordDetected) {
+                    processingEl.className = 'status-indicator status-listening';
+                    processingTextEl.textContent = 'Sim ⚙️';
+                } else {
+                    processingEl.className = 'status-indicator status-inactive';
+                    processingTextEl.textContent = 'Não';
+                }
+            }
+        }, 500);
+
+        // Log inicial
+        addLog('info', '🚀 Debug Monitor iniciado');
+        addLog('info', 'Aguardando VoiceAssistant carregar...');
+    </script>
+
+    <!-- Mock das funções necessárias -->
+    <script>
+        // Mock da estrutura do app
+        window.appState = {
+            currentScreen: 'home',
+            selectedRestaurant: null,
+            cart: []
+        };
+
+        // Mock das funções de navegação
+        window.navigateTo = function(screen) {
+            console.log('📱 Navegando para:', screen);
+            window.appState.currentScreen = screen;
+        };
+
+        window.showCart = function() {
+            console.log('🛒 Mostrando carrinho');
+        };
+
+        window.loadProducts = function(category) {
+            console.log('📦 Carregando produtos da categoria:', category);
+        };
+
+        window.loadRestaurants = function() {
+            console.log('🏪 Carregando restaurantes');
+        };
+
+        window.addToCart = function(product, quantity) {
+            console.log('➕ Adicionando ao carrinho:', product, 'qty:', quantity);
+        };
+    </script>
+
+    <!-- Carla Voice Assistant -->
+    <script src="js/voice-assistant.js"></script>
+    <script>
+        // Inicializar e expor globalmente
+        window.voiceAssistant = new VoiceAssistant();
+        console.log('✅ VoiceAssistant inicializada');
+    </script>
+</body>
+</html>

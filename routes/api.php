@@ -69,6 +69,16 @@ Route::get('/cozinha/pedidos-ativos', function() {
     }
 });
 
+// ================================
+// ROTAS PÚBLICAS - IA CARLA
+// ================================
+Route::prefix('ai')->group(function () {
+    Route::post('/process', [\App\Http\Controllers\Api\AIController::class, 'process']);
+    Route::post('/feedback', [\App\Http\Controllers\Api\AIController::class, 'feedback']);
+    Route::post('/initialize', [\App\Http\Controllers\Api\AIController::class, 'initialize']);
+    Route::get('/stats', [\App\Http\Controllers\Api\AIController::class, 'stats']);
+});
+
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::prefix('app/auth')->group(function () {

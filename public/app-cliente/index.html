@@ -112,5 +112,18 @@
     <script src="js/order-polling.js"></script>
     <script src="js/orders.js"></script>
     <script src="js/profile.js"></script>
+    <!-- IA Carla - Assistente de Voz -->
+    <script src="js/voice-assistant.js"></script>
+    <script>
+        // Inicializar Carla após carregar o app
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if (typeof VoiceAssistant !== 'undefined') {
+                    window.voiceAssistantInstance = new VoiceAssistant();
+                    console.log('🤖 Carla inicializada com sucesso!');
+                }
+            }, 1000);
+        });
+    </script>
 </body>
 </html>

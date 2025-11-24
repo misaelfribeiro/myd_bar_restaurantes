@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Carla IA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6f42c1;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --info: #17a2b8;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .section-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .neuron-bar {
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(90deg, var(--info), var(--primary));
+            margin: 5px 0;
+        }
+        
+        .context-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin: 3px;
+        }
+        
+        .interaction-item {
+            border-left: 3px solid var(--primary);
+            padding: 10px 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .action-btn {
+            margin: 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .badge-xl {
+            font-size: 1.2em;
+            padding: 10px 15px;
+        }
+        
+        .table-responsive {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .progress-label {
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Header -->
+        <div class="text-center text-white mb-4">
+            <h1><i class="fas fa-brain"></i> Painel Admin - Carla IA</h1>
+            <p class="lead">Gerenciamento Completo da Inteligência Artificial</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row" id="statsCards">
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary text-white">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h6 class="text-muted">Neurônios</h6>
+                    <h3 id="totalNeurons">-</h3>
+                    <small class="text-muted">Rede Neural</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success text-white">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <h6 class="text-muted">Sinapses</h6>
+                    <h3 id="totalSynapses">-</h3>
+                    <small class="text-muted">Conexões</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-info text-white">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h6 class="text-muted">Contextos</h6>
+                    <h3 id="totalContexts">-</h3>
+                    <small class="text-muted">Conhecimento</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning text-white">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h6 class="text-muted">Interações</h6>
+                    <h3 id="totalInteractions">-</h3>
+                    <small class="text-muted">Conversas</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="section-card">
+                    <h5><i class="fas fa-chart-line"></i> Métricas de Performance</h5>
+                    <hr>
+                    <div class="mb-3">
+                        <div class="progress-label d-flex justify-content-between">
+                            <span>Taxa de Acerto</span>
+                            <strong id="correctRate">-</strong>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            <div id="correctRateBar" class="progress-bar bg-success" role="progressbar"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="progress-label d-flex justify-content-between">
+                            <span>Confiança Média</span>
+                            <strong id="avgConfidence">-</strong>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            <div id="avgConfidenceBar" class="progress-bar bg-info" role="progressbar"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="progress-label d-flex justify-content-between">
+                            <span>Taxa de Sucesso (Contextos)</span>
+                            <strong id="contextSuccess">-</strong>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            <div id="contextSuccessBar" class="progress-bar bg-primary" role="progressbar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="section-card">
+                    <h5><i class="fas fa-graduation-cap"></i> Status do Treinamento</h5>
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <h2 id="trainedCount" class="text-success">-</h2>
+                            <small>Dados Treinados</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h2 id="pendingCount" class="text-warning">-</h2>
+                            <small>Pendentes</small>
+                        </div>
+                        <div class="col-6">
+                            <h2 id="totalUpdates" class="text-primary">-</h2>
+                            <small>Atualizações</small>
+                        </div>
+                        <div class="col-6">
+                            <h2 id="avgWeight" class="text-info">-</h2>
+                            <small>Peso Médio</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="section-card">
+            <h5><i class="fas fa-cogs"></i> Ações de Treinamento</h5>
+            <hr>
+            <div class="row">
+                <div class="col-md-4">
+                    <button class="btn btn-primary w-100 action-btn" onclick="trainWithHistory()">
+                        <i class="fas fa-graduation-cap"></i> Treinar com Histórico
+                    </button>
+                    <small class="text-muted d-block mt-2">Aplica backpropagation nos dados acumulados</small>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-success w-100 action-btn" onclick="showAddContextModal()">
+                        <i class="fas fa-plus-circle"></i> Adicionar Contexto
+                    </button>
+                    <small class="text-muted d-block mt-2">Ensinar novo conhecimento à Carla</small>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-info w-100 action-btn" onclick="loadStats()">
+                        <i class="fas fa-sync-alt"></i> Atualizar Estatísticas
+                    </button>
+                    <small class="text-muted d-block mt-2">Recarregar dados em tempo real</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contexts List -->
+        <div class="section-card">
+            <h5><i class="fas fa-book-open"></i> Contextos Ativos (<span id="contextsCount">0</span>)</h5>
+            <hr>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Categoria</th>
+                            <th>Key</th>
+                            <th>Padrão</th>
+                            <th>Uso</th>
+                            <th>Taxa Sucesso</th>
+                            <th>Confiança</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contextsTable">
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                <div class="loading">
+                                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                    <p>Carregando contextos...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Interactions -->
+        <div class="section-card">
+            <h5><i class="fas fa-comments"></i> Últimas Interações (10)</h5>
+            <hr>
+            <div id="recentInteractions">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Carregando interações...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Neural Network Details -->
+        <div class="section-card">
+            <h5><i class="fas fa-network-wired"></i> Estrutura da Rede Neural</h5>
+            <hr>
+            <div class="row">
+                <div class="col-md-4">
+                    <h6>Camada de Entrada</h6>
+                    <div id="inputLayer"></div>
+                </div>
+                <div class="col-md-4">
+                    <h6>Camada Oculta</h6>
+                    <div id="hiddenLayer"></div>
+                </div>
+                <div class="col-md-4">
+                    <h6>Camada de Saída</h6>
+                    <div id="outputLayer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Add Context -->
+    <div class="modal fade" id="addContextModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Adicionar Novo Contexto</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addContextForm">
+                        <div class="mb-3">
+                            <label class="form-label">Categoria</label>
+                            <select class="form-select" id="contextCategory" required>
+                                <option value="greeting">Saudação</option>
+                                <option value="search">Busca</option>
+                                <option value="menu">Cardápio</option>
+                                <option value="cart">Carrinho</option>
+                                <option value="orders">Pedidos</option>
+                                <option value="delivery">Entrega</option>
+                                <option value="info">Informação</option>
+                                <option value="help">Ajuda</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Key (Identificador único)</label>
+                            <input type="text" class="form-control" id="contextKey" required placeholder="ex: search_pizza">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Padrão (Regex)</label>
+                            <input type="text" class="form-control" id="contextPattern" required placeholder="ex: *(pizza)*">
+                            <small class="text-muted">Use * como wildcard, (x|y) para opções</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Resposta</label>
+                            <textarea class="form-control" id="contextResponse" rows="3" required placeholder="Resposta da Carla"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ação</label>
+                            <select class="form-select" id="contextAction">
+                                <option value="">Nenhuma</option>
+                                <option value="searchProduct">Buscar Produto</option>
+                                <option value="showMenu">Mostrar Cardápio</option>
+                                <option value="showCart">Mostrar Carrinho</option>
+                                <option value="showOrders">Mostrar Pedidos</option>
+                                <option value="checkout">Finalizar Pedido</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Limiar de Confiança (0.0 - 1.0)</label>
+                            <input type="number" class="form-control" id="contextThreshold" step="0.1" min="0" max="1" value="0.7">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveContext()">Salvar Contexto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="admin-carla.js"></script>
+</body>
+</html>
