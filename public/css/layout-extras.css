@@ -4,11 +4,32 @@
 .sidebar {
     width: 70px !important;
     transition: width 0.3s ease !important;
-    overflow: hidden !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    max-height: 100vh !important;
 }
 
 .sidebar:hover {
     width: 260px !important;
+}
+
+/* Customizar scrollbar do sidebar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.5);
+    border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.8);
 }
 
 .sidebar .menu-text {

@@ -50,9 +50,24 @@ class AccessLog extends Model
  }
  public static function logApiAccess($usuario, $endpoint, $method, $success = true)
  {
+        // Se for um Cliente (não Usuario), não loga o usuario_id pois a FK é para usuarios
+        $usuarioId = null;
+        $email = null;
+        
+        if ($usuario) {
+            // Só loga usuario_id se for realmente um Usuario
+            if ($usuario instanceof \App\Models\Usuario) {
+                $usuarioId = $usuario->id;
+                $email = $usuario->email;
+            } elseif ($usuario instanceof \App\Models\Cliente) {
+                // Para clientes, só loga o email sem usuario_id
+                $email = $usuario->email;
+            }
+        }
+        
  return self::logAccess('api_access', [
- 'usuario_id' => $usuario->id,
- 'email' => $usuario->email,
+            'usuario_id' => $usuarioId,
+            'email' => $email,
  'endpoint' => $endpoint,
  'method' => $method,
  'status' => $success ? 'success' : 'denied'

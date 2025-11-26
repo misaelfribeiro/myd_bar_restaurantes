@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "XXqOC2rpjkk=",
+  "success": true,
+  "projectFilePath": "C:\\xampp\\htdocs\\myd_bar_restaurantes\\HashGenerator\\HashGenerator.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Misael\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

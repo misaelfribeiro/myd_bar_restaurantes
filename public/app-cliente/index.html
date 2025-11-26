@@ -80,16 +80,20 @@
                 <i class="fas fa-home"></i>
                 <span>Início</span>
             </div>
-            <div class="nav-item" onclick="showMenu()">
+            <div class="nav-item" onclick="if(typeof showRestaurants === 'function') showRestaurants()">
+                <i class="fas fa-store"></i>
+                <span>Restaurantes</span>
+            </div>
+            <div class="nav-item" onclick="if(typeof showMenu === 'function') showMenu()">
                 <i class="fas fa-utensils"></i>
                 <span>Cardápio</span>
             </div>
-            <div class="nav-item" onclick="showCart()">
+            <div class="nav-item" onclick="console.log('🖱️ Click no carrinho'); if(typeof showCart === 'function') { console.log('✅ Função existe'); showCart(); } else { console.error('❌ showCart não definida'); }">
                 <i class="fas fa-shopping-bag"></i>
                 <span>Carrinho</span>
                 <span class="cart-badge" id="cartBadge">0</span>
             </div>
-            <div class="nav-item" onclick="showOrders()">
+            <div class="nav-item" onclick="if(typeof showOrders === 'function') showOrders()">
                 <i class="fas fa-receipt"></i>
                 <span>Pedidos</span>
             </div>
@@ -104,17 +108,29 @@
     <script src="js/pwa-install.js"></script>
     <!-- App JS -->
     <script src="js/dark-mode.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=1021"></script>
     <script src="js/auth.js"></script>
-    <script src="js/menu.js"></script>
-    <script src="js/cart.js"></script>
-    <script src="js/tracking-map.js"></script>
+    <script src="js/restaurants.js"></script>
+    <script src="js/custom-modal.js?v=5"></script>
+    <script src="js/menu.js?v=5"></script>
+    <script src="js/cart.js?v=1008"></script>
+    <script src="js/mercadopago.js"></script>
+    <script src="js/tracking-map.js?v=5"></script></script>
     <script src="js/order-polling.js"></script>
     <script src="js/orders.js"></script>
     <script src="js/profile.js"></script>
     <!-- IA Carla - Assistente de Voz -->
     <script src="js/voice-assistant.js"></script>
     <script>
+        // Desregistrar Service Worker antigo
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+        
         // Inicializar Carla após carregar o app
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Mercado Pago - PIX</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .qr-code-container {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .qr-code-container img {
+            max-width: 300px;
+            border: 3px solid #0066ff;
+            border-radius: 10px;
+            padding: 10px;
+            background: white;
+        }
+        .copy-paste-code {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        .status-badge {
+            font-size: 18px;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">🧪 Teste Integração Mercado Pago - PIX</h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Formulário de Teste -->
+                        <div id="form-section">
+                            <h5>Simular Pedido para Pagamento</h5>
+                            <form id="payment-form">
+                                <div class="mb-3">
+                                    <label class="form-label">ID do Pedido</label>
+                                    <input type="number" class="form-control" id="pedido_id" required>
+                                    <small class="text-muted">Digite o ID do pedido (224, 223, 222, etc)</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">E-mail do Cliente</label>
+                                    <input type="email" class="form-control" id="email" value="teste@eatsfood.com.br" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">CPF (opcional)</label>
+                                    <input type="text" class="form-control" id="cpf" placeholder="000.000.000-00">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    🔐 Gerar Pagamento PIX
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Resultado do Pagamento PIX -->
+                        <div id="pix-section" style="display: none;">
+                            <div class="alert alert-info">
+                                <strong>✅ Pagamento PIX Gerado com Sucesso!</strong>
+                                <br>Status: <span id="payment-status" class="badge status-badge bg-warning">PENDENTE</span>
+                            </div>
+
+                            <div class="qr-code-container">
+                                <h5>📱 Escaneie o QR Code</h5>
+                                <img id="qr-code-img" src="" alt="QR Code PIX">
+                                <p class="text-muted mt-2">Ou copie o código Pix abaixo</p>
+                            </div>
+
+                            <div>
+                                <h6>📋 Código Pix Copia e Cola:</h6>
+                                <div class="copy-paste-code" id="pix-code"></div>
+                                <button class="btn btn-success w-100 mb-3" onclick="copyPixCode()">
+                                    📋 Copiar Código
+                                </button>
+                            </div>
+
+                            <div class="alert alert-warning">
+                                <strong>⏱ Expira em:</strong> <span id="expires-at"></span>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <strong>🧪 Modo Teste:</strong> Como não existe app em modo teste, use o botão abaixo para simular a aprovação do pagamento.
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success btn-lg" onclick="simulateApproval()">
+                                    ✅ SIMULAR PAGAMENTO APROVADO (Teste)
+                                </button>
+                                <button class="btn btn-primary" onclick="checkStatus()">
+                                    🔄 Verificar Status do Pagamento
+                                </button>
+                                <button class="btn btn-secondary" onclick="resetForm()">
+                                    ← Novo Teste
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Log de Resposta -->
+                        <div class="mt-4">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#response-log">
+                                📝 Ver JSON da Resposta
+                            </button>
+                            <div class="collapse mt-2" id="response-log">
+                                <pre id="json-response" class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informações -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h5>ℹ️ Como Testar:</h5>
+                        <ol>
+                            <li>Digite o ID de um pedido existente no sistema</li>
+                            <li>Clique em "Gerar Pagamento PIX"</li>
+                            <li>Use o app do Mercado Pago (modo teste) para pagar</li>
+                            <li>Ou simule o pagamento no painel do Mercado Pago</li>
+                            <li>Clique em "Verificar Status" para ver se foi pago</li>
+                        </ol>
+                        <p class="mb-0"><strong>Credenciais:</strong> Modo TESTE (Sandbox)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentPaymentId = null;
+        let checkInterval = null;
+
+        document.getElementById('payment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const pedidoId = document.getElementById('pedido_id').value;
+            const email = document.getElementById('email').value;
+            const cpf = document.getElementById('cpf').value;
+
+            try {
+                const response = await fetch('/api/mercadopago/pix', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        pedido_id: pedidoId,
+                        email: email,
+                        cpf: cpf
+                    })
+                });
+
+                const data = await response.json();
+                
+                document.getElementById('json-response').textContent = JSON.stringify(data, null, 2);
+
+                if (data.success) {
+                    currentPaymentId = data.payment.id;
+                    
+                    // Exibir QR Code
+                    const qrCodeImg = 'data:image/png;base64,' + data.payment.pix.qr_code;
+                    document.getElementById('qr-code-img').src = qrCodeImg;
+                    
+                    // Exibir código Pix
+                    document.getElementById('pix-code').textContent = data.payment.pix.copy_paste;
+                    
+                    // Exibir data de expiração
+                    const expiresAt = new Date(data.payment.expires_at);
+                    document.getElementById('expires-at').textContent = expiresAt.toLocaleString('pt-BR');
+                    
+                    // Mostrar seção PIX
+                    document.getElementById('form-section').style.display = 'none';
+                    document.getElementById('pix-section').style.display = 'block';
+                    
+                    // Iniciar verificação automática a cada 5 segundos
+                    startAutoCheck();
+                    
+                    alert('✅ PIX gerado com sucesso! Agora você pode pagar para testar.');
+                } else {
+                    alert('❌ Erro: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('❌ Erro ao processar pagamento: ' + error.message);
+            }
+        });
+
+        function copyPixCode() {
+            const code = document.getElementById('pix-code').textContent;
+            navigator.clipboard.writeText(code);
+            alert('✅ Código PIX copiado!');
+        }
+
+        async function checkStatus() {
+            if (!currentPaymentId) return;
+
+            try {
+                const response = await fetch(`/api/mercadopago/payment/${currentPaymentId}/status`);
+                const data = await response.json();
+                
+                document.getElementById('json-response').textContent = JSON.stringify(data, null, 2);
+
+                if (data.success) {
+                    const status = data.payment.status;
+                    const badge = document.getElementById('payment-status');
+                    
+                    badge.textContent = status.toUpperCase();
+                    
+                    if (status === 'approved') {
+                        badge.className = 'badge status-badge bg-success';
+                        alert('✅ PAGAMENTO APROVADO!');
+                        stopAutoCheck();
+                    } else if (status === 'rejected') {
+                        badge.className = 'badge status-badge bg-danger';
+                        alert('❌ Pagamento rejeitado');
+                        stopAutoCheck();
+                    } else if (status === 'cancelled') {
+                        badge.className = 'badge status-badge bg-secondary';
+                        alert('⚠️ Pagamento cancelado');
+                        stopAutoCheck();
+                    } else {
+                        badge.className = 'badge status-badge bg-warning';
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao verificar status:', error);
+            }
+        }
+
+        function startAutoCheck() {
+            checkInterval = setInterval(checkStatus, 5000); // Verifica a cada 5 segundos
+        }
+
+        function stopAutoCheck() {
+            if (checkInterval) {
+                clearInterval(checkInterval);
+                checkInterval = null;
+            }
+        }
+
+        async function simulateApproval() {
+            if (!currentPaymentId) return;
+
+            if (!confirm('⚠️ Simular aprovação do pagamento?\n\nIsso vai marcar o pagamento como APROVADO no sistema.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/mercadopago/payment/${currentPaymentId}/simulate-approval`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                document.getElementById('json-response').textContent = JSON.stringify(data, null, 2);
+
+                if (data.success && data.payment) {
+                    // Atualizar badge diretamente com resposta da simulação
+                    const badge = document.getElementById('payment-status');
+                    badge.textContent = 'APPROVED';
+                    badge.className = 'badge status-badge bg-success';
+                    
+                    alert('✅ Pagamento aprovado com sucesso!');
+                    stopAutoCheck();
+                } else {
+                    alert('❌ Erro ao simular aprovação: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('❌ Erro ao simular aprovação: ' + error.message);
+            }
+        }
+
+        function resetForm() {
+            stopAutoCheck();
+            currentPaymentId = null;
+            document.getElementById('form-section').style.display = 'block';
+            document.getElementById('pix-section').style.display = 'none';
+            document.getElementById('payment-form').reset();
+        }
+    </script>
+</body>
+</html>

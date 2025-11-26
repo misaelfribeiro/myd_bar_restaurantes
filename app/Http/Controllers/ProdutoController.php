@@ -218,4 +218,59 @@ class ProdutoController extends Controller
  'produtos' => $produtos
  ]);
  }
+ 
+ /**
+  * API para App Cliente - Lista produtos com filtros
+  */
+ public function appProdutos(Request $request)
+ {
+     $query = Produto::with('categoria')
+         ->where('ativo', true);
+     
+     // Filtrar por tenant_code (query string ou header)
+     if ($request->has('tenant_code')) {
+         $query->where('tenant_code', $request->tenant_code);
+     } elseif ($request->header('X-Tenant-Code')) {
+         $query->where('tenant_code', $request->header('X-Tenant-Code'));
+     }
+     
+     if ($request->has('categoria_id')) {
+         $query->where('categoria_id', $request->categoria_id);
+     }
+     
+     if ($request->has('search')) {
+         $search = $request->search;
+         $query->where(function($q) use ($search) {
+             $q->where('nome', 'like', "%{$search}%")
+               ->orWhere('descricao', 'like', "%{$search}%");
+         });
+     }
+     
+     $limit = $request->input('limit', 20);
+     $produtos = $query->orderBy('nome')->limit($limit)->get();
+     
+     return response()->json([
+         'success' => true,
+         'data' => $produtos
+     ]);
+ }
+ 
+ /**
+  * API para App Cliente - Produtos em destaque
+  */
+ public function destaques(Request $request)
+ {
+     $produtos = Produto::with('categoria')
+         ->where('ativo', true)
+         ->where('destaque', true)
+         ->where('tenant_code', $request->header('X-Tenant-Code', 'RESTAURANTE0001'))
+         ->orderBy('nome')
+         ->limit(6)
+         ->get();
+     
+     return response()->json([
+         'success' => true,
+         'data' => $produtos
+     ]);
+ }
 }

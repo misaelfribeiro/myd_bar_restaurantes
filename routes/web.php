@@ -375,11 +375,19 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.access'])->group(func
  Route::get('/financeiro/create', [\App\Http\Controllers\Admin\FinanceiroController::class, 'create'])->name('financeiro.create');
  Route::post('/financeiro', [\App\Http\Controllers\Admin\FinanceiroController::class, 'store'])->name('financeiro.store');
  Route::get('/financeiro/contratos/{empresa}', [\App\Http\Controllers\Admin\FinanceiroController::class, 'getContratos'])->name('financeiro.contratos');
- Route::get('/financeiro/{fatura}', [\App\Http\Controllers\Admin\FinanceiroController::class, 'show'])->name('financeiro.show');
  Route::post('/financeiro/{fatura}/pagar', [\App\Http\Controllers\Admin\FinanceiroController::class, 'marcarPago'])->name('financeiro.pagar');
  Route::post('/financeiro/{fatura}/cancelar', [\App\Http\Controllers\Admin\FinanceiroController::class, 'cancelar'])->name('financeiro.cancelar');
  Route::get('/financeiro-relatorios', [\App\Http\Controllers\Admin\FinanceiroController::class, 'relatorios'])->name('financeiro.relatorios');
  Route::post('/financeiro/atualizar-vencidas', [\App\Http\Controllers\Admin\FinanceiroController::class, 'atualizarVencidas'])->name('financeiro.atualizar-vencidas');
+ 
+ // Rotas de Pagamentos (Nova funcionalidade)
+ Route::get('/financeiro/pagamentos/dashboard', [\App\Http\Controllers\Admin\FinanceiroController::class, 'dashboardPagamentos'])->name('financeiro.pagamentos.dashboard');
+ Route::get('/financeiro/pagamentos/lista', [\App\Http\Controllers\Admin\FinanceiroController::class, 'listarPagamentos'])->name('financeiro.pagamentos.lista');
+ Route::get('/financeiro/pagamentos/relatorios-transacoes', [\App\Http\Controllers\Admin\FinanceiroController::class, 'relatorioPagamentos'])->name('financeiro.pagamentos.relatorios');
+ Route::post('/financeiro/pagamentos/{id}/estornar', [\App\Http\Controllers\Admin\FinanceiroController::class, 'estornarPagamento'])->name('financeiro.pagamentos.estornar');
+ Route::get('/financeiro/pagamentos/{id}', [\App\Http\Controllers\Admin\FinanceiroController::class, 'detalhesPagamento'])->name('financeiro.pagamentos.detalhes');
+ Route::get('/financeiro/{fatura}', [\App\Http\Controllers\Admin\FinanceiroController::class, 'show'])->name('financeiro.show');
+ 
  Route::resource('/cargos', \App\Http\Controllers\Admin\CargoController::class)->names('cargos');
  Route::resource('/funcionarios', \App\Http\Controllers\Admin\FuncionarioController::class)->names('funcionarios');
  Route::resource('/comissoes', \App\Http\Controllers\Admin\ComissaoController::class)->names('comissoes');

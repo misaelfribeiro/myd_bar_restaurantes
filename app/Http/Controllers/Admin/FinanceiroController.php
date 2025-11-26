@@ -274,4 +274,185 @@ class FinanceiroController extends Controller
 
         return response()->json(['contratos' => $contratos]);
     }
+
+    // ==========================================
+    // PAINEL DE PAGAMENTOS (MERCADO PAGO)
+    // ==========================================
+
+    /**
+     * Dashboard financeiro - vis\u00e3o geral
+     */
+    public function dashboardPagamentos()
+    {
+        $mesAtual = now()->startOfMonth();
+
+        // Estat\u00edsticas do m\u00eas atual
+        $stats = [
+            'total_transacoes' => \App\Models\Payment::where('created_at', '>=', $mesAtual)->count(),
+            'valor_aprovado' => \App\Models\Payment::where('status', 'approved')
+                ->where('created_at', '>=', $mesAtual)
+                ->sum('amount'),
+            'transacoes_pendentes' => \App\Models\Payment::where('status', 'pending')
+                ->where('created_at', '>=', $mesAtual)
+                ->count(),
+            'taxa_plataforma' => \App\Models\Payment::where('status', 'approved')
+                ->where('created_at', '>=', $mesAtual)
+                ->sum('platform_fee'),
+            'taxa_entrega' => \App\Models\Payment::where('status', 'approved')
+                ->where('created_at', '>=', $mesAtual)
+                ->sum('delivery_fee'),
+            'liquido_restaurantes' => \App\Models\Payment::where('status', 'approved')
+                ->where('created_at', '>=', $mesAtual)
+                ->sum('net_amount'),
+        ];
+
+        // Top 10 restaurantes
+        $top_restaurantes = \App\Models\Payment::select('tenant_code', 
+                DB::raw('COUNT(*) as total_transacoes'),
+                DB::raw('SUM(amount) as total_faturamento'),
+                DB::raw('SUM(platform_fee) as total_taxa'),
+                DB::raw('SUM(delivery_fee) as total_entrega'),
+                DB::raw('SUM(net_amount) as total_liquido'))
+            ->where('status', 'approved')
+            ->where('created_at', '>=', $mesAtual)
+            ->groupBy('tenant_code')
+            ->orderByDesc('total_faturamento')
+            ->limit(10)
+            ->get();
+
+        // M\u00e9todos de pagamento
+        $metodos_pagamento = \App\Models\Payment::select('payment_method',
+                DB::raw('COUNT(*) as total'),
+                DB::raw('SUM(amount) as total_valor'))
+            ->where('status', 'approved')
+            ->where('created_at', '>=', $mesAtual)
+            ->groupBy('payment_method')
+            ->get();
+
+        return view('admin.financeiro.pagamentos-dashboard', compact('stats', 'top_restaurantes', 'metodos_pagamento'));
+    }
+
+    /**
+     * Listar todas as transações
+     */
+    public function listarPagamentos(Request $request)
+    {
+        $query = \App\Models\Payment::with(['pedido.estornos.solicitante', 'pedido.estornos.aprovador'])->orderBy('created_at', 'desc');
+
+        // Filtros
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->tenant_code) {
+            $query->where('tenant_code', $request->tenant_code);
+        }
+
+        if ($request->payment_method) {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        if ($request->data_inicio && $request->data_fim) {
+            $query->whereBetween('created_at', [$request->data_inicio, $request->data_fim]);
+        }
+
+        $pagamentos = $query->paginate(50);
+
+        return view('admin.financeiro.pagamentos-lista', compact('pagamentos'));
+    }
+
+    /**
+     * Detalhes de um pagamento
+     */
+    public function detalhesPagamento($id)
+    {
+        $pagamento = \App\Models\Payment::with('pedido')->findOrFail($id);
+        
+        return view('admin.financeiro.pagamentos-detalhes', compact('pagamento'));
+    }
+
+    /**
+     * Estornar pagamento
+     */
+    public function estornarPagamento(Request $request, $id)
+    {
+        $request->validate([
+            'motivo' => 'required|string|max:500'
+        ]);
+
+        $pagamento = \App\Models\Payment::findOrFail($id);
+
+        if ($pagamento->status !== 'approved') {
+            return back()->with('error', 'Apenas pagamentos aprovados podem ser estornados');
+        }
+
+        try {
+            // Se tiver mp_payment_id, tentar estornar no Mercado Pago
+            if ($pagamento->mp_payment_id) {
+                \MercadoPago\SDK::setAccessToken(config('services.mercadopago.access_token'));
+                $mpPayment = \MercadoPago\Payment::find_by_id($pagamento->mp_payment_id);
+                $mpPayment->refund();
+            }
+
+            // Atualizar status local
+            $pagamento->status = 'refunded';
+            $pagamento->refund_reason = $request->motivo;
+            $pagamento->save();
+
+            \Log::info("\ud83d\udcb8 Estorno processado pelo admin - Payment #{$id} | Motivo: {$request->motivo}");
+
+            return back()->with('success', 'Pagamento estornado com sucesso');
+
+        } catch (\Exception $e) {
+            \Log::error("Erro ao estornar pagamento #{$id}: " . $e->getMessage());
+            return back()->with('error', 'Erro ao processar estorno: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Relat\u00f3rio financeiro por per\u00edodo
+     */
+    public function relatorioPagamentos(Request $request)
+    {
+        $dataInicio = $request->data_inicio ?? now()->startOfMonth();
+        $dataFim = $request->data_fim ?? now()->endOfMonth();
+
+        $relatorio = [
+            'periodo' => [
+                'inicio' => $dataInicio,
+                'fim' => $dataFim
+            ],
+            'totais' => [
+                'transacoes' => \App\Models\Payment::whereBetween('created_at', [$dataInicio, $dataFim])->count(),
+                'aprovadas' => \App\Models\Payment::where('status', 'approved')
+                    ->whereBetween('created_at', [$dataInicio, $dataFim])
+                    ->count(),
+                'valor_total' => \App\Models\Payment::where('status', 'approved')
+                    ->whereBetween('created_at', [$dataInicio, $dataFim])
+                    ->sum('amount'),
+                'taxa_plataforma' => \App\Models\Payment::where('status', 'approved')
+                    ->whereBetween('created_at', [$dataInicio, $dataFim])
+                    ->sum('platform_fee'),
+                'taxa_entrega' => \App\Models\Payment::where('status', 'approved')
+                    ->whereBetween('created_at', [$dataInicio, $dataFim])
+                    ->sum('delivery_fee'),
+                'valor_restaurantes' => \App\Models\Payment::where('status', 'approved')
+                    ->whereBetween('created_at', [$dataInicio, $dataFim])
+                    ->sum('net_amount'),
+            ],
+            'por_restaurante' => \App\Models\Payment::select('tenant_code',
+                    DB::raw('COUNT(*) as total_transacoes'),
+                    DB::raw('SUM(amount) as total_valor'),
+                    DB::raw('SUM(platform_fee) as total_taxa'),
+                    DB::raw('SUM(delivery_fee) as total_entrega'),
+                    DB::raw('SUM(net_amount) as total_liquido'))
+                ->where('status', 'approved')
+                ->whereBetween('created_at', [$dataInicio, $dataFim])
+                ->groupBy('tenant_code')
+                ->orderByDesc('total_valor')
+                ->get()
+        ];
+
+        return view('admin.financeiro.pagamentos-relatorio', compact('relatorio'));
+    }
 }

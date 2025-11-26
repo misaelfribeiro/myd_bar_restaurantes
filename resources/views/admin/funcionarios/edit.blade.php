@@ -24,12 +24,13 @@
  @error('nome_completo')
  <div class="invalid-feedback">{{ $message }}</div>
  @enderror
+ {{ dd($funcionario->data_emissao) }}    
  </div>
  <div class="col-md-4 mb-3">
  <label class="form-label">Data de Nascimento *</label>
  <input type="date" name="data_nascimento" 
  class="form-control @error('data_nascimento') is-invalid @enderror" 
- value="{{ old('data_nascimento', $funcionario->data_nascimento?->format('Y-m-d')) }}" required>
+ value="{{ old('data_nascimento', $funcionario->data_nascimento->format('Y-m-d')) }}" required>
  @error('data_nascimento')
  <div class="invalid-feedback">{{ $message }}</div>
  @enderror
@@ -267,7 +268,7 @@
  <label class="form-label">Data de Admissão *</label>
  <input type="date" name="data_admissao" 
  class="form-control @error('data_admissao') is-invalid @enderror" 
- value="{{ old('data_admissao', $funcionario->data_admissao?->format('Y-m-d')) }}" required>
+ value="{{ old('data_admissao', $funcionario->data_admissao->format('Y-m-d')) }}" required>
  @error('data_admissao')
  <div class="invalid-feedback">{{ $message }}</div>
  @enderror
@@ -276,7 +277,7 @@
  <label class="form-label">Data de Demissão</label>
  <input type="date" name="data_demissao" 
  class="form-control @error('data_demissao') is-invalid @enderror" 
- value="{{ old('data_demissao', $funcionario->data_demissao?->format('Y-m-d')) }}">
+ value="{{ old('data_demissao', $funcionario->data_demissao->format('Y-m-d')) }}">
  @error('data_demissao')
  <div class="invalid-feedback">{{ $message }}</div>
  @enderror

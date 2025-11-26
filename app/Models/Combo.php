@@ -39,6 +39,11 @@ class Combo extends Model
     {
         return $this->hasMany(ComboProduto::class);
     }
+    
+    public function tenant()
+    {
+        return $this->belongsTo(Empresa::class, 'tenant_code', 'tenant_code');
+    }
 
     public function getDescontoAttribute()
     {

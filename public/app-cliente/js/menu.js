@@ -6,6 +6,13 @@ let searchTimeout = null;
 let favorites = JSON.parse(localStorage.getItem('product_favorites') || '[]');
 
 function showMenu(categoryId = null) {
+    // Verificar se tem restaurante selecionado
+    if (!hasSelectedRestaurant()) {
+        console.log('⚠️ Nenhum restaurante selecionado, redirecionando...');
+        showRestaurants();
+        return;
+    }
+    
     setActivePage('menu');
     selectedCategory = categoryId;
     
@@ -14,8 +21,24 @@ function showMenu(categoryId = null) {
         stopOrderTracking();
     }
     
+    // Obter nome do restaurante selecionado
+    const tenantCode = getSelectedRestaurant();
+    const restaurant = appState.restaurants?.find(r => r.tenant_code === tenantCode);
+    const restaurantName = restaurant?.nome_fantasia || 'Cardápio';
+    
     const content = `
         <div class="fade-in">
+            <!-- Info do Restaurante Selecionado -->
+            <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <i class="fas fa-store me-2"></i>
+                    <strong>${restaurantName}</strong>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" onclick="showRestaurants()">
+                    <i class="fas fa-exchange-alt me-1"></i>Trocar
+                </button>
+            </div>
+            
             <!-- Search Bar Aprimorada -->
             <div class="search-bar position-relative mb-3">
                 <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%);"></i>
@@ -115,6 +138,12 @@ async function loadProducts(categoryId = null) {
     try {
         let url = `${API_BASE_URL}/app/produtos`;
         const params = new URLSearchParams();
+        
+        // Adicionar tenant_code do restaurante selecionado
+        const tenantCode = getSelectedRestaurant();
+        if (tenantCode) {
+            params.append('tenant_code', tenantCode);
+        }
         
         if (categoryId) {
             params.append('categoria_id', categoryId);
@@ -303,7 +332,7 @@ function addToCartFromModal(productId) {
     modal.hide();
 }
 
-function addToCart(productId, quantidade = 1, observacoes = null) {
+async function addToCart(productId, quantidade = 1, observacoes = null) {
     const product = appState.products.find(p => p.id === productId);
     
     if (!product) {
@@ -314,6 +343,49 @@ function addToCart(productId, quantidade = 1, observacoes = null) {
     if (!product.ativo) {
         showAlert('Produto indisponível no momento', 'warning');
         return;
+    }
+    
+    console.log('➕ Adicionando produto:', {
+        id: product.id,
+        nome: product.nome,
+        tenant_code: product.tenant_code,
+        carrinho_atual: appState.cart.length
+    });
+    
+    // Verificar se há produtos de outro restaurante no carrinho
+    if (appState.cart.length > 0) {
+        const firstItemTenantCode = appState.cart[0].tenant_code;
+        
+        console.log('🔍 Validando restaurante:', {
+            carrinho: firstItemTenantCode,
+            novo_produto: product.tenant_code
+        });
+        
+        if (firstItemTenantCode && firstItemTenantCode !== product.tenant_code) {
+            // Buscar nome dos restaurantes
+            const currentRestaurant = appState.restaurants?.find(r => r.tenant_code === firstItemTenantCode);
+            const newRestaurant = appState.restaurants?.find(r => r.tenant_code === product.tenant_code);
+            
+            const currentName = currentRestaurant?.nome_fantasia || 'outro restaurante';
+            const newName = newRestaurant?.nome_fantasia || 'este restaurante';
+            
+            console.log('⚠️ Restaurantes diferentes detectados!', {
+                atual: currentName,
+                novo: newName
+            });
+            
+            const confirmed = await showRestaurantChangeModal(currentName, newName);
+            
+            if (confirmed) {
+                console.log('✅ Usuário aceitou limpar o carrinho');
+                appState.cart = [];
+                localStorage.setItem('app_cart', JSON.stringify(appState.cart));
+                updateCartBadge();
+            } else {
+                console.log('❌ Usuário cancelou a adição');
+                return;
+            }
+        }
     }
     
     // Verificar se produto já está no carrinho
@@ -330,12 +402,22 @@ function addToCart(productId, quantidade = 1, observacoes = null) {
             preco: parseFloat(product.preco),
             quantidade: quantidade,
             observacoes: observacoes,
-            imagem: product.imagem
+            imagem: product.imagem,
+            tenant_code: product.tenant_code
         });
     }
     
+    // Salvar no localStorage
+    localStorage.setItem('app_cart', JSON.stringify(appState.cart));
+    
     updateCartBadge();
     showAlert(`${product.nome} adicionado ao carrinho!`, 'success');
+    
+    // Debug
+    console.log('🛒 Carrinho atualizado:', appState.cart.map(i => ({
+        nome: i.nome,
+        tenant_code: i.tenant_code
+    })));
 }
 
 // ============================================
@@ -424,15 +506,53 @@ function toggleFavoritesOnly() {
 // ADICIONAR AO CARRINHO COM FEEDBACK VISUAL
 // ============================================
 
-function addToCartQuick(productId) {
+async function addToCartQuick(productId) {
     const product = appState.products.find(p => p.id === productId);
     
     if (!product || !product.ativo) {
-        showAlert('Produto indispon\u00edvel', 'warning');
+        showAlert('Produto indisponível', 'warning');
         return;
     }
     
-    // Verificar se produto j\u00e1 est\u00e1 no carrinho
+    console.log('➕ [QUICK] Adicionando produto:', {
+        id: product.id,
+        nome: product.nome,
+        tenant_code: product.tenant_code
+    });
+    
+    // Verificar se há produtos de outro restaurante no carrinho
+    if (appState.cart.length > 0) {
+        const firstItemTenantCode = appState.cart[0].tenant_code;
+        
+        console.log('🔍 [QUICK] Validando restaurante:', {
+            carrinho: firstItemTenantCode,
+            novo_produto: product.tenant_code
+        });
+        
+        if (firstItemTenantCode && firstItemTenantCode !== product.tenant_code) {
+            const currentRestaurant = appState.restaurants?.find(r => r.tenant_code === firstItemTenantCode);
+            const newRestaurant = appState.restaurants?.find(r => r.tenant_code === product.tenant_code);
+            
+            const currentName = currentRestaurant?.nome_fantasia || 'outro restaurante';
+            const newName = newRestaurant?.nome_fantasia || 'este restaurante';
+            
+            console.log('⚠️ [QUICK] Restaurantes diferentes!');
+            
+            const confirmed = await showRestaurantChangeModal(currentName, newName);
+            
+            if (confirmed) {
+                console.log('✅ [QUICK] Carrinho limpo');
+                appState.cart = [];
+                localStorage.setItem('app_cart', JSON.stringify(appState.cart));
+                updateCartBadge();
+            } else {
+                console.log('❌ [QUICK] Cancelado');
+                return;
+            }
+        }
+    }
+    
+    // Verificar se produto já está no carrinho
     const existingItem = appState.cart.find(item => 
         item.produto_id === productId && !item.observacoes
     );
@@ -446,14 +566,18 @@ function addToCartQuick(productId) {
             preco: parseFloat(product.preco),
             quantidade: 1,
             observacoes: null,
-            imagem: product.imagem
+            imagem: product.imagem,
+            tenant_code: product.tenant_code
         });
     }
     
+    localStorage.setItem('app_cart', JSON.stringify(appState.cart));
     updateCartBadge();
     
     // Feedback visual melhorado
     showMiniCartNotification(product);
+    
+    console.log('🛒 [QUICK] Carrinho:', appState.cart.map(i => i.nome));
 }
 
 function showMiniCartNotification(product) {

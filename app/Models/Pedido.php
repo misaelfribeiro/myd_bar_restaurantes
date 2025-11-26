@@ -53,6 +53,10 @@ class Pedido extends Model
  {
  return $this->hasOne(AvaliacaoEntregador::class);
  }
+ public function estornos()
+ {
+ return $this->hasMany(Estorno::class);
+ }
  public function getTotalPagoAttribute()
  {
  return $this->pagamentos()->where('status', 'confirmado')->sum('valor');

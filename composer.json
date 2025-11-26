@@ -7,11 +7,15 @@
     "require": {
         "php": "^7.3|^8.0",
         "doctrine/dbal": "^3.10",
+        "dompdf/dompdf": "^3.1",
+        "erusev/parsedown": "^1.7",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "laravel/framework": "^8.75",
         "laravel/sanctum": "^2.11",
-        "laravel/tinker": "^2.5"
+        "laravel/tinker": "^2.5",
+        "league/commonmark": "^2.7",
+        "mercadopago/dx-php": "^2.6"
     },
     "require-dev": {
         "facade/ignition": "^2.5",

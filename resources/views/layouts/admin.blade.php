@@ -39,6 +39,27 @@
             position: fixed;
             width: 250px;
             padding-top: 20px;
+            overflow-y: auto;
+            max-height: calc(100vh - 56px);
+        }
+
+        /* Scrollbar customizada para o sidebar */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 10px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.8);
         }
         
         .sidebar .nav-link {
@@ -159,8 +180,19 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.financeiro.*') ? 'active' : '' }}" href="{{ route('admin.financeiro.index') }}">
-                            <i class="bi bi-cash-stack"></i> Financeiro
+                        <a class="nav-link {{ request()->routeIs('admin.financeiro.index') || request()->routeIs('admin.financeiro.create') || request()->routeIs('admin.financeiro.show') ? 'active' : '' }}" href="{{ route('admin.financeiro.index') }}">
+                            <i class="bi bi-cash-stack"></i> Faturas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.financeiro.pagamentos.*') ? 'active' : '' }}" href="{{ route('admin.financeiro.pagamentos.dashboard') }}">
+                            <i class="bi bi-credit-card"></i> Pagamentos
+                            @php
+                                $pendentes = \App\Models\Payment::where('status', 'pending')->count();
+                            @endphp
+                            @if($pendentes > 0)
+                                <span class="badge badge-warning ml-2">{{ $pendentes }}</span>
+                            @endif
                         </a>
                     </li>
                     

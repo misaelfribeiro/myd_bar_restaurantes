@@ -81,6 +81,172 @@ Route::prefix('ai')->group(function () {
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+
+// ================================
+// ROTAS MERCADO PAGO - PAGAMENTOS
+// ================================
+Route::prefix('mercadopago')->group(function () {
+    // Webhook (sem autenticação - vem do Mercado Pago)
+    Route::post('/webhook', [\App\Http\Controllers\MercadoPagoController::class, 'webhook'])->name('mercadopago.webhook');
+    
+    // Criar pagamento PIX
+    Route::post('/pix', [\App\Http\Controllers\MercadoPagoController::class, 'createPixPayment'])->name('mercadopago.pix');
+    
+    // Consultar status do pagamento
+    Route::get('/payment/{id}/status', [\App\Http\Controllers\MercadoPagoController::class, 'checkPaymentStatus'])->name('mercadopago.status');
+    
+    // Simular aprovação (apenas para testes)
+    Route::post('/payment/{id}/simulate-approval', [\App\Http\Controllers\MercadoPagoController::class, 'simulateApproval'])->name('mercadopago.simulate');
+    
+    // Estornar pagamento completo (requer autenticação)
+    Route::post('/payment/{id}/refund', [\App\Http\Controllers\MercadoPagoController::class, 'refundPayment'])->name('mercadopago.refund');
+    
+    // Estornar valor parcial de um pedido
+    Route::post('/pedido/{pedidoId}/partial-refund', [\App\Http\Controllers\MercadoPagoController::class, 'partialRefund'])->name('mercadopago.partial-refund');
+});
+
+// ================================
+// ROTAS PÚBLICAS - APP CLIENTE
+// ================================
+Route::prefix('app')->group(function () {
+    // Restaurantes (exclui empresa gestora is_master=true)
+    Route::get('/restaurantes', function() {
+        $restaurantes = \App\Models\Empresa::where('ativo', true)
+            ->where('is_master', false)
+            ->select('id', 'nome_fantasia', 'razao_social', 'tenant_code', 'endereco_rua', 'endereco_numero', 
+                     'endereco_bairro', 'endereco_cidade', 'endereco_estado', 'telefone', 'celular', 
+                     'logo', 'descricao', 'horario_abertura', 'horario_fechamento', 'aceita_delivery', 
+                     'taxa_entrega_padrao', 'tempo_entrega_minutos', 'pedido_minimo', 'tipo_recebimento_pagamento')
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'restaurantes' => $restaurantes
+        ]);
+    });
+    
+    // Configurações de pagamento do restaurante
+    Route::get('/restaurante/{tenantCode}/configuracoes-pagamento', function($tenantCode) {
+        $restaurante = \App\Models\Empresa::where('tenant_code', $tenantCode)
+            ->where('ativo', true)
+            ->first();
+        
+        if (!$restaurante) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Restaurante não encontrado'
+            ], 404);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'configuracoes' => [
+                'tipo_recebimento' => $restaurante->tipo_recebimento_pagamento ?? 'manual',
+                'aceita_mp' => ($restaurante->tipo_recebimento_pagamento === 'automatico'),
+                'formas_pagamento' => ($restaurante->tipo_recebimento_pagamento === 'automatico') 
+                    ? ['mercado_pago_pix', 'mercado_pago_cartao']
+                    : ['dinheiro', 'cartao_entrega', 'pix_manual']
+            ]
+        ]);
+    });
+    
+    // Produtos
+    Route::get('/produtos', [ProdutoController::class, 'appProdutos']);
+    Route::get('/produtos/destaques', [ProdutoController::class, 'destaques']);
+    Route::get('/produtos/{id}', [ProdutoController::class, 'show']);
+    
+    // Categorias
+    Route::get('/categorias', [CategoriaController::class, 'index']);
+    Route::get('/categorias/{id}', [CategoriaController::class, 'show']);
+    
+    // Combos
+    Route::get('/combos', [\App\Http\Controllers\ComboController::class, 'appCombos']);
+    Route::get('/combos/{id}', [\App\Http\Controllers\ComboController::class, 'show']);
+    
+    // Resumo do Pedido (Checkout)
+    Route::post('/checkout/resumo', function(\Illuminate\Http\Request $request) {
+        $tenantCode = $request->input('tenant_code');
+        $itens = $request->input('itens', []);
+        
+        if (!$tenantCode || empty($itens)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dados incompletos'
+            ], 400);
+        }
+        
+        // Buscar restaurante
+        $restaurante = \App\Models\Empresa::where('tenant_code', $tenantCode)->first();
+        
+        if (!$restaurante) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Restaurante não encontrado'
+            ], 404);
+        }
+        
+        // Buscar empresa master para taxa de serviço
+        $plataforma = \App\Models\Empresa::where('is_master', true)->first();
+        
+        \Log::info('Checkout Debug:', [
+            'tenant_code' => $tenantCode,
+            'restaurante' => $restaurante ? $restaurante->nome_fantasia : 'null',
+            'plataforma' => $plataforma ? $plataforma->nome_fantasia : 'null',
+            'taxa_servico_plataforma' => $plataforma ? $plataforma->taxa_servico_plataforma : 'null'
+        ]);
+        
+        // Calcular subtotal dos produtos
+        $subtotal = 0;
+        $produtos = [];
+        
+        foreach ($itens as $item) {
+            $produto = \App\Models\Produto::find($item['produto_id']);
+            if ($produto) {
+                $valorItem = $produto->preco * $item['quantidade'];
+                $subtotal += $valorItem;
+                
+                $produtos[] = [
+                    'id' => $produto->id,
+                    'nome' => $produto->nome,
+                    'preco' => (float) $produto->preco,
+                    'quantidade' => $item['quantidade'],
+                    'subtotal' => (float) $valorItem
+                ];
+            }
+        }
+        
+        // Taxas
+        $taxaEntrega = (float) ($restaurante->taxa_entrega_padrao ?? 0);
+        $taxaServico = 0;
+        
+        if ($plataforma && $plataforma->taxa_servico_plataforma > 0) {
+            $taxaServico = ($subtotal * $plataforma->taxa_servico_plataforma) / 100;
+        }
+        
+        // Total
+        $total = $subtotal + $taxaEntrega + $taxaServico;
+        
+        return response()->json([
+            'success' => true,
+            'resumo' => [
+                'restaurante' => [
+                    'nome' => $restaurante->nome_fantasia,
+                    'tempo_entrega' => $restaurante->tempo_entrega_minutos ?? 45,
+                    'taxa_entrega' => $taxaEntrega
+                ],
+                'produtos' => $produtos,
+                'valores' => [
+                    'subtotal' => (float) $subtotal,
+                    'taxa_entrega' => $taxaEntrega,
+                    'taxa_servico' => (float) $taxaServico,
+                    'taxa_servico_percentual' => (float) ($plataforma->taxa_servico_plataforma ?? 0),
+                    'total' => (float) $total
+                ]
+            ]
+        ]);
+    });
+});
+
 Route::prefix('app/auth')->group(function () {
  Route::post('/login', [ClienteAuthController::class, 'loginOrRegister']);
  Route::middleware('auth:sanctum')->group(function () {

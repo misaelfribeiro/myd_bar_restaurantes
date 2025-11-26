@@ -62,7 +62,18 @@ class PedidoController extends Controller
 
  public function show(Pedido $pedido)
  {
- $pedido->load(['mesa', 'usuario', 'itens.produto', 'delivery.entregador', 'entregador']);
+ $pedido->load([
+ 'mesa', 
+ 'usuario', 
+ 'itens.produto', 
+ 'itens.estornos.solicitante',
+ 'itens.estornos.aprovador',
+ 'delivery.entregador', 
+ 'entregador',
+ 'estornos.itemPedido',
+ 'estornos.solicitante',
+ 'estornos.aprovador'
+ ]);
  $entregadores = [];
  if (!$pedido->mesa && !$pedido->entregador_id) {
  $entregadores = \App\Models\Entregador::where('status', 'ativo')
@@ -214,6 +225,11 @@ class PedidoController extends Controller
  public function syncOffline(Request $request)
  {
  try {
+            // Debug temporário
+            \Log::info('=== PEDIDO RECEBIDO ===');
+            \Log::info('Request completo:', $request->all());
+            \Log::info('Itens:', ['itens' => $request->input('itens')]);
+            
  $isClienteApp = auth('sanctum')->check() && auth('sanctum')->user() instanceof \App\Models\Cliente;
  if ($isClienteApp || ($request->has('tipo_pedido') && $request->tipo_pedido === 'delivery')) {
  $validated = $request->validate([

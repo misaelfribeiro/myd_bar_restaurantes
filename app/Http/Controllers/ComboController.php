@@ -85,12 +85,15 @@ class ComboController extends Controller
         return redirect()->route('combos.index')->with('success', 'Combo criado com sucesso!');
     }
 
-    public function show(Combo $combo)
+    public function show($id)
     {
-        $combo->load('produtos');
+        $combo = Combo::with('produtos')->findOrFail($id);
         
         if (request()->expectsJson() || request()->is('api/*')) {
-            return response()->json($combo);
+            return response()->json([
+                'success' => true,
+                'combo' => $combo
+            ]);
         }
         
         return view('combos.show', compact('combo'));
@@ -190,4 +193,39 @@ class ComboController extends Controller
             'ativo' => $combo->ativo
         ]);
     }
+ 
+ /**
+  * API para App Cliente - Lista combos ativos
+  * Retorna 6 combos aleatórios de todos os restaurantes
+  * Combos em destaque aparecem 3x mais (maior chance de serem sorteados)
+  */
+ public function appCombos(Request $request)
+ {
+     // Busca combos em destaque (aparecem 3x mais)
+     $combosDestaque = Combo::with(['produtos', 'tenant'])
+         ->where('ativo', true)
+         ->where('destaque', true)
+         ->get();
+     
+     // Busca combos normais
+     $combosNormais = Combo::with(['produtos', 'tenant'])
+         ->where('ativo', true)
+         ->where('destaque', false)
+         ->get();
+     
+     // Monta pool: cada combo em destaque aparece 3x
+     $pool = collect();
+     foreach ($combosDestaque as $combo) {
+         $pool->push($combo, $combo, $combo); // Adiciona 3x
+     }
+     $pool = $pool->merge($combosNormais);
+     
+     // Embaralha e pega 6 únicos
+     $combosSelecionados = $pool->shuffle()->take(20)->unique('id')->take(6)->values();
+     
+     return response()->json([
+         'success' => true,
+         'data' => $combosSelecionados
+     ]);
+ }
 }

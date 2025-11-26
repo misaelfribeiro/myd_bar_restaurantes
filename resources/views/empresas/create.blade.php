@@ -409,6 +409,43 @@
  </div>
  </div>
  </div>
+ <!-- Configurações de Pagamento -->
+ <div class="card mb-4">
+ <div class="card-header bg-success text-white">
+ <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Recebimento de Pagamentos</h5>
+ </div>
+ <div class="card-body">
+ <div class="mb-3">
+ <label class="form-label fw-bold">Tipo de Recebimento *</label>
+ <div class="form-check mb-2">
+ <input class="form-check-input" type="radio" name="tipo_recebimento_pagamento" 
+ id="pagamento_manual" value="manual"
+ {{ old('tipo_recebimento_pagamento', 'manual') == 'manual' ? 'checked' : '' }}>
+ <label class="form-check-label" for="pagamento_manual">
+ <strong>Manual (Tradicional)</strong>
+ <br><small class="text-muted">Cliente paga na entrega ou no local. O restaurante recebe diretamente e registra no caixa.</small>
+ </label>
+ </div>
+ <div class="form-check">
+ <input class="form-check-input" type="radio" name="tipo_recebimento_pagamento" 
+ id="pagamento_automatico" value="automatico"
+ {{ old('tipo_recebimento_pagamento') == 'automatico' ? 'checked' : '' }}>
+ <label class="form-check-label" for="pagamento_automatico">
+ <strong>Automático via Mercado Pago</strong>
+ <br><small class="text-muted">Cliente paga antecipadamente via PIX/Cartão. O valor é repassado após dedução das taxas.</small>
+ </label>
+ </div>
+ </div>
+ <div class="alert alert-info mb-0">
+ <i class="fas fa-info-circle me-2"></i>
+ <strong>Como funciona:</strong>
+ <ul class="mb-0 mt-2">
+ <li><strong>Manual:</strong> App mostra opções tradicionais (dinheiro, cartão na entrega, PIX manual)</li>
+ <li><strong>Automático:</strong> App integra com Mercado Pago para pagamento online antes da entrega</li>
+ </ul>
+ </div>
+ </div>
+ </div>
  <!-- Status -->
  <div class="card mb-4">
  <div class="card-header">

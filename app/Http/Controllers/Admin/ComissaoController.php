@@ -45,6 +45,7 @@ class ComissaoController extends Controller
  return redirect()->route('admin.comissoes.index')
  ->with('success', 'Comissão cadastrada com sucesso!');
  }
+ 
  public function edit($id)
  {
  $comissao = Comissao::findOrFail($id);

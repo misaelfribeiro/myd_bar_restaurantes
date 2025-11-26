@@ -82,9 +82,19 @@
  <i class="fas fa-file-invoice-dollar"></i>
  <span class="menu-text">Faturas</span>
  </a>
+ <a href="<?php echo e(route('admin.financeiro.pagamentos.dashboard')); ?>" class="menu-item <?php echo e(request()->is('admin/financeiro/pagamentos*') ? 'active' : ''); ?>">
+ <i class="fas fa-credit-card"></i>
+ <span class="menu-text">Pagamentos</span>
+ <?php
+     $pendentes = \App\Models\Payment::where('status', 'pending')->count();
+ ?>
+ <?php if($pendentes > 0): ?>
+     <span class="badge bg-warning text-dark ms-2"><?php echo e($pendentes); ?></span>
+ <?php endif; ?>
+ </a>
  <a href="<?php echo e(route('admin.financeiro.relatorios')); ?>" class="menu-item <?php echo e(request()->is('admin/financeiro-relatorios') ? 'active' : ''); ?>">
  <i class="fas fa-chart-line"></i>
- <span class="menu-text">Relatórios</span>
+ <span class="menu-text">Relatórios Caixa</span>
  </a>
  <a href="<?php echo e(route('admin.financeiro.create')); ?>" class="menu-item <?php echo e(request()->is('admin/financeiro/create') ? 'active' : ''); ?>">
  <i class="fas fa-plus-circle"></i>

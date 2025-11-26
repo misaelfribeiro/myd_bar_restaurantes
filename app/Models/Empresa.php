@@ -51,6 +51,8 @@ class Empresa extends Model
  'valor_mensalidade',
  'taxa_transacao_percent',
  'taxa_fixa_pedido',
+ 'taxa_servico_plataforma',
+ 'tipo_recebimento_pagamento',
  'dominio_personalizado',
  'cor_primaria',
  'cor_secundaria',
@@ -72,6 +74,7 @@ class Empresa extends Model
  'valor_mensalidade' => 'decimal:2',
  'taxa_transacao_percent' => 'decimal:2',
  'taxa_fixa_pedido' => 'decimal:2',
+ 'taxa_servico_plataforma' => 'decimal:2',
  'permite_white_label' => 'boolean',
  'recursos_habilitados' => 'array'
  ];

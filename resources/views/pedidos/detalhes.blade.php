@@ -147,7 +147,7 @@
  </div>
  <div class="card-body p-0">
  @forelse($pedido->itens as $item)
- <div class="border-bottom p-4 {{ $loop->last ? '' : 'border-bottom' }}">
+ <div class="border-bottom p-4 {{ $loop->last ? '' : 'border-bottom' }} {{ $item->estornos->where('status', 'aprovado')->count() > 0 ? 'bg-danger bg-opacity-10' : '' }}">
  <div class="row align-items-center">
  <div class="col-md-6">
  <h6 class="mb-2">
@@ -157,6 +157,14 @@
  {{ $item->nome_item }}
  @if($item->tipo_item === 'combo')
  <span class="badge bg-warning text-dark ms-1">Combo</span>
+ @endif
+ @if($item->estornos->count() > 0)
+ @foreach($item->estornos as $estorno)
+ <span class="badge bg-{{ $estorno->status_badge }} ms-1" title="{{ $estorno->motivo }}">
+ <i class="fas {{ $estorno->status_icon }} me-1"></i>
+ Estorno {{ $estorno->status_text }}
+ </span>
+ @endforeach
  @endif
  </h6>
  <div class="text-muted">
@@ -176,6 +184,30 @@
  <i class="fas fa-sticky-note me-1"></i>
  {{ $item->observacoes }}
  </small>
+ </div>
+ @endif
+ @if($item->estornos->count() > 0)
+ <div class="mt-2">
+ @foreach($item->estornos as $estorno)
+ <div class="alert alert-{{ $estorno->status === 'aprovado' ? 'danger' : ($estorno->status === 'pendente' ? 'warning' : 'secondary') }} alert-sm mb-2 py-2">
+ <div class="d-flex align-items-start">
+ <i class="fas {{ $estorno->status_icon }} me-2 mt-1"></i>
+ <div class="flex-grow-1">
+ <div class="fw-bold">Estorno {{ $estorno->tipo }}: R$ {{ number_format($estorno->valor, 2, ',', '.') }}</div>
+ <small>
+ <strong>Motivo:</strong> {{ $estorno->motivo }}<br>
+ <strong>Solicitado por:</strong> {{ $estorno->solicitante->name ?? 'N/A' }} em {{ $estorno->solicitado_em->format('d/m/Y H:i') }}
+ @if($estorno->aprovador)
+ <br><strong>Processado por:</strong> {{ $estorno->aprovador->name }} em {{ $estorno->processado_em ? $estorno->processado_em->format('d/m/Y H:i') : '-' }}
+ @if($estorno->observacoes_aprovacao)
+ <br><strong>Obs:</strong> {{ $estorno->observacoes_aprovacao }}
+ @endif
+ @endif
+ </small>
+ </div>
+ </div>
+ </div>
+ @endforeach
  </div>
  @endif
  </div>
@@ -232,6 +264,156 @@
  </div>
  @endif
  </div>
+ <!-- Estornos do Pedido -->
+ @if($pedido->estornos->count() > 0)
+ <div class="card mb-4 border-warning">
+ <div class="card-header d-flex justify-content-between align-items-center bg-warning text-dark">
+ <h5 class="card-title mb-0">
+ <i class="fas fa-building me-2"></i>
+ Estornos Processados pela EatsFood
+ </h5>
+ <span class="badge bg-dark">{{ $pedido->estornos->count() }} {{ $pedido->estornos->count() === 1 ? 'estorno' : 'estornos' }}</span>
+ </div>
+ <div class="alert alert-warning mb-0 rounded-0 border-0">
+ <i class="fas fa-info-circle me-2"></i>
+ <strong>Importante:</strong> Estes estornos foram aprovados pelo Call Center da <strong>EatsFood</strong> após reclamação do cliente. O valor será debitado do repasse do restaurante.
+ </div>
+ <div class="card-body p-0">
+ <div class="table-responsive">
+ <table class="table table-hover mb-0">
+ <thead class="table-light">
+ <tr>
+ <th>Item</th>
+ <th>Tipo</th>
+ <th>Valor</th>
+ <th>Motivo</th>
+ <th>Solicitado por</th>
+ <th>Data</th>
+ <th>Status</th>
+ <th>Aprovado por</th>
+ </tr>
+ </thead>
+ <tbody>
+ @foreach($pedido->estornos as $estorno)
+ <tr>
+ <td>
+ @if($estorno->itemPedido)
+ <div class="fw-bold">{{ $estorno->itemPedido->nome_item }}</div>
+ <small class="text-muted">Qtd: {{ $estorno->itemPedido->quantidade }}</small>
+ @else
+ <span class="text-muted">Estorno Total</span>
+ @endif
+ </td>
+ <td>
+ <span class="badge bg-{{ $estorno->tipo === 'parcial' ? 'info' : 'warning' }}">
+ {{ ucfirst($estorno->tipo) }}
+ </span>
+ </td>
+ <td class="fw-bold text-danger">
+ R$ {{ number_format($estorno->valor, 2, ',', '.') }}
+ </td>
+ <td>
+ <small>{{ Str::limit($estorno->motivo, 50) }}</small>
+ @if(strlen($estorno->motivo) > 50)
+ <button type="button" class="btn btn-link btn-sm p-0" 
+ data-bs-toggle="tooltip" 
+ title="{{ $estorno->motivo }}">
+ <i class="fas fa-info-circle"></i>
+ </button>
+ @endif
+ </td>
+ <td>
+ <div class="d-flex align-items-center">
+ <i class="fas fa-user-circle text-muted me-2"></i>
+ <div>
+ <div class="fw-bold">{{ $estorno->solicitante->name ?? 'N/A' }}</div>
+ <small class="text-muted">{{ $estorno->solicitado_em->format('d/m/Y H:i') }}</small>
+ </div>
+ </div>
+ </td>
+ <td>
+ {{ $estorno->created_at->format('d/m/Y H:i') }}
+ </td>
+ <td>
+ <span class="badge bg-{{ $estorno->status_badge }}">
+ <i class="fas {{ $estorno->status_icon }} me-1"></i>
+ {{ $estorno->status_text }}
+ </span>
+ </td>
+ <td>
+ @if($estorno->aprovador)
+ <div class="d-flex align-items-center">
+ <i class="fas fa-user-check text-muted me-2"></i>
+ <div>
+ <div class="fw-bold">{{ $estorno->aprovador->name }}</div>
+ <small class="text-muted">{{ $estorno->processado_em ? $estorno->processado_em->format('d/m/Y H:i') : '-' }}</small>
+ @if($estorno->observacoes_aprovacao)
+ <br>
+ <small class="text-muted fst-italic">"{{ Str::limit($estorno->observacoes_aprovacao, 40) }}"</small>
+ @endif
+ </div>
+ </div>
+ @else
+ <span class="text-muted">-</span>
+ @endif
+ </td>
+ </tr>
+ @endforeach
+ </tbody>
+ </table>
+ </div>
+ </div>
+ <div class="card-footer bg-light">
+ <div class="row align-items-center">
+ <div class="col-md-6">
+ <div>
+ <div class="d-flex align-items-center mb-2">
+ <i class="fas fa-coins text-danger me-2"></i>
+ <span class="text-muted">
+ Total estornado (aprovado): 
+ <strong class="text-danger fs-5">
+ R$ {{ number_format($pedido->estornos->where('status', 'aprovado')->sum('valor'), 2, ',', '.') }}
+ </strong>
+ </span>
+ </div>
+ <small class="text-muted">
+ <i class="fas fa-building me-1"></i>
+ Processado pela <strong>EatsFood Call Center</strong>
+ </small>
+ </div>
+ </div>
+ <div class="col-md-6 text-end">
+ @php
+ $pendentes = $pedido->estornos->where('status', 'pendente')->count();
+ $totalEstornadoAprovado = $pedido->estornos->where('status', 'aprovado')->sum('valor');
+ // Verificar se existe pagamento aprovado via Mercado Pago
+ $pagamentoMP = \App\Models\Payment::where('pedido_id', $pedido->id)
+     ->where('status', 'approved')
+     ->first();
+ @endphp
+ @if($pendentes > 0)
+ <span class="badge bg-warning me-2">
+ <i class="fas fa-clock me-1"></i>
+ {{ $pendentes }} {{ $pendentes === 1 ? 'pendente' : 'pendentes' }}
+ </span>
+ @endif
+ @if($totalEstornadoAprovado > 0 && $pagamentoMP && auth()->check() && in_array(auth()->user()->role, ['admin', 'gerente', 'supervisor']))
+ <button type="button" 
+     class="btn btn-danger btn-sm" 
+     onclick="processarEstornoMercadoPago({{ $pedido->id }}, {{ $totalEstornadoAprovado }})"
+     id="btnEstornoMP"
+     title="Processar devolução do dinheiro ao cliente via Mercado Pago">
+ <i class="fas fa-credit-card me-1"></i>
+ Processar Estorno ao Cliente
+ <br>
+ <small>(R$ {{ number_format($totalEstornadoAprovado, 2, ',', '.') }} via Mercado Pago)</small>
+ </button>
+ @endif
+ </div>
+ </div>
+ </div>
+ </div>
+ @endif
  <!-- Ações Rápidas -->
  @if($pedido->status !== 'cancelado' && $pedido->status !== 'entregue')
  <div class="card">
@@ -458,24 +640,52 @@
  $subtotal = $pedido->itens->sum(function($item) { 
  return $item->preco_unitario * $item->quantidade; 
  });
+ $totalEstornos = $pedido->estornos->where('status', 'aprovado')->sum('valor');
  $desconto = 0;
- $total = $subtotal - $desconto;
+ $total = $subtotal - $desconto - $totalEstornos;
  @endphp
  <div class="d-flex justify-content-between mb-2">
  <span>Subtotal:</span>
- <span>R$ {{ number_format($subtotal, 2, ',', '.') }}</span>
+ <span class="fw-bold">R$ {{ number_format($subtotal, 2, ',', '.') }}</span>
  </div>
  @if($desconto > 0)
  <div class="d-flex justify-content-between mb-2 text-success">
- <span>Desconto:</span>
- <span>- R$ {{ number_format($desconto, 2, ',', '.') }}</span>
+ <span><i class="fas fa-tag me-1"></i> Desconto:</span>
+ <span class="text-success">- R$ {{ number_format($desconto, 2, ',', '.') }}</span>
+ </div>
+ @endif
+ @if($totalEstornos > 0)
+ <div class="d-flex justify-content-between mb-2 text-danger">
+ <span><i class="fas fa-undo me-1"></i> Estornos Aprovados:</span>
+ <span class="text-danger fw-bold">- R$ {{ number_format($totalEstornos, 2, ',', '.') }}</span>
  </div>
  @endif
  <hr>
- <div class="d-flex justify-content-between">
- <strong>Total:</strong>
- <strong class="text-success">R$ {{ number_format($total, 2, ',', '.') }}</strong>
+ <div class="d-flex justify-content-between align-items-center">
+ <strong class="fs-5">Total a Pagar:</strong>
+ <strong class="text-success fs-4">R$ {{ number_format($total, 2, ',', '.') }}</strong>
  </div>
+ @if($totalEstornos > 0)
+ <div class="alert alert-warning mt-3 mb-0">
+ <div class="d-flex align-items-start">
+ <i class="fas fa-exclamation-triangle fa-2x me-3 mt-1"></i>
+ <div>
+ <h6 class="alert-heading mb-2">
+ <i class="fas fa-building me-1"></i>
+ Estorno Processado pela EatsFood
+ </h6>
+ <p class="mb-1">
+ <strong>Valor a devolver ao cliente:</strong> 
+ <span class="text-danger fw-bold">R$ {{ number_format($totalEstornos, 2, ',', '.') }}</span>
+ </p>
+ <small class="text-muted">
+ <i class="fas fa-info-circle me-1"></i>
+ Este pedido foi entregue e o cliente registrou reclamação. O estorno foi aprovado pelo Call Center da <strong>EatsFood</strong> e será processado via Mercado Pago. O valor será debitado do repasse do restaurante.
+ </small>
+ </div>
+ </div>
+ </div>
+ @endif
  </div>
  </div>
  </div>
@@ -883,6 +1093,62 @@ function showToast(type, message) {
  toast.parentNode.removeChild(toast);
  }
  }, 5000);
+}
+
+// Processar estorno via Mercado Pago
+function processarEstornoMercadoPago(pedidoId, valor) {
+ const mensagem = `🏢 ESTORNO EATSFOOD - CALL CENTER\n\n` +
+     `Valor: R$ ${valor.toFixed(2).replace('.', ',')}\n` +
+     `Pedido: #${pedidoId}\n\n` +
+     `⚠️ ATENÇÃO:\n` +
+     `• O dinheiro será devolvido ao cliente via Mercado Pago\n` +
+     `• O restaurante será debitado no repasse\n` +
+     `• Esta ação é IRREVERSÍVEL\n\n` +
+     `Confirma o processamento do estorno?`;
+ 
+ if (!confirm(mensagem)) {
+ return;
+ }
+ 
+ const btn = document.getElementById('btnEstornoMP');
+ const originalContent = btn.innerHTML;
+ btn.disabled = true;
+ btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processando estorno...';
+ 
+ fetch(`/api/mercadopago/pedido/${pedidoId}/partial-refund`, {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+ 'Accept': 'application/json'
+ },
+ body: JSON.stringify({
+ amount: valor,
+ reason: 'Estorno EatsFood - Reclamação pós-entrega aprovada pelo Call Center'
+ })
+ })
+ .then(response => response.json())
+ .then(data => {
+ if (data.success) {
+ showToast('success', '✅ Estorno processado! O cliente receberá R$ ' + valor.toFixed(2).replace('.', ',') + ' de volta.');
+ btn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Estorno Concluído';
+ btn.classList.remove('btn-danger');
+ btn.classList.add('btn-success');
+ setTimeout(() => {
+ location.reload();
+ }, 3000);
+ } else {
+ showToast('error', '❌ Erro ao processar estorno: ' + (data.message || 'Erro desconhecido'));
+ btn.disabled = false;
+ btn.innerHTML = originalContent;
+ }
+ })
+ .catch(error => {
+ console.error('Erro:', error);
+ showToast('error', '❌ Erro ao comunicar com o Mercado Pago. Tente novamente.');
+ btn.disabled = false;
+ btn.innerHTML = originalContent;
+ });
 }
 </script>
 @endpush

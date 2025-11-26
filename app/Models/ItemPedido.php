@@ -33,6 +33,11 @@ class ItemPedido extends Model
  return $this->belongsTo(Combo::class);
  }
 
+ public function estornos()
+ {
+ return $this->hasMany(Estorno::class, 'item_pedido_id');
+ }
+
  // Método helper para pegar o item (produto ou combo)
  public function getItemAttribute()
  {
